@@ -97,13 +97,13 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const renderContent = () => {
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-red-400 bg-gray-900">
+        <div className="flex flex-col items-center justify-center h-full text-red-600 dark:text-red-400 bg-gray-50 dark:bg-gray-900">
           <div className="text-2xl mb-4">⚠️</div>
           <h3 className="text-lg font-semibold mb-2">Error Loading PDF</h3>
           <p className="text-sm text-gray-300 mb-4">{error.message}</p>
           <button
             onClick={openPDF}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md transition-colors"
           >
             Try Again
           </button>
@@ -113,7 +113,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     if (isLoading) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-gray-300 bg-gray-900">
+        <div className="flex flex-col items-center justify-center h-full text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
           <h3 className="text-lg font-semibold mb-2">
             {loadingState.stage === LoadingStage.OPENING && "Opening PDF..."}
@@ -123,8 +123,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             {loadingState.stage === LoadingStage.COMPLETE &&
               "PDF Loaded Successfully!"}
           </h3>
-          <p className="text-sm text-gray-400">{loadingState.message}</p>
-          <div className="w-64 bg-gray-700 rounded-full h-2 mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {loadingState.message}
+          </p>
+          <div className="w-64 bg-gray-300 dark:bg-gray-700 rounded-full h-2 mt-4">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${loadingState.progress}%` }}
@@ -136,10 +138,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     if (!isLoaded || !document) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-gray-300 bg-gray-900">
+        <div className="flex flex-col items-center justify-center h-full text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
           <div className="text-6xl mb-6">📄</div>
           <h2 className="text-2xl font-bold mb-4">Welcome to StreamSlate</h2>
-          <p className="text-gray-400 mb-6 text-center max-w-md">
+          <p className="text-gray-600 dark:text-gray-400 mb-6 text-center max-w-md">
             Open a PDF document to start annotating and presenting. Perfect for
             live streaming and content creation.
           </p>
@@ -155,11 +157,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     return (
       <div
-        className={`flex flex-col h-full ${transparentBg ? "bg-transparent" : "bg-gray-800"}`}
+        className={`flex flex-col h-full ${transparentBg ? "bg-transparent" : "bg-white dark:bg-gray-800"}`}
       >
         {/* Top Toolbar */}
         <div
-          className={`${transparentBg ? "bg-gray-900/90 backdrop-blur-sm" : "bg-gray-900"} border-b border-gray-700 px-4 py-2`}
+          className={`${transparentBg ? "bg-gray-100/90 dark:bg-gray-900/90 backdrop-blur-sm" : "bg-gray-100 dark:bg-gray-900"} border-b border-gray-300 dark:border-gray-700 px-4 py-2`}
         >
           <div className="flex items-center justify-between">
             <AnnotationTools
@@ -172,7 +174,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => rotate(true)}
-                className="p-2 text-gray-300 hover:text-white"
+                className="p-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                 title="Rotate Clockwise"
               >
                 🔄
@@ -226,7 +228,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
         {/* Bottom Control Bar */}
         <div
-          className={`flex items-center justify-between ${transparentBg ? "bg-gray-900/90 backdrop-blur-sm" : "bg-gray-900"} px-4 py-2 border-t border-gray-700`}
+          className={`flex items-center justify-between ${transparentBg ? "bg-gray-100/90 dark:bg-gray-900/90 backdrop-blur-sm" : "bg-gray-100 dark:bg-gray-900"} px-4 py-2 border-t border-gray-300 dark:border-gray-700`}
         >
           {/* Page Navigation */}
           <PageNavigation
@@ -286,7 +288,20 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     let isMounted = true;
 
     const renderPage = async () => {
-      if (!canvasRef.current || !document?.path) return;
+      console.log("[PDFCanvasRenderer] renderPage called", {
+        hasCanvas: !!canvasRef.current,
+        documentPath: document?.path,
+        currentPage,
+        zoom,
+        rotation,
+      });
+
+      if (!canvasRef.current || !document?.path) {
+        console.log(
+          "[PDFCanvasRenderer] Early return - missing canvas or document path"
+        );
+        return;
+      }
 
       setIsRendering(true);
       setRenderError(null);
@@ -294,10 +309,14 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       try {
         // Load document if not already loaded
         if (!pdfRenderer.isLoaded) {
+          console.log("[PDFCanvasRenderer] Loading document...");
           await pdfRenderer.loadDocument(document.path);
+        } else {
+          console.log("[PDFCanvasRenderer] Document already loaded");
         }
 
         // Render the current page
+        console.log("[PDFCanvasRenderer] Rendering page", currentPage);
         await pdfRenderer.renderPage(currentPage, canvasRef.current, {
           scale: zoom,
           rotation: rotation,
@@ -307,6 +326,10 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           setIsRendering(false);
           // Update canvas size for annotation layer
           if (canvasRef.current && onCanvasSizeChange) {
+            console.log("[PDFCanvasRenderer] Updating canvas size:", {
+              width: canvasRef.current.width,
+              height: canvasRef.current.height,
+            });
             onCanvasSizeChange({
               width: canvasRef.current.width,
               height: canvasRef.current.height,
@@ -314,6 +337,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           }
         }
       } catch (error) {
+        console.error("[PDFCanvasRenderer] Error rendering PDF:", error);
         if (isMounted) {
           setRenderError(
             error instanceof Error ? error.message : "Failed to render PDF"
@@ -333,13 +357,15 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   if (renderError) {
     return (
       <div
-        className={`flex-1 ${transparentBg ? "bg-transparent" : "bg-gray-900"} relative`}
+        className={`flex-1 ${transparentBg ? "bg-transparent" : "bg-gray-50 dark:bg-gray-900"} relative`}
       >
         <div className="absolute inset-0 flex items-center justify-center text-red-400">
           <div className="text-center">
             <div className="text-6xl mb-4">⚠️</div>
             <h3 className="text-xl font-semibold mb-2">Render Error</h3>
-            <p className="text-sm text-gray-300">{renderError}</p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {renderError}
+            </p>
           </div>
         </div>
       </div>
@@ -350,9 +376,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     <div ref={containerRef} className="relative">
       {isRendering && (
         <div
-          className={`absolute inset-0 flex items-center justify-center ${transparentBg ? "bg-gray-900/50" : "bg-gray-900"} bg-opacity-75 z-10`}
+          className={`absolute inset-0 flex items-center justify-center ${transparentBg ? "bg-gray-100/50 dark:bg-gray-900/50" : "bg-gray-100 dark:bg-gray-900"} bg-opacity-75 z-10`}
         >
-          <div className="flex flex-col items-center text-gray-300">
+          <div className="flex flex-col items-center text-gray-700 dark:text-gray-300">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
             <p className="text-sm">Rendering page {currentPage}...</p>
           </div>
@@ -361,7 +387,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       <canvas
         ref={canvasRef}
-        className="border border-gray-600 shadow-2xl block"
+        className="border border-gray-300 dark:border-gray-600 shadow-2xl block bg-white"
         style={{
           filter: "drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5))",
         }}

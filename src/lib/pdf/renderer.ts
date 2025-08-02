@@ -26,12 +26,14 @@ import type {
   PDFPageProxy,
   RenderTask,
 } from "pdfjs-dist/types/src/display/api";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
+
+// Import PDF.js worker with Vite's ?url syntax
+// @ts-ignore - Vite specific import
+import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 // Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.js",
-  import.meta.url
-).toString();
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 export interface RenderOptions {
   scale: number;
@@ -56,10 +58,28 @@ export class PDFRenderer {
    * Load a PDF document from a file path
    */
   async loadDocument(filePath: string): Promise<PDFDocumentProxy> {
+    console.log("[PDFRenderer] Loading document from path:", filePath);
+
     try {
-      // Convert file path to data URL for PDF.js
-      const response = await fetch(`file://${filePath}`);
+      // Convert the file path to a URL that Tauri can serve
+      const fileUrl = convertFileSrc(filePath);
+      console.log("[PDFRenderer] Converted file path to URL:", fileUrl);
+
+      const response = await fetch(fileUrl);
+      console.log(
+        "[PDFRenderer] Fetch response:",
+        response.status,
+        response.statusText
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch PDF: ${response.status} ${response.statusText}`
+        );
+      }
+
       const arrayBuffer = await response.arrayBuffer();
+      console.log("[PDFRenderer] ArrayBuffer size:", arrayBuffer.byteLength);
 
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
@@ -68,8 +88,13 @@ export class PDFRenderer {
       });
 
       this.document = await loadingTask.promise;
+      console.log(
+        "[PDFRenderer] Document loaded successfully, pages:",
+        this.document.numPages
+      );
       return this.document;
     } catch (error) {
+      console.error("[PDFRenderer] Failed to load PDF:", error);
       throw new Error(
         `Failed to load PDF: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -101,11 +126,25 @@ export class PDFRenderer {
     canvas: HTMLCanvasElement,
     options: RenderOptions
   ): Promise<PDFRenderResult> {
+    console.log(
+      "[PDFRenderer] Rendering page",
+      pageNumber,
+      "with options:",
+      options
+    );
+
     const page = await this.getPage(pageNumber);
     const viewport = page.getViewport({
       scale: options.scale,
       rotation: options.rotation,
     });
+
+    console.log(
+      "[PDFRenderer] Viewport dimensions:",
+      viewport.width,
+      "x",
+      viewport.height
+    );
 
     // Set canvas dimensions
     const context = canvas.getContext("2d");
@@ -115,10 +154,20 @@ export class PDFRenderer {
 
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+    console.log(
+      "[PDFRenderer] Canvas dimensions set to:",
+      canvas.width,
+      "x",
+      canvas.height
+    );
 
     // Cancel any existing render task for this page
     const existingTask = this.renderTasks.get(pageNumber);
     if (existingTask) {
+      console.log(
+        "[PDFRenderer] Cancelling existing render task for page",
+        pageNumber
+      );
       existingTask.cancel();
       this.renderTasks.delete(pageNumber);
     }
@@ -132,8 +181,10 @@ export class PDFRenderer {
     this.renderTasks.set(pageNumber, renderTask);
 
     try {
+      console.log("[PDFRenderer] Starting render for page", pageNumber);
       await renderTask.promise;
       this.renderTasks.delete(pageNumber);
+      console.log("[PDFRenderer] Successfully rendered page", pageNumber);
 
       return {
         canvas,
@@ -141,6 +192,12 @@ export class PDFRenderer {
         viewport,
       };
     } catch (error) {
+      console.error(
+        "[PDFRenderer] Render error for page",
+        pageNumber,
+        ":",
+        error
+      );
       this.renderTasks.delete(pageNumber);
       throw error;
     }

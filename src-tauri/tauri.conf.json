@@ -59,6 +59,11 @@
         "all": true,
         "request": true,
         "scope": ["http://localhost:11451/*", "ws://localhost:11451/*"]
+      },
+      "protocol": {
+        "all": false,
+        "asset": true,
+        "assetScope": ["**"]
       }
     },
     "bundle": {
@@ -73,7 +78,7 @@
       "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration"
     },
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' ws://localhost:11451; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' asset: https://asset.localhost http://localhost:* ws://localhost:*; font-src 'self' data:;"
     },
     "windows": [
       {
