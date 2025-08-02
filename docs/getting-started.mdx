@@ -1,0 +1,188 @@
+---
+title: Getting Started
+description: Learn how to set up and use StreamSlate for live streaming and content creation
+---
+
+# Getting Started with StreamSlate
+
+StreamSlate is a desktop PDF-annotation app designed specifically for live streamers and YouTubers who need to annotate PDFs during their broadcasts.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** (version 18 or higher)
+- **Rust** (latest stable version)
+- **npm** or **yarn** package manager
+
+### System Requirements
+
+- **macOS**: 10.15 (Catalina) or later
+- **Windows**: Windows 10 or later
+- **Linux**: Ubuntu 20.04 or equivalent
+
+## Installation
+
+### Option 1: Download Release (Recommended)
+
+1. Visit the [releases page](https://github.com/streamslate/streamslate/releases)
+2. Download the latest version for your operating system
+3. Install the application following your OS-specific instructions
+
+### Option 2: Build from Source
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/streamslate/streamslate.git
+   cd streamslate
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Build and run the application:
+   ```bash
+   npm run tauri:dev
+   ```
+
+## Quick Start
+
+### 1. Launch StreamSlate
+
+After installation, launch StreamSlate from your applications folder or by running:
+
+```bash
+npm run tauri:dev
+```
+
+### 2. Open a PDF
+
+1. Click **File > Open PDF** or use the keyboard shortcut `Cmd+O` (macOS) / `Ctrl+O` (Windows/Linux)
+2. Select your PDF file from the file dialog
+3. The PDF will load in the main viewer
+
+### 3. Start Annotating
+
+- **Text Tool**: Click the text icon and click anywhere on the PDF to add text annotations
+- **Drawing Tool**: Select the pen tool to draw freehand annotations
+- **Highlighter**: Use the highlighter to emphasize important content
+- **Shapes**: Add rectangles, circles, and arrows to highlight areas
+
+### 4. Presenter Mode
+
+For live streaming, enable Presenter Mode:
+
+1. Click the **Presenter Mode** button or press `F11`
+2. A separate window opens that you can capture in your streaming software
+3. The presenter window displays your annotations in real-time
+4. Configure window position and size to fit your streaming layout
+
+## Streaming Integration
+
+### OBS Studio Setup
+
+1. Add a **Window Capture** source in OBS
+2. Select the StreamSlate Presenter window
+3. Position and resize as needed in your scene
+4. Your PDF annotations will now appear in your stream
+
+### Stream Deck Integration
+
+StreamSlate supports Stream Deck for remote control:
+
+- **Next Page**: Navigate to the next PDF page
+- **Previous Page**: Go back to the previous page
+- **Clear Annotations**: Remove all annotations from current page
+- **Toggle Presenter**: Show/hide presenter mode
+
+## Keyboard Shortcuts
+
+| Shortcut       | Action                |
+| -------------- | --------------------- |
+| `Cmd/Ctrl + O` | Open PDF              |
+| `Cmd/Ctrl + S` | Save annotations      |
+| `F11`          | Toggle Presenter Mode |
+| `Cmd/Ctrl + Z` | Undo last annotation  |
+| `Cmd/Ctrl + Y` | Redo annotation       |
+| `Space`        | Pan tool              |
+| `T`            | Text tool             |
+| `P`            | Pen tool              |
+| `H`            | Highlighter           |
+
+## Configuration
+
+### Settings
+
+Access settings through **File > Preferences**:
+
+- **Appearance**: Choose between light and dark themes
+- **Annotations**: Set default colors, line weights, and fonts
+- **Streaming**: Configure presenter mode display options
+- **Shortcuts**: Customize keyboard shortcuts
+
+### WebSocket API
+
+StreamSlate exposes a WebSocket API on port `11451` for external integrations:
+
+```javascript
+const ws = new WebSocket("ws://localhost:11451");
+
+// Change page
+ws.send(
+  JSON.stringify({
+    action: "changePage",
+    page: 5,
+  })
+);
+
+// Clear annotations
+ws.send(
+  JSON.stringify({
+    action: "clearAnnotations",
+  })
+);
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**PDF won't open**
+
+- Ensure the PDF file isn't corrupted
+- Check that the file isn't password protected
+- Verify you have read permissions for the file
+
+**Presenter mode not showing**
+
+- Check that your streaming software is capturing the correct window
+- Ensure the presenter window isn't minimized
+- Try toggling presenter mode off and on again
+
+**Annotations not saving**
+
+- Verify you have write permissions in the chosen save location
+- Check available disk space
+- Ensure the application isn't running in read-only mode
+
+### Getting Help
+
+- **Documentation**: Visit our [full documentation](https://streamslate.app/docs)
+- **Issues**: Report bugs on [GitHub Issues](https://github.com/streamslate/streamslate/issues)
+- **Discord**: Join our [community Discord](https://discord.gg/streamslate)
+- **Email**: Contact support at support@streamslate.app
+
+## Next Steps
+
+- Explore the [Advanced Features](/docs/advanced-features) guide
+- Learn about [Custom Integrations](/docs/integrations)
+- Check out [Video Tutorials](/docs/tutorials) for visual walkthroughs
+- Join the community to share tips and get help
+
+---
+
+_StreamSlate is open source and licensed under GPL-3. Contributions are welcome!_

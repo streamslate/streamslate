@@ -1,0 +1,116 @@
+{
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devPath": "http://localhost:1420",
+    "distDir": "../dist",
+    "withGlobalTauri": false
+  },
+  "package": {
+    "productName": "StreamSlate",
+    "version": "0.0.1"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "shell": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "all": true,
+        "readFile": true,
+        "writeFile": true,
+        "readDir": true,
+        "copyFile": true,
+        "createDir": true,
+        "removeDir": true,
+        "removeFile": true,
+        "renameFile": true,
+        "exists": true,
+        "scope": ["$RESOURCE/*", "$HOME/**", "$DOCUMENT/**", "$DESKTOP/**"]
+      },
+      "path": {
+        "all": true
+      },
+      "dialog": {
+        "all": true,
+        "ask": true,
+        "confirm": true,
+        "message": true,
+        "open": true,
+        "save": true
+      },
+      "window": {
+        "all": false,
+        "close": true,
+        "hide": true,
+        "show": true,
+        "maximize": true,
+        "minimize": true,
+        "unmaximize": true,
+        "unminimize": true,
+        "startDragging": true,
+        "setAlwaysOnTop": true,
+        "setDecorations": true,
+        "setSkipTaskbar": true
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": ["http://localhost:11451/*", "ws://localhost:11451/*"]
+      }
+    },
+    "bundle": {
+      "active": true,
+      "targets": "all",
+      "identifier": "com.streamslate.app",
+      "resources": [],
+      "externalBin": [],
+      "copyright": "",
+      "category": "Productivity",
+      "shortDescription": "PDF annotation tool for streamers",
+      "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration"
+    },
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ws://localhost:11451; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    },
+    "windows": [
+      {
+        "label": "main",
+        "fullscreen": false,
+        "resizable": true,
+        "title": "StreamSlate",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 600,
+        "minHeight": 400,
+        "center": true,
+        "skipTaskbar": false,
+        "alwaysOnTop": false,
+        "decorations": true,
+        "transparent": false,
+        "maximized": false,
+        "visible": true
+      },
+      {
+        "label": "presenter",
+        "fullscreen": false,
+        "resizable": true,
+        "title": "StreamSlate - Presenter Mode",
+        "width": 800,
+        "height": 600,
+        "minWidth": 400,
+        "minHeight": 300,
+        "center": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "decorations": false,
+        "transparent": true,
+        "maximized": false,
+        "visible": false,
+        "url": "/presenter"
+      }
+    ]
+  }
+}
