@@ -109,6 +109,25 @@ install_sys_packages() {
   esac
 }
 
+# ---------- Linux-only (WebKit2GTK) ----------
+install_webkit_linux() {
+  case "$PKG" in
+    apt)
+      sudo apt-get update -y
+      # install newer WebKit if stock repo is too old
+      if ! dpkg -s libwebkit2gtk-4.1-dev &>/dev/null; then
+        sudo apt-add-repository -y ppa:ubuntu-mozillateam/ppa
+      fi
+      sudo apt-get install -y libwebkit2gtk-4.1-dev ;;
+    pacman)
+      sudo pacman -Syu --noconfirm --needed webkit2gtk ;;
+    *)
+      : # other distros covered earlier
+  esac
+}
+
+# call right after install_sys_packages
+[[ "$OS" == "Linux" ]] && install_webkit_linux
 # ------------------------- Git Hooks / Lint-staged -------------------------- #
 setup_hooks() {
   info "Configuring Husky git hooks & commit lint…"
