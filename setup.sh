@@ -116,9 +116,14 @@ install_webkit_linux() {
       sudo apt-get update -y
       # install newer WebKit if stock repo is too old
       if ! dpkg -s libwebkit2gtk-4.1-dev &>/dev/null; then
-        sudo apt-add-repository -y ppa:ubuntu-mozillateam/ppa
+        sudo add-apt-repository universe          # does nothing if already enabled
+        sudo apt-get update -y
       fi
-      sudo apt-get install -y libwebkit2gtk-4.1-dev ;;
+        sudo apt-get install -y \
+             build-essential curl git \
+             libwebkit2gtk-4.1-dev \  # GTK-WebKit 4.1 headers & libs
+             libssl-dev libgtk-3-dev \
+             libayatana-appindicator3-dev libappindicator3-dev ;;
     pacman)
       sudo pacman -Syu --noconfirm --needed webkit2gtk ;;
     *)
