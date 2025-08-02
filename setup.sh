@@ -102,7 +102,8 @@ install_sys_packages() {
       brew bundle --file "$REPO_ROOT/scripts/Brewfile" || true ;;
     apt)
       sudo apt-get update -y
-      sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential pkg-config curl git wget ca-certificates \
+      # Skip webkit here - handled in install_webkit_linux()
+      sudo apt-get install -y build-essential pkg-config curl git wget ca-certificates \
            libssl-dev libgtk-3-dev libayatana-appindicator3-dev libappindicator3-dev ;;
     pacman)
       sudo pacman -Syu --noconfirm --needed base-devel webkit2gtk git curl wget openssl gtk3 libappindicator-gtk3 ;;
