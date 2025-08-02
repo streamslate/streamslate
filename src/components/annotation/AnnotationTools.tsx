@@ -119,50 +119,89 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-gray-800 border border-gray-700 rounded-lg p-2 ${className}`}
+      className={`flex flex-col bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl p-3 ${className}`}
     >
-      <div className="flex flex-wrap gap-1 mb-2">
+      <div className="flex items-center gap-2 flex-wrap">
         {TOOLS.map((tool) => (
           <button
             key={tool.id}
             onClick={() => handleToolClick(tool.type)}
-            className={`p-2 rounded-md border text-sm font-medium transition-all duration-200 ${activeTool === tool.type ? "bg-blue-600 border-blue-500 text-white shadow-md" : "bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500"}`}
+            className={`group relative p-2.5 rounded-lg border text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+              activeTool === tool.type
+                ? "bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/25 scale-105"
+                : "bg-gray-700/80 border-gray-600/50 text-gray-300 hover:bg-gray-600/80 hover:border-gray-500/50 hover:shadow-md"
+            }`}
             title={tool.name}
           >
-            <div className="flex flex-col items-center space-y-1">
-              <span className="text-lg">{tool.icon}</span>
-              <span className="text-xs">{tool.name}</span>
+            <div className="flex items-center justify-center">
+              <span className="text-xl">{tool.icon}</span>
+              <span
+                className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] font-medium whitespace-nowrap transition-opacity duration-200 pointer-events-none ${
+                  activeTool === tool.type
+                    ? "text-blue-400 opacity-100"
+                    : "text-gray-400 opacity-0 group-hover:opacity-100"
+                }`}
+              >
+                {tool.name}
+              </span>
             </div>
           </button>
         ))}
       </div>
 
       {activeTool && (
-        <div className="border-t border-gray-700 pt-2">
+        <div className="border-t border-gray-700/50 mt-3 pt-3">
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="w-full flex items-center justify-between p-2 text-sm text-gray-300 hover:text-white transition-colors"
+            className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-medium text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all duration-200"
           >
-            <span>Tool Settings</span>
-            <span
-              className={`transform transition-transform ${showConfig ? "rotate-180" : ""}`}
-            >
-              ▼
+            <span className="flex items-center gap-2">
+              <svg
+                className="w-3 h-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
+              Tool Settings
             </span>
+            <svg
+              className={`w-3 h-3 transform transition-transform ${showConfig ? "rotate-180" : ""}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
           </button>
 
           {showConfig && (
-            <div className="mt-2 space-y-3">
+            <div className="mt-3 space-y-4 bg-gray-900/50 rounded-lg p-3">
               <div>
-                <label className="block text-xs text-gray-400 mb-1">
+                <label className="block text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
                   Color
                 </label>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
                       onClick={() => handleColorChange(color)}
-                      className={`w-6 h-6 rounded border-2 transition-all ${toolConfig.color === color ? "border-white shadow-md scale-110" : "border-gray-600 hover:border-gray-400"}`}
+                      className={`w-7 h-7 rounded-lg border-2 transition-all duration-200 ${
+                        toolConfig.color === color
+                          ? "border-white shadow-lg scale-110 ring-2 ring-white/20"
+                          : "border-gray-600/50 hover:border-gray-400/50 hover:scale-105"
+                      }`}
                       style={{ backgroundColor: color }}
                       title={color}
                     />
@@ -172,7 +211,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                       type="color"
                       value={toolConfig.color}
                       onChange={(e) => handleColorChange(e.target.value)}
-                      className="w-6 h-6 rounded border-2 border-gray-600 bg-transparent cursor-pointer"
+                      className="w-7 h-7 rounded-lg border-2 border-gray-600/50 bg-transparent cursor-pointer hover:border-gray-400/50 transition-colors"
                       title="Custom color"
                     />
                   </div>
@@ -180,8 +219,11 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs text-gray-400 mb-1">
-                  Opacity: {Math.round(toolConfig.opacity * 100)}%
+                <label className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                  <span>Opacity</span>
+                  <span className="text-gray-500 normal-case font-normal">
+                    {Math.round(toolConfig.opacity * 100)}%
+                  </span>
                 </label>
                 <input
                   type="range"
@@ -192,14 +234,20 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                   onChange={(e) =>
                     handleOpacityChange(parseFloat(e.target.value))
                   }
-                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                  className="w-full h-1.5 bg-gray-700/50 rounded-full appearance-none cursor-pointer slider hover:bg-gray-700 transition-colors"
+                  style={{
+                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${toolConfig.opacity * 100}%, rgb(55 65 81 / 0.5) ${toolConfig.opacity * 100}%, rgb(55 65 81 / 0.5) 100%)`,
+                  }}
                 />
               </div>
 
               {activeTool !== AnnotationType.HIGHLIGHT && (
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">
-                    Stroke Width: {toolConfig.strokeWidth}px
+                  <label className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                    <span>Stroke Width</span>
+                    <span className="text-gray-500 normal-case font-normal">
+                      {toolConfig.strokeWidth}px
+                    </span>
                   </label>
                   <input
                     type="range"
@@ -210,7 +258,10 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                     onChange={(e) =>
                       handleStrokeWidthChange(parseInt(e.target.value))
                     }
-                    className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                    className="w-full h-1.5 bg-gray-700/50 rounded-full appearance-none cursor-pointer slider hover:bg-gray-700 transition-colors"
+                    style={{
+                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(toolConfig.strokeWidth - 1) * 11.11}%, rgb(55 65 81 / 0.5) ${(toolConfig.strokeWidth - 1) * 11.11}%, rgb(55 65 81 / 0.5) 100%)`,
+                    }}
                   />
                 </div>
               )}
