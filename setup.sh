@@ -104,7 +104,7 @@ install_sys_packages() {
       sudo apt-get update -y
       # Skip webkit here - handled in install_webkit_linux()
       sudo apt-get install -y build-essential pkg-config curl git wget ca-certificates \
-           libssl-dev libgtk-3-dev libayatana-appindicator3-dev libappindicator3-dev ;;
+           libssl-dev libgtk-3-dev libayatana-appindicator3-dev ;;
     pacman)
       sudo pacman -Syu --noconfirm --needed base-devel webkit2gtk git curl wget openssl gtk3 libappindicator-gtk3 ;;
   esac
@@ -124,7 +124,7 @@ install_webkit_linux() {
            build-essential curl git wget ca-certificates \
            libwebkit2gtk-4.1-dev \
            libssl-dev libgtk-3-dev \
-           libayatana-appindicator3-dev || sudo apt-get install -y libappindicator3-dev ;;
+           libayatana-appindicator3-dev ;;
     pacman)
       sudo pacman -Syu --noconfirm --needed webkit2gtk ;;
     *)
