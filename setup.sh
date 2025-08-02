@@ -119,11 +119,11 @@ install_webkit_linux() {
         sudo add-apt-repository universe -y          # does nothing if already enabled
         sudo apt-get update -y
       fi
-        sudo apt-get install -y \
-             build-essential curl git wget ca-certificates \
-             libwebkit2gtk-4.1-dev \  # GTK-WebKit 4.1 headers & libs
-             libssl-dev libgtk-3-dev \
-             libayatana-appindicator3-dev || sudo apt-get install -y libappindicator3-dev ;;
+      sudo apt-get install -y \
+           build-essential curl git wget ca-certificates \
+           libwebkit2gtk-4.1-dev \
+           libssl-dev libgtk-3-dev \
+           libayatana-appindicator3-dev || sudo apt-get install -y libappindicator3-dev ;;
     pacman)
       sudo pacman -Syu --noconfirm --needed webkit2gtk ;;
     *)
@@ -131,8 +131,6 @@ install_webkit_linux() {
   esac
 }
 
-# call right after install_sys_packages
-[[ "$OS" == "Linux" ]] && install_webkit_linux
 # ------------------------- Git Hooks / Lint-staged -------------------------- #
 setup_hooks() {
   info "Configuring Husky git hooks & commit lint…"
@@ -155,6 +153,7 @@ main() {
   info "🛠  StreamSlate dev environment setup starting…"
 
   install_sys_packages
+  [[ "$OS" == "Linux" ]] && install_webkit_linux
   install_node
   install_rust
   install_js_deps
