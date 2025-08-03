@@ -21,8 +21,31 @@ import { defineConfig } from "cypress";
 export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:1420",
-    setupNodeEvents(_on, _config) {
+    setupNodeEvents(on, config) {
       // implement node event listeners here
+
+      // Handle browser launch options for macOS ARM64
+      on("before:browser:launch", (browser, launchOptions) => {
+        // Remove problematic flags on macOS
+        if (process.platform === "darwin") {
+          // Filter out --no-sandbox flag which is not supported on macOS
+          if (browser.family === "chromium" && browser.name !== "electron") {
+            launchOptions.args = launchOptions.args.filter(
+              (arg) => !arg.startsWith("--no-sandbox")
+            );
+          }
+        }
+        return launchOptions;
+      });
+
+      return config;
     },
   },
+
+  // Additional configuration to help with macOS compatibility
+  video: false,
+  screenshotOnRunFailure: false,
+
+  // Set browser preferences
+  chromeWebSecurity: false,
 });

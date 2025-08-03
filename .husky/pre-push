@@ -9,9 +9,14 @@ fi
 
 # Run frontend tests
 echo "🧪 Running frontend tests..."
-if ! npm run test:headless; then
-  echo "❌ Frontend tests failed. Please fix them before pushing."
-  exit 1
+# Check if cypress directory exists and has test files
+if [ -d "cypress/e2e" ] && [ "$(find cypress/e2e -name '*.cy.ts' -o -name '*.cy.js' | wc -l)" -gt 0 ]; then
+  if ! npm run test:headless; then
+    echo "❌ Frontend tests failed. Please fix them before pushing."
+    exit 1
+  fi
+else
+  echo "⚠️  No Cypress tests found. Skipping frontend tests..."
 fi
 
 # Run Rust tests if any Rust files are in the commit
