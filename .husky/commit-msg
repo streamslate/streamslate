@@ -1,5 +1,5 @@
 # Get the commit message
-commit_regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,50}'
+commit_regex='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .{1,72}'
 
 if ! grep -qE "$commit_regex" "$1"; then
   echo "❌ Invalid commit message format!"
@@ -20,11 +20,11 @@ if ! grep -qE "$commit_regex" "$1"; then
   exit 1
 fi
 
-# Check commit message length
+# Check commit message length (relaxed to 72 characters)
 subject=$(head -n1 "$1" | sed 's/^[^:]*: //')
-if [ ${#subject} -gt 50 ]; then
-  echo "❌ Commit subject is too long (${#subject} chars, max 50)"
-  echo "Please keep the subject line under 50 characters."
+if [ ${#subject} -gt 72 ]; then
+  echo "❌ Commit subject is too long (${#subject} chars, max 72)"
+  echo "Please keep the subject line under 72 characters."
   exit 1
 fi
 
