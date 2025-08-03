@@ -21,13 +21,14 @@
  * This is a foundation component that will be enhanced with PDF.js integration in future phases
  */
 
-import React, { useRef, useEffect, useState, useMemo } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { usePDF } from "../../hooks/usePDF";
 import { useTheme } from "../../hooks/useTheme";
 import {
   LoadingStage,
-  Annotation,
-  AnnotationType,
+  type Annotation,
+  type AnnotationType,
+  type PDFDocument,
 } from "../../types/pdf.types";
 import { pdfRenderer } from "../../lib/pdf/renderer";
 import { usePDFStore } from "../../stores/pdf.store";
@@ -366,7 +367,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
  * Handles the actual PDF.js rendering to canvas
  */
 interface PDFCanvasRendererProps {
-  pdfDocument: any;
+  pdfDocument: PDFDocument;
   currentPage: number;
   zoom: number;
   rotation: number;
@@ -388,84 +389,14 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const renderTaskRef = useRef<any>(null); // Track current render task
+  const renderTaskRef = useRef<{
+    cancel?: () => void;
+    canvas: HTMLCanvasElement;
+    viewport: { width: number; height: number };
+  } | null>(null); // Track current render task
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-  const [containerDimensions, setContainerDimensions] = useState({
-    width: 0,
-    height: 0,
-  });
-  const [pageDimensions, setPageDimensions] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-
-  // Use a ref to store the calculated zoom to prevent infinite loops
-  const calculatedZoomRef = useRef<number>(zoom);
-
-  // Calculate effective zoom based on fit mode
-  // Using useMemo instead of useCallback to ensure stable value
-  const effectiveZoom = useMemo(() => {
-    if (
-      !pdfDocument ||
-      fitMode === FitMode.CUSTOM ||
-      !pageDimensions ||
-      !containerDimensions.width
-    ) {
-      return zoom;
-    }
-
-    const containerPadding = 40; // 20px padding on each side
-    const availableWidth = containerDimensions.width - containerPadding;
-    const availableHeight = containerDimensions.height - containerPadding;
-
-    // Use the page dimensions at scale 1.0
-    let pageWidth = pageDimensions.width;
-    let pageHeight = pageDimensions.height;
-
-    // Adjust for rotation
-    if (rotation % 180 === 90) {
-      [pageWidth, pageHeight] = [pageHeight, pageWidth];
-    }
-
-    let newZoom = zoom;
-    switch (fitMode) {
-      case FitMode.FIT_WIDTH:
-        newZoom = availableWidth / pageWidth;
-        break;
-      case FitMode.FIT_HEIGHT:
-        newZoom = availableHeight / pageHeight;
-        break;
-      case FitMode.FIT_PAGE: {
-        const widthScale = availableWidth / pageWidth;
-        const heightScale = availableHeight / pageHeight;
-        newZoom = Math.min(widthScale, heightScale);
-        break;
-      }
-      case FitMode.ACTUAL_SIZE:
-        newZoom = 1.0;
-        break;
-    }
-
-    // Prevent tiny zoom changes that can cause oscillation
-    const zoomDiff = Math.abs(newZoom - calculatedZoomRef.current);
-    if (zoomDiff < 0.01) {
-      return calculatedZoomRef.current;
-    }
-
-    calculatedZoomRef.current = newZoom;
-    return newZoom;
-  }, [
-    fitMode,
-    zoom,
-    rotation,
-    pdfDocument,
-    pageDimensions?.width,
-    pageDimensions?.height,
-    containerDimensions.width,
-    containerDimensions.height,
-  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -603,7 +534,14 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         renderTaskRef.current = null;
       }
     };
-  }, [pdfDocument?.path, currentPage, zoom, rotation, onCanvasSizeChange]);
+  }, [
+    pdfDocument?.path,
+    currentPage,
+    zoom,
+    rotation,
+    onCanvasSizeChange,
+    fitMode,
+  ]);
 
   // Add debug logging for canvas size
   useEffect(() => {

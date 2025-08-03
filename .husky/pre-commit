@@ -1,6 +1,15 @@
 # Run lint-staged for JavaScript/TypeScript files
 npx lint-staged
 
+# Run TypeScript auto-fix if there are TypeScript files staged
+if git diff --cached --name-only | grep -q '\.tsx\?$'; then
+  echo "🔧 Running TypeScript auto-fix..."
+  if node scripts/auto-fix-ts.cjs; then
+    # Re-stage any fixed files
+    git add -u
+  fi
+fi
+
 # Run Rust checks if any Rust files are staged
 if git diff --cached --name-only | grep -q '\.rs$'; then
   echo "Running Rust checks..."

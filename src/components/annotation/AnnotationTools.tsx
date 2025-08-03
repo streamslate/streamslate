@@ -17,7 +17,11 @@
  */
 
 import React, { useState } from "react";
-import { AnnotationType, Tool, ToolConfig } from "../../types/pdf.types";
+import {
+  AnnotationType,
+  type Tool,
+  type ToolConfig,
+} from "../../types/pdf.types";
 
 interface AnnotationToolsProps {
   activeTool?: AnnotationType;

@@ -54,9 +54,20 @@ export default [
         {
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
         },
       ],
       "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      // Auto-fixable rules
+      "@typescript-eslint/no-unused-expressions": "error",
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        {
+          prefer: "type-imports",
+          fixStyle: "inline-type-imports",
+        },
+      ],
     },
   },
   {
@@ -71,6 +82,12 @@ export default [
     },
   },
   {
-    ignores: ["dist", "node_modules", ".eslintrc.cjs", "src-tauri"],
+    ignores: [
+      "dist",
+      "node_modules",
+      ".eslintrc.cjs",
+      "src-tauri",
+      "scripts/*.cjs",
+    ],
   },
 ];

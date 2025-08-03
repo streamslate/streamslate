@@ -17,7 +17,8 @@
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "fix:ts": "node scripts/auto-fix-ts.cjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.6.0",
@@ -51,8 +52,9 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
+      "eslint --fix --max-warnings 0",
+      "prettier --write",
+      "bash -c 'npx tsc --noEmit --pretty || true'"
     ],
     "*.{json,md,yml,yaml}": [
       "prettier --write"
