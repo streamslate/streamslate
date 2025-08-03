@@ -11,9 +11,15 @@ fi
 echo "🧪 Running frontend tests..."
 # Check if cypress directory exists and has test files
 if [ -d "cypress/e2e" ] && [ "$(find cypress/e2e -name '*.cy.ts' -o -name '*.cy.js' | wc -l)" -gt 0 ]; then
-  if ! npm run test:headless; then
-    echo "❌ Frontend tests failed. Please fix them before pushing."
-    exit 1
+  # Check if dev server is running
+  if curl -s -o /dev/null -w "%{http_code}" http://localhost:1420 | grep -q "200\|301\|302"; then
+    if ! npm run test:headless; then
+      echo "❌ Frontend tests failed. Please fix them before pushing."
+      exit 1
+    fi
+  else
+    echo "⚠️  Dev server not running at http://localhost:1420. Skipping Cypress E2E tests..."
+    echo "   To run E2E tests, start the dev server with: npm run tauri:dev"
   fi
 else
   echo "⚠️  No Cypress tests found. Skipping frontend tests..."
