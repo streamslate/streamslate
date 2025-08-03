@@ -1,10 +1,15 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g., v1.0.0)"
+        required: true
+        type: string
 
 env:
   CARGO_TERM_COLOR: always
@@ -12,7 +17,42 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
+  create-release:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.id }}
+      release_upload_url: ${{ steps.create-release.outputs.upload_url }}
+      release_tag: ${{ steps.get-tag.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get tag
+        id: get-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.get-tag.outputs.tag }}
+          release_name: StreamSlate ${{ steps.get-tag.outputs.tag }}
+          draft: true
+          prerelease: false
+
+  build-tauri:
+    needs: create-release
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -31,8 +71,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
 
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-20.04'
@@ -43,46 +81,17 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "./src-tauri -> target"
-
-      - name: Check TypeScript types
-        run: npx tsc --noEmit
-
-      - name: Check formatting
-        run: |
-          npm run format:check
-          cd src-tauri && cargo fmt --all -- --check
-
-      - name: Run linting
-        run: npm run lint
-
-      - name: Run Rust clippy
-        run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Run Rust tests
-        run: cd src-tauri && cargo test
-
-      - name: Run frontend tests
-        run: npm run test:headless
-
-      - name: Build frontend
-        run: npm run build
-
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          releaseId: ${{ needs.create-release.outputs.release_id }}
           args: "--config src-tauri/tauri.conf.json"
 
-  docker:
-    needs: test
+  docker-release:
+    needs: create-release
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-
     permissions:
       contents: read
       packages: write
@@ -107,12 +116,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}},value=${{ needs.create-release.outputs.release_tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.create-release.outputs.release_tag }}
+            type=semver,pattern={{major}},value=${{ needs.create-release.outputs.release_tag }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

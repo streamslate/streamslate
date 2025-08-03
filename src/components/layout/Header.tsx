@@ -75,9 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-primary">
-            StreamSlate
-          </h1>
+          <h1 className="text-2xl font-bold text-primary">StreamSlate</h1>
         </div>
         <div className="flex items-center space-x-3">
           {!isLoaded && (

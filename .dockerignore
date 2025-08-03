@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Rust
+target
+**/*.rs.bk
+Cargo.lock
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist
+build
+*.log
+
+# Test
+cypress/videos
+cypress/screenshots
+coverage
+
+# Docs
+docs
+*.md
+
+# Environment
+.env
+.env.*
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+
+# Tauri
+src-tauri/target
