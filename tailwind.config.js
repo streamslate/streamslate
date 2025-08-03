@@ -19,12 +19,42 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
-  darkMode: "class", // Changed to 'class' for manual control
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // StreamSlate brand colors
+        // Custom gray shades
+        gray: {
+          850: "#1a202c",
+        },
+        // Base colors using CSS variables
+        bg: {
+          primary: "rgb(var(--color-bg-primary) / <alpha-value>)",
+          secondary: "rgb(var(--color-bg-secondary) / <alpha-value>)",
+          tertiary: "rgb(var(--color-bg-tertiary) / <alpha-value>)",
+          inverse: "rgb(var(--color-bg-inverse) / <alpha-value>)",
+        },
+        surface: {
+          primary: "rgb(var(--color-surface-primary) / <alpha-value>)",
+          secondary: "rgb(var(--color-surface-secondary) / <alpha-value>)",
+          tertiary: "rgb(var(--color-surface-tertiary) / <alpha-value>)",
+        },
+        text: {
+          primary: "rgb(var(--color-text-primary) / <alpha-value>)",
+          secondary: "rgb(var(--color-text-secondary) / <alpha-value>)",
+          tertiary: "rgb(var(--color-text-tertiary) / <alpha-value>)",
+          inverse: "rgb(var(--color-text-inverse) / <alpha-value>)",
+        },
+        border: {
+          primary: "rgb(var(--color-border-primary) / <alpha-value>)",
+          secondary: "rgb(var(--color-border-secondary) / <alpha-value>)",
+          tertiary: "rgb(var(--color-border-tertiary) / <alpha-value>)",
+        },
+        // Brand colors
         primary: {
+          DEFAULT: "rgb(var(--color-primary) / <alpha-value>)",
+          hover: "rgb(var(--color-primary-hover) / <alpha-value>)",
+          active: "rgb(var(--color-primary-active) / <alpha-value>)",
           50: "#eff6ff",
           100: "#dbeafe",
           200: "#bfdbfe",
@@ -37,19 +67,10 @@ export default {
           900: "#1e3a8a",
           950: "#172554",
         },
-        accent: {
-          50: "#fdf4ff",
-          100: "#fae8ff",
-          200: "#f5d0fe",
-          300: "#f0abfc",
-          400: "#e879f9",
-          500: "#d946ef",
-          600: "#c026d3",
-          700: "#a21caf",
-          800: "#86198f",
-          900: "#701a75",
-          950: "#4a044e",
-        },
+        success: "rgb(var(--color-success) / <alpha-value>)",
+        warning: "rgb(var(--color-warning) / <alpha-value>)",
+        error: "rgb(var(--color-error) / <alpha-value>)",
+        info: "rgb(var(--color-info) / <alpha-value>)",
       },
     },
   },

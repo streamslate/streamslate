@@ -16,92 +16,73 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+/* Import layout fixes for compositing issues */
+@import "./layout-fix.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* Modern Color System with CSS Variables */
 @layer base {
-  /* Light Mode Colors */
+  /* Clean Light Mode */
   :root {
     /* Background colors */
-    --color-bg-primary: 249 250 251; /* #F9FAFB */
-    --color-bg-secondary: 243 244 246; /* #F3F4F6 */
-    --color-bg-tertiary: 229 231 235; /* #E5E7EB */
-    --color-bg-inverse: 17 24 39; /* #111827 */
+    --color-bg-primary: 255 255 255; /* #FFFFFF */
+    --color-bg-secondary: 250 250 250; /* #FAFAFA */
+    --color-bg-tertiary: 245 245 245; /* #F5F5F5 */
 
     /* Surface colors */
     --color-surface-primary: 255 255 255; /* #FFFFFF */
-    --color-surface-secondary: 249 250 251; /* #F9FAFB */
-    --color-surface-tertiary: 243 244 246; /* #F3F4F6 */
+    --color-surface-secondary: 250 250 250; /* #FAFAFA */
+    --color-surface-tertiary: 245 245 245; /* #F5F5F5 */
 
     /* Text colors */
-    --color-text-primary: 17 24 39; /* #111827 */
-    --color-text-secondary: 75 85 99; /* #4B5563 */
-    --color-text-tertiary: 107 114 128; /* #6B7280 */
-    --color-text-inverse: 249 250 251; /* #F9FAFB */
+    --color-text-primary: 10 10 10; /* #0A0A0A */
+    --color-text-secondary: 71 85 105; /* #475569 */
+    --color-text-tertiary: 148 163 184; /* #94A3B8 */
 
     /* Border colors */
-    --color-border-primary: 229 231 235; /* #E5E7EB */
-    --color-border-secondary: 209 213 219; /* #D1D5DB */
-    --color-border-tertiary: 156 163 175; /* #9CA3AF */
+    --color-border-primary: 229 229 229; /* #E5E5E5 */
+    --color-border-secondary: 212 212 212; /* #D4D4D4 */
+    --color-border-tertiary: 163 163 163; /* #A3A3A3 */
 
     /* Brand colors */
-    --color-primary: 59 130 246; /* #3B82F6 */
-    --color-primary-hover: 37 99 235; /* #2563EB */
-    --color-primary-active: 29 78 216; /* #1D4ED8 */
-
-    /* Semantic colors */
-    --color-success: 16 185 129; /* #10B981 */
-    --color-warning: 245 158 11; /* #F59E0B */
-    --color-error: 239 68 68; /* #EF4444 */
-    --color-info: 59 130 246; /* #3B82F6 */
-
-    /* Shadow colors */
-    --color-shadow: 0 0 0; /* Black with opacity */
+    --color-primary: 79 70 229; /* #4F46E5 - Indigo 600 */
+    --color-primary-hover: 67 56 202; /* #4338CA - Indigo 700 */
+    --color-primary-active: 55 48 163; /* #3730A3 - Indigo 800 */
 
     /* Component specific */
-    --pdf-bg: 229 231 235; /* #E5E7EB */
+    --pdf-bg: 250 250 250; /* #FAFAFA */
     --pdf-surface: 255 255 255; /* #FFFFFF */
   }
 
-  /* Dark Mode Colors */
+  /* Clean Dark Mode */
   .dark {
     /* Background colors */
-    --color-bg-primary: 17 17 17; /* #111111 */
+    --color-bg-primary: 10 10 10; /* #0A0A0A */
     --color-bg-secondary: 23 23 23; /* #171717 */
     --color-bg-tertiary: 38 38 38; /* #262626 */
-    --color-bg-inverse: 249 250 251; /* #F9FAFB */
 
     /* Surface colors */
     --color-surface-primary: 23 23 23; /* #171717 */
     --color-surface-secondary: 38 38 38; /* #262626 */
-    --color-surface-tertiary: 64 64 64; /* #404040 */
+    --color-surface-tertiary: 51 51 51; /* #333333 */
 
     /* Text colors */
-    --color-text-primary: 249 250 251; /* #F9FAFB */
-    --color-text-secondary: 209 213 219; /* #D1D5DB */
-    --color-text-tertiary: 156 163 175; /* #9CA3AF */
-    --color-text-inverse: 17 24 39; /* #111827 */
+    --color-text-primary: 245 245 245; /* #F5F5F5 */
+    --color-text-secondary: 212 212 212; /* #D4D4D4 */
+    --color-text-tertiary: 163 163 163; /* #A3A3A3 */
 
     /* Border colors */
     --color-border-primary: 38 38 38; /* #262626 */
-    --color-border-secondary: 64 64 64; /* #404040 */
-    --color-border-tertiary: 82 82 82; /* #525252 */
+    --color-border-secondary: 51 51 51; /* #333333 */
+    --color-border-tertiary: 64 64 64; /* #404040 */
 
     /* Brand colors */
-    --color-primary: 59 130 246; /* #3B82F6 */
-    --color-primary-hover: 96 165 250; /* #60A5FA */
-    --color-primary-active: 37 99 235; /* #2563EB */
-
-    /* Semantic colors */
-    --color-success: 34 197 94; /* #22C55E */
-    --color-warning: 251 191 36; /* #FBBF24 */
-    --color-error: 248 113 113; /* #F87171 */
-    --color-info: 96 165 250; /* #60A5FA */
-
-    /* Shadow colors */
-    --color-shadow: 0 0 0; /* Black with opacity */
+    --color-primary: 129 140 248; /* #818CF8 - Indigo 400 */
+    --color-primary-hover: 165 180 252; /* #A5B4FC - Indigo 300 */
+    --color-primary-active: 99 102 241; /* #6366F1 - Indigo 500 */
 
     /* Component specific */
     --pdf-bg: 23 23 23; /* #171717 */
@@ -114,8 +95,9 @@
   }
 
   body {
-    @apply bg-[rgb(var(--color-bg-primary))] text-[rgb(var(--color-text-primary))];
     @apply transition-colors duration-200;
+    background-color: rgb(var(--color-bg-primary));
+    color: rgb(var(--color-text-primary));
   }
 
   /* Custom scrollbar styles */
@@ -241,6 +223,20 @@ body {
     @apply focus:ring-[rgb(var(--color-border-tertiary))];
   }
 
+  .btn-dashed {
+    @apply flex items-center justify-center gap-3 w-full px-4 py-3 rounded-lg;
+    @apply border-2 border-dashed border-[rgb(var(--color-border-secondary))];
+    @apply text-[rgb(var(--color-text-secondary))];
+    @apply bg-transparent;
+    @apply transition-all duration-150 group;
+  }
+
+  .btn-dashed:hover {
+    @apply border-[rgb(var(--color-primary))];
+    @apply text-[rgb(var(--color-primary))];
+    @apply bg-[rgba(var(--color-primary),0.05)];
+  }
+
   /* Cards */
   .card {
     @apply bg-[rgb(var(--color-surface-primary))] rounded-lg;
@@ -275,12 +271,9 @@ body {
   -ms-user-select: none;
 }
 
-/* PDF Canvas Optimizations */
+/* PDF Canvas - No aggressive optimizations */
 canvas {
-  image-rendering: crisp-edges;
-  image-rendering: -webkit-crisp-edges;
-  image-rendering: pixelated;
-  will-change: transform;
+  position: relative;
 }
 
 /* Custom Range Slider */
@@ -317,12 +310,6 @@ input[type="range"]::-moz-range-thumb {
   @apply hover:bg-[rgb(var(--color-primary-hover))];
   @apply transition-colors duration-150;
   @apply shadow-sm;
-}
-
-/* Remove all excessive animations and gradients */
-.bg-gradient-text {
-  @apply bg-gradient-to-r from-[rgb(var(--color-primary))] to-[rgb(var(--color-primary-hover))];
-  @apply bg-clip-text text-transparent;
 }
 
 /* Subtle shadows */
@@ -499,19 +486,4 @@ select {
   height: 300px;
 }
 
-/* CSS variables for component consistency */
-:root {
-  --bg-primary: rgb(var(--color-bg-primary));
-  --bg-secondary: rgb(var(--color-bg-secondary));
-  --bg-tertiary: rgb(var(--color-bg-tertiary));
-  --bg-card: rgb(var(--color-surface-primary));
-  --bg-quaternary: rgb(var(--color-surface-tertiary));
-  --text-primary: rgb(var(--color-text-primary));
-  --text-secondary: rgb(var(--color-text-secondary));
-  --text-muted: rgb(var(--color-text-tertiary));
-  --border-default: rgb(var(--color-border-primary));
-  --border-subtle: rgba(var(--color-border-primary), 0.5);
-  --border-hover: rgb(var(--color-border-secondary));
-  --accent-primary: rgb(var(--color-primary));
-  --accent-hover: rgb(var(--color-primary-hover));
-}
+/* Remove conflicting CSS variables - use Tailwind classes instead */

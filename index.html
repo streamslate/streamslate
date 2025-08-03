@@ -8,11 +8,12 @@
     <script>
       // Initialize dark mode before page load to prevent flash
       (function () {
-        const theme = localStorage.getItem("theme") || "light";
+        const theme = localStorage.getItem("theme");
         if (
           theme === "dark" ||
-          (!localStorage.getItem("theme") &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches)
+          (!theme &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches) ||
+          !theme // Default to dark mode if no preference is set
         ) {
           document.documentElement.classList.add("dark");
         }

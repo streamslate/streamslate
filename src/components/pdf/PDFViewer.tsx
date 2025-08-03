@@ -97,13 +97,27 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const renderContent = () => {
     if (error) {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-primary))]">
-          <div className="card p-8 max-w-md animate-scale-in">
-            <div className="text-4xl mb-4 text-center">⚠️</div>
-            <h3 className="text-lg font-semibold mb-2 text-[rgb(var(--color-error))]">
+        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-secondary))]">
+          <div className="bg-[rgb(var(--color-surface-primary))] p-8 max-w-sm rounded-lg border border-[rgb(var(--color-border-primary))] animate-scale-in">
+            <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg
+                className="w-6 h-6 text-red-600 dark:text-red-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))] text-center mb-2">
               Error Loading PDF
             </h3>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-4">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] text-center mb-4">
               {error.message}
             </p>
             <button onClick={openPDF} className="btn btn-primary w-full">
@@ -116,26 +130,27 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     if (isLoading) {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-primary))]">
-          <div className="card p-8 max-w-sm animate-scale-in">
-            <div className="flex justify-center mb-4">
-              <div className="relative">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[rgb(var(--color-surface-tertiary))]"></div>
-                <div className="absolute inset-0 animate-spin rounded-full h-12 w-12 border-4 border-[rgb(var(--color-primary))] border-t-transparent"></div>
-              </div>
+        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-secondary))]">
+          <div className="bg-[rgb(var(--color-surface-primary))] p-8 rounded-lg border border-[rgb(var(--color-border-primary))] animate-fade-in">
+            <div className="animate-pulse">
+              <div className="w-8 h-8 bg-[rgb(var(--color-primary))] rounded-full mx-auto mb-4"></div>
+              <div className="h-2 bg-[rgb(var(--color-bg-tertiary))] rounded w-32 mx-auto mb-2"></div>
+              <div className="h-2 bg-[rgb(var(--color-bg-tertiary))] rounded w-24 mx-auto"></div>
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-center text-[rgb(var(--color-text-primary))]">
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] text-center mt-4">
               {loadingState.stage === LoadingStage.OPENING && "Opening PDF..."}
               {loadingState.stage === LoadingStage.PARSING && "Parsing PDF..."}
               {loadingState.stage === LoadingStage.RENDERING &&
                 "Rendering PDF..."}
               {loadingState.stage === LoadingStage.COMPLETE &&
                 "PDF Loaded Successfully!"}
-            </h3>
-            <p className="text-sm text-[rgb(var(--color-text-secondary))] text-center mb-4">
-              {loadingState.message}
             </p>
-            <div className="w-full bg-[rgb(var(--color-surface-secondary))] rounded-full h-2">
+            {loadingState.message && (
+              <p className="text-xs text-[rgb(var(--color-text-tertiary))] text-center mt-2">
+                {loadingState.message}
+              </p>
+            )}
+            <div className="w-full bg-[rgb(var(--color-bg-tertiary))] rounded-full h-2 mt-4">
               <div
                 className="bg-[rgb(var(--color-primary))] h-2 rounded-full transition-all duration-300"
                 style={{ width: `${loadingState.progress}%` }}
@@ -148,18 +163,47 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
     if (!isLoaded || !document) {
       return (
-        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-primary))]">
-          <div className="card p-12 max-w-lg text-center animate-scale-in">
-            <div className="text-6xl mb-6">📄</div>
-            <h2 className="text-2xl font-bold mb-4 text-[rgb(var(--color-text-primary))]">
-              Welcome to StreamSlate
+        <div className="flex flex-col items-center justify-center h-full bg-[rgb(var(--color-bg-secondary))]">
+          <div className="bg-[rgb(var(--color-surface-primary))] p-12 max-w-lg text-center rounded-lg border border-[rgb(var(--color-border-primary))] animate-scale-in">
+            <div className="w-16 h-16 bg-[rgb(var(--color-bg-tertiary))] rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg
+                className="w-8 h-8 text-[rgb(var(--color-text-tertiary))]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-[rgb(var(--color-text-primary))] mb-2">
+              No PDF Loaded
             </h2>
-            <p className="text-[rgb(var(--color-text-secondary))] mb-6">
-              Open a PDF document to start annotating and presenting. Perfect
-              for live streaming and content creation.
+            <p className="text-sm text-[rgb(var(--color-text-secondary))] mb-6">
+              Open a PDF file to start annotating and presenting
             </p>
-            <button onClick={openPDF} className="btn btn-primary">
-              Open PDF
+            <button
+              onClick={openPDF}
+              className="btn btn-primary inline-flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Open PDF File
             </button>
           </div>
         </div>
@@ -169,7 +213,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     return (
       <div
         className={`flex flex-col h-full ${
-          transparentBg ? "bg-transparent" : "bg-[rgb(var(--color-bg-primary))]"
+          transparentBg
+            ? "bg-transparent"
+            : "bg-[rgb(var(--color-bg-secondary))]"
         }`}
       >
         {/* Top Toolbar */}
@@ -178,7 +224,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             transparentBg
               ? "bg-[rgb(var(--color-surface-primary))]/95 backdrop-blur-md"
               : "bg-[rgb(var(--color-surface-primary))]"
-          } border-b border-[rgb(var(--color-border-primary))] px-6 py-3 shadow-soft`}
+          } border-b border-[rgb(var(--color-border-primary))] px-6 py-3 shadow-sm`}
         >
           <div className="flex items-center justify-between gap-4">
             <AnnotationTools
@@ -192,7 +238,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => rotate(true)}
-                className="p-2.5 rounded-lg text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] transition-all duration-150"
+                className="p-2.5 rounded-lg text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-tertiary))] transition-all duration-150"
                 title="Rotate Clockwise"
               >
                 <svg
@@ -212,7 +258,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               <div className="w-px h-6 bg-[rgb(var(--color-border-primary))]"></div>
               <button
                 onClick={closePDF}
-                className="btn btn-secondary text-[rgb(var(--color-error))] hover:bg-[rgb(var(--color-error))]/10"
+                className="px-4 py-2 rounded-md text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium transition-all duration-150"
               >
                 Close PDF
               </button>
@@ -223,13 +269,15 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         {/* PDF Content Area with Annotation Layer */}
         <div
           className={`flex-1 relative overflow-auto ${
-            transparentBg ? "bg-transparent" : "bg-[rgb(var(--pdf-bg))]"
+            transparentBg
+              ? "bg-transparent"
+              : "bg-[rgb(var(--color-bg-tertiary))]"
           }`}
         >
-          <div className="absolute inset-0 flex items-center justify-center p-8">
+          <div className="h-full w-full flex items-center justify-center p-8">
             <div className="relative inline-block animate-fade-in">
               <PDFCanvasRenderer
-                document={document}
+                pdfDocument={document}
                 currentPage={currentPageInfo.current}
                 zoom={viewerState.zoom}
                 rotation={viewerState.rotation}
@@ -269,7 +317,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             transparentBg
               ? "bg-[rgb(var(--color-surface-primary))]/95 backdrop-blur-md"
               : "bg-[rgb(var(--color-surface-primary))]"
-          } px-6 py-3 border-t border-[rgb(var(--color-border-primary))] shadow-soft`}
+          } px-6 py-3 border-t border-[rgb(var(--color-border-primary))] shadow-sm`}
         >
           {/* Page Navigation */}
           <div className="flex-1">
@@ -308,7 +356,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
  * Handles the actual PDF.js rendering to canvas
  */
 interface PDFCanvasRendererProps {
-  document: any;
+  pdfDocument: any;
   currentPage: number;
   zoom: number;
   rotation: number;
@@ -317,7 +365,7 @@ interface PDFCanvasRendererProps {
 }
 
 const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
-  document,
+  pdfDocument,
   currentPage,
   zoom,
   rotation,
@@ -329,14 +377,12 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
 
-  // Check if dark mode is active
-  const isDarkMode = document.documentElement.classList.contains("dark");
-
   useEffect(() => {
     let isMounted = true;
+    let renderTimeout: ReturnType<typeof setTimeout>;
 
     const renderPage = async () => {
-      if (!canvasRef.current || !document?.path) {
+      if (!canvasRef.current || !pdfDocument?.path) {
         return;
       }
 
@@ -346,14 +392,13 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       try {
         // Load document if not already loaded
         if (!pdfRenderer.isLoaded) {
-          await pdfRenderer.loadDocument(document.path);
+          await pdfRenderer.loadDocument(pdfDocument.path);
         }
 
         // Render the current page
         await pdfRenderer.renderPage(currentPage, canvasRef.current, {
           scale: zoom,
           rotation: rotation,
-          darkMode: isDarkMode,
         });
 
         if (isMounted) {
@@ -367,6 +412,15 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           }
         }
       } catch (error) {
+        // Ignore rendering cancellation errors
+        if (
+          error instanceof Error &&
+          error.name === "RenderingCancelledException"
+        ) {
+          console.log("[PDFCanvasRenderer] Rendering cancelled, will retry");
+          return;
+        }
+
         console.error("[PDFCanvasRenderer] Error rendering PDF:", error);
         if (isMounted) {
           setRenderError(
@@ -377,24 +431,28 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       }
     };
 
-    renderPage();
+    // Debounce rendering to avoid rapid re-renders
+    renderTimeout = setTimeout(renderPage, 100);
 
     return () => {
       isMounted = false;
+      clearTimeout(renderTimeout);
     };
-  }, [document?.path, currentPage, zoom, rotation, isDarkMode]);
+  }, [pdfDocument?.path, currentPage, zoom, rotation]);
 
   if (renderError) {
     return (
       <div
         className={`flex-1 ${
-          transparentBg ? "bg-transparent" : "bg-[rgb(var(--color-bg-primary))]"
+          transparentBg
+            ? "bg-transparent"
+            : "bg-[rgb(var(--color-bg-secondary))]"
         } relative`}
       >
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="card p-8 text-center">
+          <div className="bg-[rgb(var(--color-surface-primary))] p-8 text-center rounded-lg border border-[rgb(var(--color-border-primary))]">
             <div className="text-4xl mb-4">⚠️</div>
-            <h3 className="text-xl font-semibold mb-2 text-[rgb(var(--color-error))]">
+            <h3 className="text-xl font-semibold mb-2 text-red-600 dark:text-red-400">
               Render Error
             </h3>
             <p className="text-sm text-[rgb(var(--color-text-secondary))]">
@@ -412,13 +470,13 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         <div
           className={`absolute inset-0 flex items-center justify-center ${
             transparentBg
-              ? "bg-[rgb(var(--pdf-bg))]/50"
-              : "bg-[rgb(var(--pdf-bg))]"
+              ? "bg-[rgb(var(--color-bg-tertiary))]/50"
+              : "bg-[rgb(var(--color-bg-tertiary))]"
           } bg-opacity-75 z-10 rounded-lg`}
         >
           <div className="flex flex-col items-center text-[rgb(var(--color-text-primary))]">
             <div className="relative">
-              <div className="animate-spin rounded-full h-8 w-8 border-4 border-[rgb(var(--color-surface-tertiary))]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-[rgb(var(--color-border-primary))]"></div>
               <div className="absolute inset-0 animate-spin rounded-full h-8 w-8 border-4 border-[rgb(var(--color-primary))] border-t-transparent"></div>
             </div>
             <p className="text-sm mt-2">Rendering page {currentPage}...</p>
@@ -428,7 +486,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       <canvas
         ref={canvasRef}
-        className="border border-[rgb(var(--color-border-primary))] shadow-large block bg-[rgb(var(--pdf-surface))] rounded-lg animate-scale-in"
+        className="border border-[rgb(var(--color-border-primary))] shadow-lg block bg-white rounded-lg animate-scale-in"
       />
     </div>
   );

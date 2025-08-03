@@ -90,7 +90,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       <button
         onClick={onZoomOut}
         disabled={zoom <= 0.1}
-        className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+        className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
         title="Zoom Out (Ctrl + -)"
         aria-label="Zoom out"
       >
@@ -113,7 +113,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="min-w-20 px-3 py-1 text-sm bg-gray-700 border border-gray-600 rounded text-gray-200 hover:bg-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
+          className="min-w-20 px-3 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:border-blue-500 transition-colors"
         >
           {getFitModeLabel(fitMode)}
         </button>
@@ -127,10 +127,10 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
             />
 
             {/* Dropdown Menu */}
-            <div className="absolute top-full left-0 mt-1 w-32 bg-gray-800 border border-gray-600 rounded shadow-lg z-20">
+            <div className="absolute top-full left-0 mt-1 w-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded shadow-lg z-20">
               {/* Fit Mode Options */}
-              <div className="border-b border-gray-600">
-                <div className="px-2 py-1 text-xs text-gray-400 font-medium">
+              <div className="border-b border-gray-200 dark:border-gray-600">
+                <div className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400 font-medium">
                   Fit Mode
                 </div>
                 {Object.values(FitMode)
@@ -139,10 +139,10 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
                     <button
                       key={mode}
                       onClick={() => handleFitModeSelect(mode)}
-                      className={`w-full px-3 py-1 text-left text-sm hover:bg-gray-700 transition-colors ${
+                      className={`w-full px-3 py-1 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                         fitMode === mode
-                          ? "bg-gray-700 text-blue-400"
-                          : "text-gray-200"
+                          ? "bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400"
+                          : "text-gray-700 dark:text-gray-200"
                       }`}
                     >
                       {getFitModeLabel(mode)}
@@ -152,18 +152,18 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
 
               {/* Preset Zoom Levels */}
               <div>
-                <div className="px-2 py-1 text-xs text-gray-400 font-medium">
+                <div className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400 font-medium">
                   Zoom Level
                 </div>
                 {PRESET_ZOOMS.map((presetZoom) => (
                   <button
                     key={presetZoom}
                     onClick={() => handleZoomSelect(presetZoom)}
-                    className={`w-full px-3 py-1 text-left text-sm hover:bg-gray-700 transition-colors ${
+                    className={`w-full px-3 py-1 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                       Math.abs(zoom - presetZoom) < 0.01 &&
                       fitMode === FitMode.CUSTOM
-                        ? "bg-gray-700 text-blue-400"
-                        : "text-gray-200"
+                        ? "bg-gray-100 dark:bg-gray-700 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-200"
                     }`}
                   >
                     {formatZoomPercentage(presetZoom)}
@@ -179,7 +179,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       <button
         onClick={onZoomIn}
         disabled={zoom >= 5.0}
-        className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+        className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
         title="Zoom In (Ctrl + +)"
         aria-label="Zoom in"
       >
@@ -201,7 +201,7 @@ export const ZoomControls: React.FC<ZoomControlsProps> = ({
       {/* Reset to 100% Button */}
       <button
         onClick={() => handleZoomSelect(1.0)}
-        className="px-2 py-1 text-xs text-gray-300 hover:text-white hover:bg-gray-700 rounded transition-colors"
+        className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
         title="Reset to 100%"
       >
         100%

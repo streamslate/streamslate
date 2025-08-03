@@ -1,0 +1,58 @@
+/* Clean Layout Fix without breaking PDF rendering */
+
+/* Ensure proper containment for main containers */
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fix for flex container issues */
+.flex {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Ensure proper overflow handling */
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.overflow-auto {
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PDF container specific fixes */
+#pdf-container {
+  contain: layout size style;
+}
+
+/* Canvas should not have any transforms */
+canvas {
+  position: relative;
+  z-index: 1;
+}
+
+/* Prevent layout thrashing */
+.flex-1 {
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Fix for absolute positioned elements */
+.absolute {
+  position: absolute !important;
+}
+
+.relative {
+  position: relative !important;
+}
+
+/* Remove backdrop filter optimization that might break things */
+.backdrop-blur-sm,
+.backdrop-blur-md {
+  backdrop-filter: blur(4px);
+}

@@ -93,7 +93,7 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
       <button
         onClick={onPreviousPage}
         disabled={!canPrevious}
-        className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+        className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
         title="Previous Page (Left Arrow)"
         aria-label="Previous page"
       >
@@ -114,7 +114,7 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
 
       {/* Page Input */}
       <div className="flex items-center space-x-1 text-sm">
-        <span className="text-gray-400">Page</span>
+        <span className="text-gray-600 dark:text-gray-400">Page</span>
         <input
           type="text"
           value={inputValue}
@@ -122,18 +122,20 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
           onKeyDown={handleInputKeyDown}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          className="w-12 px-1 py-0.5 text-center bg-gray-700 border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-blue-500 focus:bg-gray-600"
+          className="w-12 px-1 py-0.5 text-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-gray-900 dark:text-gray-200 focus:outline-none focus:border-blue-500 focus:bg-gray-50 dark:focus:bg-gray-600"
           min="1"
           max={totalPages}
         />
-        <span className="text-gray-400">of {totalPages}</span>
+        <span className="text-gray-600 dark:text-gray-400">
+          of {totalPages}
+        </span>
       </div>
 
       {/* Next Page Button */}
       <button
         onClick={onNextPage}
         disabled={!canNext}
-        className="p-2 text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+        className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
         title="Next Page (Right Arrow)"
         aria-label="Next page"
       >
@@ -153,11 +155,11 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
       </button>
 
       {/* Quick Navigation Buttons */}
-      <div className="flex items-center space-x-1 ml-2 border-l border-gray-600 pl-2">
+      <div className="flex items-center space-x-1 ml-2 border-l border-gray-300 dark:border-gray-600 pl-2">
         <button
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          className="px-2 py-1 text-xs text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+          className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
           title="First Page"
         >
           First
@@ -165,7 +167,7 @@ export const PageNavigation: React.FC<PageNavigationProps> = ({
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="px-2 py-1 text-xs text-gray-300 hover:text-white hover:bg-gray-700 disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
+          className="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-600 disabled:cursor-not-allowed disabled:hover:bg-transparent rounded transition-colors"
           title="Last Page"
         >
           Last
