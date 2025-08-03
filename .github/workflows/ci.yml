@@ -16,9 +16,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
+        include:
+          - platform: ubuntu-20.04
+            runner: streamslate-runner-set
+          - platform: macos-latest
+            runner: macos-latest
+          - platform: windows-latest
+            runner: windows-latest
 
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - uses: actions/checkout@v4
