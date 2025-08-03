@@ -348,7 +348,11 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     );
   };
 
-  return <div className={`pdf-viewer ${className}`}>{renderContent()}</div>;
+  return (
+    <div className={`pdf-viewer h-full flex flex-col ${className}`}>
+      {renderContent()}
+    </div>
+  );
 };
 
 /**
@@ -374,8 +378,10 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const renderTaskRef = useRef<any>(null); // Track current render task
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
+  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -398,6 +404,17 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         return;
       }
 
+      // Cancel any existing render task to prevent overlap
+      if (renderTaskRef.current) {
+        console.log("[PDFCanvasRenderer] Cancelling previous render task");
+        try {
+          renderTaskRef.current.cancel?.();
+        } catch (e) {
+          console.log("[PDFCanvasRenderer] Error cancelling render task:", e);
+        }
+        renderTaskRef.current = null;
+      }
+
       setIsRendering(true);
       setRenderError(null);
 
@@ -418,6 +435,10 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
             rotation: rotation,
           }
         );
+
+        // Store render task reference for potential cancellation
+        renderTaskRef.current = result;
+
         console.log("[PDFCanvasRenderer] Render result:", {
           canvasWidth: result.canvas.width,
           canvasHeight: result.canvas.height,
@@ -427,6 +448,23 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
         if (isMounted) {
           setIsRendering(false);
+
+          // WORKAROUND: Convert canvas to image for Tauri WebView compatibility
+          if (canvasRef.current) {
+            try {
+              const dataUrl = canvasRef.current.toDataURL("image/png");
+              console.log(
+                "[PDFCanvasRenderer] Created fallback image for WebView compatibility"
+              );
+              setImageDataUrl(dataUrl);
+            } catch (e) {
+              console.warn(
+                "[PDFCanvasRenderer] Failed to create fallback image:",
+                e
+              );
+            }
+          }
+
           // Update canvas size for annotation layer
           if (canvasRef.current && onCanvasSizeChange) {
             const size = {
@@ -457,6 +495,8 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           );
           setIsRendering(false);
         }
+      } finally {
+        renderTaskRef.current = null;
       }
     };
 
@@ -466,8 +506,32 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     return () => {
       isMounted = false;
       clearTimeout(renderTimeout);
+
+      // Cancel any ongoing render task on cleanup
+      if (renderTaskRef.current) {
+        console.log("[PDFCanvasRenderer] Cleanup: Cancelling render task");
+        try {
+          renderTaskRef.current.cancel?.();
+        } catch (e) {
+          console.log("[PDFCanvasRenderer] Cleanup error:", e);
+        }
+        renderTaskRef.current = null;
+      }
     };
   }, [pdfDocument?.path, currentPage, zoom, rotation, onCanvasSizeChange]);
+
+  // Add debug logging for canvas size
+  useEffect(() => {
+    if (canvasRef.current) {
+      console.log("[PDFCanvasRenderer] Canvas element dimensions:", {
+        width: canvasRef.current.width,
+        height: canvasRef.current.height,
+        offsetWidth: canvasRef.current.offsetWidth,
+        offsetHeight: canvasRef.current.offsetHeight,
+        style: canvasRef.current.style.cssText,
+      });
+    }
+  }, [isRendering]);
 
   if (renderError) {
     return (
@@ -493,28 +557,36 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     );
   }
 
-  // Add debug logging for canvas size
-  useEffect(() => {
-    if (canvasRef.current) {
-      console.log("[PDFCanvasRenderer] Canvas element dimensions:", {
-        width: canvasRef.current.width,
-        height: canvasRef.current.height,
-        offsetWidth: canvasRef.current.offsetWidth,
-        offsetHeight: canvasRef.current.offsetHeight,
-        style: canvasRef.current.style.cssText,
-      });
-    }
-  }, [isRendering]);
+  console.log("[PDFCanvasRenderer] Render state:", {
+    isRendering,
+    renderError,
+  });
+
+  console.log("[PDFCanvasRenderer] Component render - about to return JSX");
+  console.log("[PDFCanvasRenderer] imageDataUrl exists:", !!imageDataUrl);
+  console.log(
+    "[PDFCanvasRenderer] imageDataUrl length:",
+    imageDataUrl ? imageDataUrl.length : 0
+  );
 
   return (
-    <div ref={containerRef} className="relative inline-block">
+    <div
+      ref={containerRef}
+      className="relative w-full h-full overflow-auto bg-gray-100 dark:bg-gray-900"
+      style={{
+        // Force hardware acceleration and compositing for Tauri WebView
+        transform: "translateZ(0)",
+        backfaceVisibility: "hidden",
+        perspective: "1000px",
+      }}
+    >
       {isRendering && (
         <div
           className={`absolute inset-0 flex items-center justify-center ${
             transparentBg
               ? "bg-[rgb(var(--color-bg-tertiary))]/50"
-              : "bg-[rgb(var(--color-bg-tertiary))]"
-          } bg-opacity-75 z-10 rounded-lg`}
+              : "bg-[rgb(var(--color-bg-tertiary)))"
+          } bg-opacity-75 z-10 rounded-lg pointer-events-none`}
         >
           <div className="flex flex-col items-center text-[rgb(var(--color-text-primary))]">
             <div className="relative">
@@ -526,15 +598,44 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         </div>
       )}
 
+      {/* Canvas element (hidden for WebView compatibility) */}
       <canvas
         ref={canvasRef}
-        className="border border-[rgb(var(--color-border-primary))] shadow-lg block bg-white dark:bg-gray-800 rounded-lg animate-scale-in"
+        className="hidden"
         style={{
-          display: "block",
-          maxWidth: "100%",
-          height: "auto",
+          position: "absolute",
+          top: "-9999px",
+          left: "-9999px",
         }}
       />
+
+      {/* Fallback image for Tauri WebView */}
+      {imageDataUrl ? (
+        <img
+          src={imageDataUrl}
+          alt={`PDF page ${currentPage}`}
+          className="block mx-auto max-w-full h-auto"
+          style={{
+            display: "block",
+            visibility: "visible",
+            opacity: "1",
+            transform: "translateZ(0)",
+            backfaceVisibility: "hidden",
+            WebkitTransform: "translateZ(0)",
+            WebkitBackfaceVisibility: "hidden",
+          }}
+          onLoad={() =>
+            console.log("[PDFCanvasRenderer] Image loaded successfully")
+          }
+          onError={(e) =>
+            console.error("[PDFCanvasRenderer] Image load error:", e)
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-center w-full h-64 bg-gray-200 text-gray-500">
+          No image data available
+        </div>
+      )}
     </div>
   );
 };

@@ -156,11 +156,22 @@ export class PDFRenderer {
 
     canvas.width = viewport.width;
     canvas.height = viewport.height;
+
+    // Set canvas style dimensions to match
+    canvas.style.width = `${viewport.width}px`;
+    canvas.style.height = `${viewport.height}px`;
+
     console.log(
       "[PDFRenderer] Canvas dimensions set to:",
       canvas.width,
       "x",
       canvas.height
+    );
+    console.log(
+      "[PDFRenderer] Canvas style dimensions set to:",
+      canvas.style.width,
+      "x",
+      canvas.style.height
     );
 
     // Cancel any existing render task for this page
@@ -187,8 +198,36 @@ export class PDFRenderer {
 
     try {
       console.log("[PDFRenderer] Starting render for page", pageNumber);
+      console.log(
+        `[PDFRenderer] Canvas context type:`,
+        context ? "2d" : "unknown"
+      );
+      console.log(
+        `[PDFRenderer] Canvas style dimensions:`,
+        canvas.style.width,
+        "x",
+        canvas.style.height
+      );
+
       await renderTask.promise;
       this.renderTasks.delete(pageNumber);
+
+      // Check if anything was actually drawn
+      const imageData = context.getImageData(
+        0,
+        0,
+        Math.min(100, canvas.width),
+        Math.min(100, canvas.height)
+      );
+      const hasContent = imageData.data.some((value, index) => {
+        // Check if any pixel is not transparent white
+        return index % 4 < 3 && value !== 255; // RGB channels that aren't white
+      });
+      console.log(`[PDFRenderer] Canvas has visible content:`, hasContent);
+      console.log(
+        `[PDFRenderer] Sample pixel data (first 16 bytes):`,
+        Array.from(imageData.data.slice(0, 16))
+      );
 
       console.log("[PDFRenderer] Successfully rendered page", pageNumber);
 
