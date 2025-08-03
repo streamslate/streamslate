@@ -22,6 +22,13 @@ NODE_VERSION="20.11.1"
 RUST_TOOLCHAIN="stable"
 PNPM_VERSION="9.1.1"
 
+# Container/CI optimizations
+export CARGO_NET_GIT_FETCH_WITH_CLI=true
+export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-$(nproc)}"
+export CARGO_INSTALL_ROOT="${CARGO_INSTALL_ROOT:-$HOME/.cargo}"
+export PATH="$CARGO_INSTALL_ROOT/bin:$PATH"
+
 # ------------------------------- Helpers ------------------------------------ #
 command_exists() { command -v "$1" &>/dev/null; }
 
@@ -58,15 +65,21 @@ install_node() {
     return
   fi
 
-  info "Installing Node $NODE_VERSION via nvm…"
-  if ! command_exists nvm; then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-    # shellcheck disable=SC1090
-    source "$HOME/.nvm/nvm.sh"
+  # For containers, prefer direct binary installation over nvm
+  if [[ -n "${CONTAINER:-}" ]] || [[ -n "${CI:-}" ]]; then
+    info "Installing Node $NODE_VERSION (container mode)…"
+    curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | tar -xJ -C /usr/local --strip-components=1
+  else
+    info "Installing Node $NODE_VERSION via nvm…"
+    if ! command_exists nvm; then
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+      # shellcheck disable=SC1090
+      source "$HOME/.nvm/nvm.sh"
+    fi
+    nvm install "$NODE_VERSION"
+    nvm use "$NODE_VERSION"
+    nvm alias default "$NODE_VERSION"
   fi
-  nvm install "$NODE_VERSION"
-  nvm use "$NODE_VERSION"
-  nvm alias default "$NODE_VERSION"
 }
 
 # ---------------------------- Install Rust ---------------------------------- #
@@ -80,8 +93,18 @@ install_rust() {
     source "$HOME/.cargo/env"
   fi
 
-  info "Installing tauri-cli + cargo tools…"
-  cargo install tauri-cli wasm-bindgen-cli cargo-make --locked || true
+  # Skip cargo-make for containers - it's rarely needed and has huge deps
+  info "Installing essential cargo tools…"
+  if [[ -n "${CONTAINER:-}" ]] || [[ -n "${CI:-}" ]]; then
+    cargo install tauri-cli --version "^2.0.0" --locked || true
+    cargo install wasm-bindgen-cli --version "=0.2.100" --locked || true
+  else
+    cargo install tauri-cli wasm-bindgen-cli --locked || true
+    # Only install cargo-make if explicitly requested
+    if [[ "${INSTALL_CARGO_MAKE:-}" == "true" ]]; then
+      cargo install cargo-make --locked || true
+    fi
+  fi
 }
 
 # -------------------------- Install PNPM & Deps ----------------------------- #
@@ -134,6 +157,12 @@ install_webkit_linux() {
 
 # ------------------------- Git Hooks / Lint-staged -------------------------- #
 setup_hooks() {
+  # Skip git hooks in containers/CI
+  if [[ -n "${CONTAINER:-}" ]] || [[ -n "${CI:-}" ]]; then
+    info "Skipping git hooks setup (container/CI environment)"
+    return
+  fi
+  
   info "Configuring Husky git hooks & commit lint…"
   if [ -d .git ]; then
     pnpm dlx husky install
@@ -152,6 +181,12 @@ copy_env() {
 # ------------------------------- Execution ---------------------------------- #
 main() {
   info "🛠  StreamSlate dev environment setup starting…"
+  
+  # Detect container/CI environment
+  if [[ -f /.dockerenv ]] || [[ -n "${CONTAINER:-}" ]] || [[ -n "${CI:-}" ]]; then
+    info "Container/CI environment detected - using optimized setup"
+    export CONTAINER=1
+  fi
 
   install_sys_packages
   [[ "$OS" == "Linux" ]] && install_webkit_linux

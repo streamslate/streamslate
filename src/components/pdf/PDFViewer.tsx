@@ -382,7 +382,19 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     let renderTimeout: ReturnType<typeof setTimeout>;
 
     const renderPage = async () => {
+      console.log("[PDFCanvasRenderer] renderPage called with:", {
+        hasCanvas: !!canvasRef.current,
+        pdfPath: pdfDocument?.path,
+        currentPage,
+        zoom,
+        rotation,
+      });
+
       if (!canvasRef.current || !pdfDocument?.path) {
+        console.error("[PDFCanvasRenderer] Missing canvas or PDF path", {
+          hasCanvas: !!canvasRef.current,
+          pdfPath: pdfDocument?.path,
+        });
         return;
       }
 
@@ -392,23 +404,40 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       try {
         // Load document if not already loaded
         if (!pdfRenderer.isLoaded) {
+          console.log("[PDFCanvasRenderer] Loading document...");
           await pdfRenderer.loadDocument(pdfDocument.path);
         }
 
         // Render the current page
-        await pdfRenderer.renderPage(currentPage, canvasRef.current, {
-          scale: zoom,
-          rotation: rotation,
+        console.log("[PDFCanvasRenderer] Calling pdfRenderer.renderPage...");
+        const result = await pdfRenderer.renderPage(
+          currentPage,
+          canvasRef.current,
+          {
+            scale: zoom,
+            rotation: rotation,
+          }
+        );
+        console.log("[PDFCanvasRenderer] Render result:", {
+          canvasWidth: result.canvas.width,
+          canvasHeight: result.canvas.height,
+          viewportWidth: result.viewport.width,
+          viewportHeight: result.viewport.height,
         });
 
         if (isMounted) {
           setIsRendering(false);
           // Update canvas size for annotation layer
           if (canvasRef.current && onCanvasSizeChange) {
-            onCanvasSizeChange({
+            const size = {
               width: canvasRef.current.width,
               height: canvasRef.current.height,
-            });
+            };
+            console.log(
+              "[PDFCanvasRenderer] Calling onCanvasSizeChange with:",
+              size
+            );
+            onCanvasSizeChange(size);
           }
         }
       } catch (error) {
@@ -438,7 +467,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       isMounted = false;
       clearTimeout(renderTimeout);
     };
-  }, [pdfDocument?.path, currentPage, zoom, rotation]);
+  }, [pdfDocument?.path, currentPage, zoom, rotation, onCanvasSizeChange]);
 
   if (renderError) {
     return (
@@ -464,8 +493,21 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     );
   }
 
+  // Add debug logging for canvas size
+  useEffect(() => {
+    if (canvasRef.current) {
+      console.log("[PDFCanvasRenderer] Canvas element dimensions:", {
+        width: canvasRef.current.width,
+        height: canvasRef.current.height,
+        offsetWidth: canvasRef.current.offsetWidth,
+        offsetHeight: canvasRef.current.offsetHeight,
+        style: canvasRef.current.style.cssText,
+      });
+    }
+  }, [isRendering]);
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative inline-block">
       {isRendering && (
         <div
           className={`absolute inset-0 flex items-center justify-center ${
@@ -486,7 +528,12 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       <canvas
         ref={canvasRef}
-        className="border border-[rgb(var(--color-border-primary))] shadow-lg block bg-white rounded-lg animate-scale-in"
+        className="border border-[rgb(var(--color-border-primary))] shadow-lg block bg-white dark:bg-gray-800 rounded-lg animate-scale-in"
+        style={{
+          display: "block",
+          maxWidth: "100%",
+          height: "auto",
+        }}
       />
     </div>
   );
