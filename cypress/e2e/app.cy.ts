@@ -25,14 +25,22 @@ describe("StreamSlate App", () => {
     cy.contains("h1", "StreamSlate");
   });
 
-  it("has a greeting input field", () => {
-    cy.get("#greet-input").should("be.visible");
+  it("has a header with main controls", () => {
+    // Check for header element
+    cy.get("header").should("be.visible");
+
+    // Check for open PDF button
+    cy.contains("button", "Open PDF").should("be.visible");
   });
 
-  it("can enter text and greet", () => {
-    cy.get("#greet-input").type("Cypress");
-    cy.contains("button", "Greet").click();
-    // Note: This test may fail until Tauri backend is running
-    // cy.contains('Hello, Cypress!')
+  it("has main layout structure", () => {
+    // Check for the main app container
+    cy.get("div.h-screen").should("exist");
+
+    // Check for header
+    cy.get("header").should("be.visible");
+
+    // Check for main content area
+    cy.get("main").should("be.visible");
   });
 });
