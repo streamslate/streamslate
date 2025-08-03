@@ -29,7 +29,7 @@ import type {
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 // Import PDF.js worker with Vite's ?url syntax
-// @ts-ignore - Vite specific import
+// @ts-expect-error - Vite specific import
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 // Configure PDF.js worker
@@ -42,6 +42,8 @@ export interface RenderOptions {
     width: number;
     height: number;
   };
+  darkMode?: boolean;
+  backgroundColor?: string;
 }
 
 export interface PDFRenderResult {
@@ -172,10 +174,17 @@ export class PDFRenderer {
       this.renderTasks.delete(pageNumber);
     }
 
+    // Clear canvas with background color for dark mode
+    if (options.darkMode || options.backgroundColor) {
+      context.fillStyle = options.backgroundColor || "#1f2937"; // gray-800
+      context.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
     // Start rendering
     const renderTask = page.render({
       canvasContext: context,
       viewport: viewport,
+      background: options.darkMode ? "transparent" : undefined,
     });
 
     this.renderTasks.set(pageNumber, renderTask);
@@ -184,6 +193,22 @@ export class PDFRenderer {
       console.log("[PDFRenderer] Starting render for page", pageNumber);
       await renderTask.promise;
       this.renderTasks.delete(pageNumber);
+
+      // Apply dark mode filter if requested
+      if (options.darkMode) {
+        // Apply color inversion and adjustment for dark mode
+        context.globalCompositeOperation = "difference";
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Adjust brightness and contrast
+        context.globalCompositeOperation = "multiply";
+        context.fillStyle = "rgba(255, 255, 255, 0.85)";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.globalCompositeOperation = "source-over";
+      }
+
       console.log("[PDFRenderer] Successfully rendered page", pageNumber);
 
       return {

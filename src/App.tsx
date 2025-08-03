@@ -19,6 +19,7 @@
 import React, { useState, useEffect } from "react";
 import { PDFViewer } from "./components/pdf/PDFViewer";
 import { useIntegrationStore } from "./stores/integration.store";
+import { usePDF } from "./hooks/usePDF";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -28,6 +29,14 @@ function App() {
   const [presenterMode, setPresenterMode] = useState(false);
   const [transparentBg, setTransparentBg] = useState(false);
   const [borderlessMode, setBorderlessMode] = useState(false);
+
+  // Get PDF state and functions
+  const { openPDF, isLoaded } = usePDF();
+
+  // Debug logging
+  useEffect(() => {
+    console.log("[App Debug] PDF state:", { isLoaded });
+  }, [isLoaded]);
 
   // Get WebSocket state from integration store
   const websocketState = useIntegrationStore((state) => state.websocket);
@@ -113,6 +122,31 @@ function App() {
             </h1>
           </div>
           <div className="flex items-center space-x-4">
+            {/* Open PDF Button - Always visible in header */}
+            {!isLoaded && (
+              <button
+                onClick={openPDF}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-blue-600/20"
+              >
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>Open PDF</span>
+                </div>
+              </button>
+            )}
+
             <button
               onClick={() => setPresenterMode(!presenterMode)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg ${
@@ -260,11 +294,35 @@ function App() {
                           d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                         />
                       </svg>
-                      <h3 className="text-lg font-semibold">Recent Files</h3>
+                      <h3 className="text-lg font-semibold">PDF Files</h3>
                     </div>
+
+                    {/* Open PDF Button */}
+                    <div className="mb-4">
+                      <button
+                        onClick={openPDF}
+                        className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-600/20"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span className="font-medium">Open PDF File</span>
+                      </button>
+                    </div>
+
                     <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-600/20">
                       <p className="text-sm text-gray-500 text-center">
-                        No recent files
+                        {isLoaded ? "PDF loaded successfully" : "No PDF loaded"}
                       </p>
                     </div>
                   </div>

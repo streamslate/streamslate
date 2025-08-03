@@ -342,6 +342,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         await pdfRenderer.renderPage(currentPage, canvasRef.current, {
           scale: zoom,
           rotation: rotation,
+          darkMode: true, // Enable dark mode for PDF rendering
         });
 
         if (isMounted) {
@@ -409,7 +410,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       <canvas
         ref={canvasRef}
-        className="border border-gray-300/50 dark:border-gray-600/50 shadow-2xl block bg-white rounded-lg animate-scale-in"
+        className="border border-gray-300/50 dark:border-gray-600/50 shadow-2xl block bg-gray-800 dark:bg-gray-900 rounded-lg animate-scale-in"
         style={{
           filter: "drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3))",
           boxShadow:
