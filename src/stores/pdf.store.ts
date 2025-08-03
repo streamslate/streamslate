@@ -51,6 +51,16 @@ interface PDFStore {
   toggleSidebar: () => void;
   toggleToolbar: () => void;
 
+  // Helper to calculate zoom for fit modes
+  calculateFitZoom: (
+    fitMode: FitMode,
+    containerWidth: number,
+    containerHeight: number,
+    pageWidth: number,
+    pageHeight: number,
+    rotation: number
+  ) => number;
+
   // Loading state actions
   setLoading: (
     isLoading: boolean,
@@ -121,9 +131,76 @@ export const usePDFStore = create<PDFStore>()(
         })),
 
       setFitMode: (fitMode) =>
-        set((state) => ({
-          viewerState: { ...state.viewerState, fitMode },
-        })),
+        set((state) => {
+          // When setting fit mode to custom, keep the current zoom
+          // For other modes, the component will calculate the appropriate zoom
+          if (fitMode === FitMode.CUSTOM) {
+            return {
+              viewerState: { ...state.viewerState, fitMode },
+            };
+          }
+
+          // For fit modes, we set a default zoom of 1.0
+          // The actual calculation will happen in the component
+          let defaultZoom = 1.0;
+          switch (fitMode) {
+            case FitMode.FIT_WIDTH:
+            case FitMode.FIT_HEIGHT:
+            case FitMode.FIT_PAGE:
+              defaultZoom = 1.0;
+              break;
+            case FitMode.ACTUAL_SIZE:
+              defaultZoom = 1.0;
+              break;
+          }
+
+          return {
+            viewerState: { ...state.viewerState, fitMode, zoom: defaultZoom },
+          };
+        }),
+
+      calculateFitZoom: (
+        fitMode,
+        containerWidth,
+        containerHeight,
+        pageWidth,
+        pageHeight,
+        rotation
+      ) => {
+        if (fitMode === FitMode.CUSTOM) {
+          return get().viewerState.zoom;
+        }
+
+        const containerPadding = 40; // 20px padding on each side
+        const availableWidth = containerWidth - containerPadding;
+        const availableHeight = containerHeight - containerPadding;
+
+        // Adjust for rotation
+        let effectivePageWidth = pageWidth;
+        let effectivePageHeight = pageHeight;
+        if (rotation % 180 === 90) {
+          [effectivePageWidth, effectivePageHeight] = [
+            effectivePageHeight,
+            effectivePageWidth,
+          ];
+        }
+
+        switch (fitMode) {
+          case FitMode.FIT_WIDTH:
+            return availableWidth / effectivePageWidth;
+          case FitMode.FIT_HEIGHT:
+            return availableHeight / effectivePageHeight;
+          case FitMode.FIT_PAGE: {
+            const widthScale = availableWidth / effectivePageWidth;
+            const heightScale = availableHeight / effectivePageHeight;
+            return Math.min(widthScale, heightScale);
+          }
+          case FitMode.ACTUAL_SIZE:
+            return 1.0;
+          default:
+            return 1.0;
+        }
+      },
 
       setViewMode: (viewMode) =>
         set((state) => ({

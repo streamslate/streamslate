@@ -21,7 +21,7 @@
  * This is a foundation component that will be enhanced with PDF.js integration in future phases
  */
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { usePDF } from "../../hooks/usePDF";
 import { useTheme } from "../../hooks/useTheme";
 import {
@@ -92,6 +92,9 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
 
   // Canvas size state for annotation layer
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  // Container ref for fit mode calculations
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Get annotations for current page
   const currentPageAnnotations = getPageAnnotations(viewerState.currentPage);
@@ -272,7 +275,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
             transparentBg ? "bg-transparent" : "bg-bg-tertiary"
           }`}
         >
-          <div className="h-full w-full flex items-start justify-center p-8 overflow-auto">
+          <div
+            className="h-full w-full flex items-start justify-center p-8 overflow-auto"
+            ref={containerRef}
+          >
             <div className="relative inline-block animate-fade-in">
               <PDFCanvasRenderer
                 pdfDocument={document}
@@ -282,6 +288,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 onCanvasSizeChange={setCanvasSize}
                 transparentBg={transparentBg}
                 darkMode={darkMode}
+                fitMode={viewerState.fitMode}
               />
 
               {/* Annotation Layer Overlay */}
@@ -366,6 +373,7 @@ interface PDFCanvasRendererProps {
   onCanvasSizeChange?: (size: { width: number; height: number }) => void;
   transparentBg?: boolean;
   darkMode?: boolean;
+  fitMode?: FitMode;
 }
 
 const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
@@ -376,6 +384,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   onCanvasSizeChange,
   transparentBg,
   darkMode = false,
+  fitMode = FitMode.CUSTOM,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -383,6 +392,80 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [containerDimensions, setContainerDimensions] = useState({
+    width: 0,
+    height: 0,
+  });
+  const [pageDimensions, setPageDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Use a ref to store the calculated zoom to prevent infinite loops
+  const calculatedZoomRef = useRef<number>(zoom);
+
+  // Calculate effective zoom based on fit mode
+  // Using useMemo instead of useCallback to ensure stable value
+  const effectiveZoom = useMemo(() => {
+    if (
+      !pdfDocument ||
+      fitMode === FitMode.CUSTOM ||
+      !pageDimensions ||
+      !containerDimensions.width
+    ) {
+      return zoom;
+    }
+
+    const containerPadding = 40; // 20px padding on each side
+    const availableWidth = containerDimensions.width - containerPadding;
+    const availableHeight = containerDimensions.height - containerPadding;
+
+    // Use the page dimensions at scale 1.0
+    let pageWidth = pageDimensions.width;
+    let pageHeight = pageDimensions.height;
+
+    // Adjust for rotation
+    if (rotation % 180 === 90) {
+      [pageWidth, pageHeight] = [pageHeight, pageWidth];
+    }
+
+    let newZoom = zoom;
+    switch (fitMode) {
+      case FitMode.FIT_WIDTH:
+        newZoom = availableWidth / pageWidth;
+        break;
+      case FitMode.FIT_HEIGHT:
+        newZoom = availableHeight / pageHeight;
+        break;
+      case FitMode.FIT_PAGE: {
+        const widthScale = availableWidth / pageWidth;
+        const heightScale = availableHeight / pageHeight;
+        newZoom = Math.min(widthScale, heightScale);
+        break;
+      }
+      case FitMode.ACTUAL_SIZE:
+        newZoom = 1.0;
+        break;
+    }
+
+    // Prevent tiny zoom changes that can cause oscillation
+    const zoomDiff = Math.abs(newZoom - calculatedZoomRef.current);
+    if (zoomDiff < 0.01) {
+      return calculatedZoomRef.current;
+    }
+
+    calculatedZoomRef.current = newZoom;
+    return newZoom;
+  }, [
+    fitMode,
+    zoom,
+    rotation,
+    pdfDocument,
+    pageDimensions?.width,
+    pageDimensions?.height,
+    containerDimensions.width,
+    containerDimensions.height,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -393,8 +476,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         hasCanvas: !!canvasRef.current,
         pdfPath: pdfDocument?.path,
         currentPage,
-        zoom,
+        zoom: zoom,
         rotation,
+        fitMode,
       });
 
       if (!canvasRef.current || !pdfDocument?.path) {

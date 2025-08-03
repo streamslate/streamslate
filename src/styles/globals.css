@@ -486,15 +486,74 @@ select {
   height: 300px;
 }
 
-/* PDF Dark Mode Support */
+/* PDF Dark Mode Support with Customizable Colors */
+:root {
+  /* Default PDF dark mode colors */
+  --pdf-dark-bg-color: #1a1a1a;
+  --pdf-dark-text-color: #e0e0e0;
+  --pdf-dark-invert: 0.85;
+  --pdf-dark-contrast: 1.2;
+  --pdf-dark-brightness: 0.9;
+  --pdf-dark-sepia: 0;
+}
+
+/* Pleasant default dark mode theme */
+.dark {
+  --pdf-dark-bg-color: #1e1e1e;
+  --pdf-dark-text-color: #d4d4d4;
+  --pdf-dark-invert: 0.88;
+  --pdf-dark-contrast: 1.15;
+  --pdf-dark-brightness: 0.95;
+  --pdf-dark-sepia: 0.05;
+}
+
+/* PDF Dark Mode with customizable filters */
 .pdf-dark-mode {
+  /* More sophisticated filter for better readability */
+  filter: invert(var(--pdf-dark-invert)) contrast(var(--pdf-dark-contrast))
+    brightness(var(--pdf-dark-brightness)) sepia(var(--pdf-dark-sepia))
+    hue-rotate(180deg);
+  background-color: var(--pdf-dark-bg-color);
+  transition: filter 0.3s ease;
+}
+
+/* Special handling for images in PDFs */
+.pdf-dark-mode img,
+.pdf-dark-mode svg,
+.pdf-dark-mode picture {
+  /* Re-invert images to show them normally */
   filter: invert(1) hue-rotate(180deg);
-  background-color: transparent;
 }
 
 /* Ensure annotations remain visible in dark mode */
 .pdf-dark-mode + .annotation-layer {
-  filter: invert(1) hue-rotate(180deg);
+  /* Don't invert annotations */
+  filter: none;
+}
+
+/* Annotation colors in dark mode */
+.dark .annotation-layer {
+  /* Adjust annotation colors for dark background */
+  --annotation-yellow: #ffeb3b;
+  --annotation-green: #4caf50;
+  --annotation-blue: #2196f3;
+  --annotation-red: #f44336;
+}
+
+/* Soft dark mode preset */
+.pdf-dark-mode.soft {
+  --pdf-dark-invert: 0.82;
+  --pdf-dark-contrast: 1.1;
+  --pdf-dark-brightness: 1;
+  --pdf-dark-sepia: 0.08;
+}
+
+/* High contrast dark mode preset */
+.pdf-dark-mode.high-contrast {
+  --pdf-dark-invert: 0.95;
+  --pdf-dark-contrast: 1.3;
+  --pdf-dark-brightness: 0.85;
+  --pdf-dark-sepia: 0;
 }
 
 /* Remove conflicting CSS variables - use Tailwind classes instead */
