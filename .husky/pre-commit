@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged for JavaScript/TypeScript files
+npx lint-staged
+
+# Run Rust checks if any Rust files are staged
+if git diff --cached --name-only | grep -q '\.rs$'; then
+  echo "Running Rust checks..."
+  cd src-tauri
+  
+  # Format check
+  if ! cargo fmt --all -- --check; then
+    echo "❌ Rust formatting issues found. Run 'cargo fmt' to fix."
+    exit 1
+  fi
+  
+  # Clippy check
+  if ! cargo clippy --all-targets --all-features -- -D warnings; then
+    echo "❌ Rust clippy issues found. Please fix the warnings."
+    exit 1
+  fi
+  
+  # Run tests
+  if ! cargo test --quiet; then
+    echo "❌ Rust tests failed. Please fix the failing tests."
+    exit 1
+  fi
+  
+  cd ..
+fi
+
+echo "✅ All pre-commit checks passed!"

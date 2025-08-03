@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-push checks..."
+
+# Run TypeScript type checking
+echo "📋 Checking TypeScript types..."
+if ! npx tsc --noEmit; then
+  echo "❌ TypeScript type errors found. Please fix them before pushing."
+  exit 1
+fi
+
+# Run frontend tests
+echo "🧪 Running frontend tests..."
+if ! npm run test:headless; then
+  echo "❌ Frontend tests failed. Please fix them before pushing."
+  exit 1
+fi
+
+# Run Rust tests if any Rust files are in the commit
+if git diff --name-only HEAD @{u} 2>/dev/null | grep -q '\.rs$' || [ $? -eq 128 ]; then
+  echo "🦀 Running Rust tests..."
+  cd src-tauri
+  
+  if ! cargo test --quiet; then
+    echo "❌ Rust tests failed. Please fix them before pushing."
+    exit 1
+  fi
+  
+  cd ..
+fi
+
+echo "✅ All pre-push checks passed! Pushing to remote..."
