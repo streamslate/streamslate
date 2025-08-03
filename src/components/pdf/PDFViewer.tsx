@@ -23,6 +23,7 @@
 
 import React, { useRef, useEffect, useState } from "react";
 import { usePDF } from "../../hooks/usePDF";
+import { useTheme } from "../../hooks/useTheme";
 import {
   LoadingStage,
   Annotation,
@@ -45,6 +46,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   className = "",
   transparentBg = false,
 }) => {
+  const { darkMode } = useTheme();
   const {
     document,
     viewerState,
@@ -213,9 +215,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     return (
       <div
         className={`flex flex-col h-full ${
-          transparentBg
-            ? "bg-transparent"
-            : "bg-bg-secondary"
+          transparentBg ? "bg-transparent" : "bg-bg-secondary"
         }`}
       >
         {/* Top Toolbar */}
@@ -269,9 +269,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
         {/* PDF Content Area with Annotation Layer */}
         <div
           className={`flex-1 relative overflow-auto ${
-            transparentBg
-              ? "bg-transparent"
-              : "bg-bg-tertiary"
+            transparentBg ? "bg-transparent" : "bg-bg-tertiary"
           }`}
         >
           <div className="h-full w-full flex items-start justify-center p-8 overflow-auto">
@@ -283,6 +281,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 rotation={viewerState.rotation}
                 onCanvasSizeChange={setCanvasSize}
                 transparentBg={transparentBg}
+                darkMode={darkMode}
               />
 
               {/* Annotation Layer Overlay */}
@@ -366,6 +365,7 @@ interface PDFCanvasRendererProps {
   rotation: number;
   onCanvasSizeChange?: (size: { width: number; height: number }) => void;
   transparentBg?: boolean;
+  darkMode?: boolean;
 }
 
 const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
@@ -375,6 +375,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   rotation,
   onCanvasSizeChange,
   transparentBg,
+  darkMode = false,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -537,9 +538,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     return (
       <div
         className={`flex-1 ${
-          transparentBg
-            ? "bg-transparent"
-            : "bg-bg-secondary"
+          transparentBg ? "bg-transparent" : "bg-bg-secondary"
         } relative`}
       >
         <div className="absolute inset-0 flex items-center justify-center">
@@ -548,9 +547,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
             <h3 className="text-xl font-semibold mb-2 text-red-600 dark:text-red-400">
               Render Error
             </h3>
-            <p className="text-sm text-text-secondary">
-              {renderError}
-            </p>
+            <p className="text-sm text-text-secondary">{renderError}</p>
           </div>
         </div>
       </div>
@@ -614,7 +611,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         <img
           src={imageDataUrl}
           alt={`PDF page ${currentPage}`}
-          className="block mx-auto max-w-full h-auto"
+          className={`block mx-auto max-w-full h-auto ${
+            darkMode ? "pdf-dark-mode" : ""
+          }`}
           style={{
             display: "block",
             visibility: "visible",

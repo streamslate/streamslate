@@ -486,4 +486,15 @@ select {
   height: 300px;
 }
 
+/* PDF Dark Mode Support */
+.pdf-dark-mode {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: transparent;
+}
+
+/* Ensure annotations remain visible in dark mode */
+.pdf-dark-mode + .annotation-layer {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 /* Remove conflicting CSS variables - use Tailwind classes instead */
