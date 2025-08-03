@@ -24,7 +24,8 @@ import { useCallback } from "react";
 import { open } from "@tauri-apps/api/dialog";
 import { PDFCommands } from "../lib/tauri/commands";
 import { usePDFStore } from "../stores/pdf.store";
-import { PDFDocument, LoadingStage, PDFError } from "../types/pdf.types";
+import { LoadingStage } from "../types/pdf.types";
+import type { PDFDocument, PDFError } from "../types/pdf.types";
 
 export const usePDF = () => {
   const {

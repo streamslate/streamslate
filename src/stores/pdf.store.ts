@@ -22,15 +22,13 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import {
+import { FitMode, ViewMode, LoadingStage } from "../types/pdf.types";
+import type {
   PDFDocument,
   ViewerState,
   Annotation,
   LoadingState,
   PDFError,
-  FitMode,
-  ViewMode,
-  LoadingStage,
 } from "../types/pdf.types";
 
 interface PDFStore {

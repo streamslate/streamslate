@@ -21,7 +21,8 @@
  */
 
 import React, { useRef, useCallback, useState } from "react";
-import { Annotation, AnnotationType } from "../../types/pdf.types";
+import { AnnotationType } from "../../types/pdf.types";
+import type { Annotation } from "../../types/pdf.types";
 
 interface AnnotationLayerProps {
   pageNumber: number;

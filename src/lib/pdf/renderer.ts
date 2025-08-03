@@ -49,7 +49,12 @@ export interface RenderOptions {
 export interface PDFRenderResult {
   canvas: HTMLCanvasElement;
   page: PDFPageProxy;
-  viewport: any;
+  viewport: {
+    width: number;
+    height: number;
+    scale: number;
+    rotation: number;
+  };
 }
 
 export class PDFRenderer {
@@ -271,7 +276,9 @@ export class PDFRenderer {
     const page = await this.getPage(pageNumber);
     const textContent = await page.getTextContent();
 
-    return textContent.items.map((item: any) => item.str).join(" ");
+    return textContent.items
+      .map((item) => (item as { str: string }).str)
+      .join(" ");
   }
 
   /**
@@ -343,14 +350,14 @@ export class PDFRenderer {
   /**
    * Get document metadata
    */
-  async getMetadata(): Promise<any> {
+  async getMetadata(): Promise<Record<string, unknown>> {
     if (!this.document) {
       throw new Error("No PDF document loaded");
     }
 
     try {
       const metadata = await this.document.getMetadata();
-      return metadata.info;
+      return metadata.info as Record<string, unknown>;
     } catch (error) {
       console.warn("Failed to get PDF metadata:", error);
       return {};

@@ -115,7 +115,7 @@ export interface ToolConfig {
 export interface PDFError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 export interface LoadingState {

@@ -21,7 +21,7 @@
  * Handles communication with OBS, Stream Deck, and other streaming tools
  */
 
-import {
+import type {
   IntegrationMessage,
   WebSocketState,
 } from "../../types/integration.types";
@@ -31,7 +31,7 @@ export class StreamSlateWebSocketClient {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
-  private messageHandlers = new Map<string, (data: any) => void>();
+  private messageHandlers = new Map<string, (data: unknown) => void>();
   private stateChangeHandlers: ((state: WebSocketState) => void)[] = [];
 
   constructor(private port: number = 11451) {}
@@ -122,7 +122,7 @@ export class StreamSlateWebSocketClient {
   /**
    * Register a message handler for a specific type
    */
-  onMessage(type: string, handler: (data: any) => void): void {
+  onMessage(type: string, handler: (data: unknown) => void): void {
     this.messageHandlers.set(type, handler);
   }
 

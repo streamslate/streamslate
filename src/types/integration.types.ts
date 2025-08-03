@@ -32,7 +32,7 @@ export interface IntegrationMessage {
   type: IntegrationMessageType;
   source: IntegrationSource;
   timestamp: Date;
-  data: any;
+  data: unknown;
 }
 
 export enum IntegrationMessageType {
@@ -104,7 +104,7 @@ export interface OBSSource {
   name: string;
   type: string;
   visible: boolean;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
 }
 
 export interface OBSStats {
@@ -217,12 +217,12 @@ export interface APIParameter {
   type: string;
   required: boolean;
   description: string;
-  example: any;
+  example: unknown;
 }
 
 export interface APIResponse {
   status: number;
-  data: any;
+  data: unknown;
   error?: string;
 }
 
@@ -231,7 +231,7 @@ export interface IntegrationEvent {
   type: IntegrationMessageType;
   source: IntegrationSource;
   timestamp: Date;
-  data: any;
+  data: unknown;
   handled: boolean;
 }
 
@@ -240,5 +240,5 @@ export interface IntegrationError {
   message: string;
   source: IntegrationSource;
   timestamp: Date;
-  details?: any;
+  details?: unknown;
 }

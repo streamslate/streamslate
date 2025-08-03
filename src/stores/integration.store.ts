@@ -22,7 +22,8 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import {
+import { NDIQuality, IntegrationSource } from "../types/integration.types";
+import type {
   WebSocketState,
   OBSIntegration,
   StreamDeckIntegration,
@@ -30,7 +31,6 @@ import {
   IntegrationConfig,
   IntegrationError,
   IntegrationEvent,
-  NDIQuality,
 } from "../types/integration.types";
 
 interface IntegrationStore {
@@ -276,7 +276,7 @@ export const useIntegrationStore = create<IntegrationStore>()(
               error instanceof Error
                 ? error.message
                 : "Failed to connect to OBS",
-            source: "obs" as any,
+            source: IntegrationSource.OBS,
             timestamp: new Date(),
             details: error,
           };
