@@ -62,7 +62,7 @@ function App() {
   return (
     <div
       className={`h-screen w-screen overflow-hidden flex flex-col ${
-        transparentBg ? "bg-transparent" : "bg-[rgb(var(--color-bg-primary))]"
+        transparentBg ? "bg-transparent" : "bg-bg-primary"
       }`}
     >
       {borderlessMode && !presenterMode && (

@@ -48,7 +48,7 @@ export const BorderlessWindowControls: React.FC<
           title="Maximize"
         ></div>
       </div>
-      <div className="flex-1 text-center text-sm font-medium text-[rgb(var(--color-primary))]">
+      <div className="flex-1 text-center text-sm font-medium text-primary">
         StreamSlate
       </div>
     </div>

@@ -53,21 +53,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside
       className={`${
         transparentBg
-          ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-md"
-          : "bg-[rgb(var(--color-surface-primary))]"
-      } border-r border-[rgb(var(--color-border-primary))] transition-all duration-300 flex-shrink-0 ${
+          ? "bg-surface-primary/90 backdrop-blur-md"
+          : "bg-surface-primary"
+      } border-r border-border-primary transition-all duration-300 flex-shrink-0 ${
         sidebarOpen && !presenterMode ? "w-72" : "w-0"
       } overflow-hidden`}
     >
       <div className="h-full flex flex-col overflow-hidden">
         {/* Panel Tabs */}
-        <div className="flex border-b border-[rgb(var(--color-border-primary))] p-2 gap-2">
+        <div className="flex border-b border-border-primary p-2 gap-2">
           <button
             onClick={() => onSetActivePanel("files")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
               activePanel === "files"
-                ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
-                : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-tertiary))]"
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
             }`}
           >
             <svg
@@ -89,8 +89,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSetActivePanel("annotations")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
               activePanel === "annotations"
-                ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
-                : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-tertiary))]"
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
             }`}
           >
             <svg
@@ -112,8 +112,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={() => onSetActivePanel("settings")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
               activePanel === "settings"
-                ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
-                : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-bg-tertiary))]"
+                ? "bg-primary/10 text-primary border border-primary/20"
+                : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
             }`}
           >
             <svg
@@ -143,10 +143,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex-1 p-6 overflow-y-auto animate-fade-in">
           {activePanel === "files" && (
             <div className="space-y-4">
-              <div className="bg-[rgb(var(--color-surface-secondary))] p-6 rounded-lg border border-[rgb(var(--color-border-primary))] animate-slide-up">
+              <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-4">
                   <svg
-                    className="w-6 h-6 text-[rgb(var(--color-primary))]"
+                    className="w-6 h-6 text-primary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -158,7 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                  <h3 className="text-lg font-semibold text-text-primary">
                     PDF Files
                   </h3>
                 </div>
@@ -183,8 +183,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 </div>
 
-                <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-md border border-[rgb(var(--color-border-primary))]">
-                  <p className="text-sm text-[rgb(var(--color-text-tertiary))] text-center">
+                <div className="p-4 bg-bg-tertiary rounded-md border border-border-primary">
+                  <p className="text-sm text-text-tertiary text-center">
                     {isLoaded ? "PDF loaded successfully" : "No PDF loaded"}
                   </p>
                 </div>
@@ -193,10 +193,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           {activePanel === "annotations" && (
             <div className="space-y-4">
-              <div className="bg-[rgb(var(--color-surface-secondary))] p-6 rounded-lg border border-[rgb(var(--color-border-primary))] animate-slide-up">
+              <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-4">
                   <svg
-                    className="w-6 h-6 text-[rgb(var(--color-primary))]"
+                    className="w-6 h-6 text-primary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -208,12 +208,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                  <h3 className="text-lg font-semibold text-text-primary">
                     Annotations List
                   </h3>
                 </div>
-                <div className="p-4 bg-[rgb(var(--color-bg-tertiary))] rounded-md border border-[rgb(var(--color-border-primary))]">
-                  <p className="text-sm text-[rgb(var(--color-text-tertiary))] text-center">
+                <div className="p-4 bg-bg-tertiary rounded-md border border-border-primary">
+                  <p className="text-sm text-text-tertiary text-center">
                     No annotations yet
                   </p>
                 </div>
@@ -222,10 +222,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           {activePanel === "settings" && (
             <div className="space-y-4">
-              <div className="bg-[rgb(var(--color-surface-secondary))] p-6 rounded-lg border border-[rgb(var(--color-border-primary))] animate-slide-up">
+              <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-6">
                   <svg
-                    className="w-6 h-6 text-[rgb(var(--color-primary))]"
+                    className="w-6 h-6 text-primary"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -243,75 +243,75 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                     />
                   </svg>
-                  <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                  <h3 className="text-lg font-semibold text-text-primary">
                     Settings
                   </h3>
                 </div>
                 <div className="space-y-4">
-                  <label className="flex items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
+                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
+                      className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={darkMode}
                       onChange={(e) => onSetDarkMode(e.target.checked)}
                     />
-                    <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
+                    <span className="text-sm font-medium text-text-primary">
                       Dark Theme
                     </span>
                   </label>
-                  <label className="flex items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
+                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
+                      className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       defaultChecked
                     />
-                    <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
+                    <span className="text-sm font-medium text-text-primary">
                       Auto-save
                     </span>
                   </label>
-                  <label className="flex items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
+                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
+                      className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={transparentBg}
                       onChange={(e) => onSetTransparentBg(e.target.checked)}
                     />
                     <div className="flex-1">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
+                      <span className="text-sm font-medium text-text-primary">
                         Transparent Background
                       </span>
-                      <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                      <p className="text-xs text-text-tertiary mt-1">
                         Enable window capture in OBS with transparency support
                       </p>
                     </div>
                   </label>
                   {transparentBg && (
-                    <div className="ml-4 p-3 bg-[rgb(var(--color-primary))]/10 border border-[rgb(var(--color-primary))]/30 rounded-lg animate-slide-up">
-                      <p className="text-sm text-[rgb(var(--color-primary))]">
+                    <div className="ml-4 p-3 bg-primary/10 border border-primary/30 rounded-lg animate-slide-up">
+                      <p className="text-sm text-primary">
                         ✨ Transparent mode is active! Perfect for stream
                         overlays.
                       </p>
                     </div>
                   )}
-                  <label className="flex items-center p-3 bg-[rgb(var(--color-bg-tertiary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
+                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
+                      className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={borderlessMode}
                       onChange={(e) => onSetBorderlessMode(e.target.checked)}
                     />
                     <div className="flex-1">
-                      <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
+                      <span className="text-sm font-medium text-text-primary">
                         Borderless Window
                       </span>
-                      <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
+                      <p className="text-xs text-text-tertiary mt-1">
                         Clean window mode for streaming
                       </p>
                     </div>
                   </label>
                   {borderlessMode && (
-                    <div className="ml-4 p-3 bg-[rgb(var(--color-primary))]/10 border border-[rgb(var(--color-primary))]/30 rounded-lg animate-slide-up">
-                      <p className="text-sm text-[rgb(var(--color-primary))]">
+                    <div className="ml-4 p-3 bg-primary/10 border border-primary/30 rounded-lg animate-slide-up">
+                      <p className="text-sm text-primary">
                         🖼️ Borderless mode enabled! Minimal UI for streaming.
                       </p>
                     </div>

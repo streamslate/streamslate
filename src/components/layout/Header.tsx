@@ -48,9 +48,9 @@ export const Header: React.FC<HeaderProps> = ({
     <header
       className={`${
         transparentBg
-          ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-md"
-          : "bg-[rgb(var(--color-surface-primary))]"
-      } border-b border-[rgb(var(--color-border-primary))] px-6 py-3 flex-shrink-0 ${
+          ? "bg-surface-primary/90 backdrop-blur-md"
+          : "bg-surface-primary"
+      } border-b border-border-primary px-6 py-3 flex-shrink-0 ${
         presenterMode || borderlessMode ? "hidden" : ""
       } animate-fade-in`}
     >
@@ -75,7 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </svg>
           </button>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-primary))]">
+          <h1 className="text-2xl font-bold text-primary">
             StreamSlate
           </h1>
         </div>
@@ -159,7 +159,7 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{presenterMode ? "Exit" : "Presenter"}</span>
             </div>
           </button>
-          <div className="flex items-center space-x-2 px-3 py-1.5 bg-[rgb(var(--color-bg-tertiary))] rounded-lg border border-[rgb(var(--color-border-secondary))]">
+          <div className="flex items-center space-x-2 px-3 py-1.5 bg-bg-tertiary rounded-lg border border-border-secondary">
             <div
               className={`w-2 h-2 rounded-full ${
                 websocketState.connected
@@ -167,7 +167,7 @@ export const Header: React.FC<HeaderProps> = ({
                   : "bg-red-500 animate-pulse"
               }`}
             ></div>
-            <span className="text-sm text-[rgb(var(--color-text-secondary))]">
+            <span className="text-sm text-text-secondary">
               {websocketState.connected ? "Connected" : "Disconnected"}
             </span>
           </div>

@@ -106,20 +106,20 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-[rgb(var(--color-bg-tertiary))];
+    @apply bg-bg-tertiary;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-[rgb(var(--color-border-tertiary))] rounded-full;
+    @apply bg-border-tertiary rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-[rgb(var(--color-text-tertiary))];
+    @apply bg-text-tertiary;
   }
 
   /* Selection colors */
   ::selection {
-    @apply bg-[rgb(var(--color-primary))] text-white;
+    @apply bg-primary text-white;
   }
 }
 
@@ -203,32 +203,32 @@ body {
   }
 
   .btn-primary {
-    @apply bg-[rgb(var(--color-primary))] text-white;
-    @apply hover:bg-[rgb(var(--color-primary-hover))];
-    @apply focus:ring-[rgb(var(--color-primary))];
-    @apply active:bg-[rgb(var(--color-primary-active))];
+    @apply bg-primary text-white;
+    @apply hover:bg-primary-hover;
+    @apply focus:ring-primary;
+    @apply active:bg-primary-active;
   }
 
   .btn-secondary {
-    @apply bg-[rgb(var(--color-surface-secondary))] text-[rgb(var(--color-text-primary))];
-    @apply hover:bg-[rgb(var(--color-surface-tertiary))];
-    @apply border border-[rgb(var(--color-border-primary))];
+    @apply bg-surface-secondary text-text-primary;
+    @apply hover:bg-surface-tertiary;
+    @apply border border-border-primary;
     @apply focus:ring-[rgb(var(--color-border-tertiary))];
   }
 
   .btn-ghost {
-    @apply bg-transparent text-[rgb(var(--color-text-secondary))];
-    @apply hover:bg-[rgb(var(--color-surface-secondary))];
-    @apply hover:text-[rgb(var(--color-text-primary))];
+    @apply bg-transparent text-text-secondary;
+    @apply hover:bg-surface-secondary;
+    @apply hover:text-text-primary;
     @apply focus:ring-[rgb(var(--color-border-tertiary))];
   }
 
   .btn-dashed {
     @apply flex items-center justify-center gap-3 w-full px-4 py-3 rounded-lg;
-    @apply border-2 border-dashed border-[rgb(var(--color-border-secondary))];
-    @apply text-[rgb(var(--color-text-secondary))];
+    @apply border-2 border-dashed border-border-secondary;
+    @apply text-text-secondary;
     @apply bg-transparent;
-    @apply transition-all duration-150 group;
+    @apply transition-all duration-150;
   }
 
   .btn-dashed:hover {
@@ -239,19 +239,19 @@ body {
 
   /* Cards */
   .card {
-    @apply bg-[rgb(var(--color-surface-primary))] rounded-lg;
-    @apply border border-[rgb(var(--color-border-primary))];
+    @apply bg-surface-primary rounded-lg;
+    @apply border border-border-primary;
     @apply shadow-sm;
   }
 
   /* Inputs */
   .input {
     @apply w-full px-3 py-2 rounded-md;
-    @apply bg-[rgb(var(--color-surface-primary))];
-    @apply border border-[rgb(var(--color-border-primary))];
-    @apply text-[rgb(var(--color-text-primary))];
+    @apply bg-surface-primary;
+    @apply border border-border-primary;
+    @apply text-text-primary;
     @apply placeholder-[rgb(var(--color-text-tertiary))];
-    @apply focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))];
+    @apply focus:outline-none focus:ring-2 focus:ring-primary;
     @apply focus:border-transparent;
     @apply transition-all duration-150;
   }
@@ -259,8 +259,8 @@ body {
 
 /* Custom Focus Styles */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-[rgb(var(--color-primary))] focus:ring-offset-2;
-  @apply focus:ring-offset-[rgb(var(--color-bg-primary))];
+  @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2;
+  @apply focus:ring-offset-bg-primary;
 }
 
 /* Text Selection Prevention */
@@ -286,28 +286,28 @@ input[type="range"] {
 
 input[type="range"]::-webkit-slider-track {
   @apply w-full h-1 rounded-full;
-  @apply bg-[rgb(var(--color-bg-tertiary))];
+  @apply bg-bg-tertiary;
 }
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   @apply w-4 h-4 rounded-full;
-  @apply bg-[rgb(var(--color-primary))];
-  @apply hover:bg-[rgb(var(--color-primary-hover))];
+  @apply bg-primary;
+  @apply hover:bg-primary-hover;
   @apply transition-colors duration-150;
   @apply shadow-sm;
 }
 
 input[type="range"]::-moz-range-track {
   @apply w-full h-1 rounded-full;
-  @apply bg-[rgb(var(--color-bg-tertiary))];
+  @apply bg-bg-tertiary;
 }
 
 input[type="range"]::-moz-range-thumb {
   @apply w-4 h-4 rounded-full border-0;
-  @apply bg-[rgb(var(--color-primary))];
-  @apply hover:bg-[rgb(var(--color-primary-hover))];
+  @apply bg-primary;
+  @apply hover:bg-primary-hover;
   @apply transition-colors duration-150;
   @apply shadow-sm;
 }

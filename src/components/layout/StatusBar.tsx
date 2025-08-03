@@ -35,14 +35,14 @@ export const StatusBar: React.FC<StatusBarProps> = ({
     <div
       className={`${
         transparentBg
-          ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-sm"
-          : "bg-[rgb(var(--color-surface-primary))]"
-      } border-t border-[rgb(var(--color-border-primary))] px-6 py-2 flex items-center justify-between text-xs text-[rgb(var(--color-text-tertiary))] ${
+          ? "bg-surface-primary/90 backdrop-blur-sm"
+          : "bg-surface-primary"
+      } border-t border-border-primary px-6 py-2 flex items-center justify-between text-xs text-text-tertiary ${
         presenterMode || borderlessMode ? "hidden" : ""
       }`}
     >
       <div className="flex items-center space-x-6">
-        <span className="flex items-center space-x-2 px-3 py-1 bg-[rgb(var(--color-bg-tertiary))] rounded-full">
+        <span className="flex items-center space-x-2 px-3 py-1 bg-bg-tertiary rounded-full">
           <div
             className={`w-2 h-2 rounded-full ${
               websocketState.connected
