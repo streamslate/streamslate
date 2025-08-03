@@ -119,17 +119,17 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-xl p-3 ${className}`}
+      className={`flex flex-col bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl shadow-lg p-4 ${className}`}
     >
       <div className="flex items-center gap-2 flex-wrap">
         {TOOLS.map((tool) => (
           <button
             key={tool.id}
             onClick={() => handleToolClick(tool.type)}
-            className={`group relative p-2.5 rounded-lg border text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+            className={`group relative p-3 rounded-lg border transition-all duration-200 transform hover:scale-105 ${
               activeTool === tool.type
-                ? "bg-gradient-to-br from-blue-500 to-blue-600 border-blue-400 text-white shadow-lg shadow-blue-500/25 scale-105"
-                : "bg-gray-700/80 border-gray-600/50 text-gray-300 hover:bg-gray-600/80 hover:border-gray-500/50 hover:shadow-md"
+                ? "bg-[var(--accent-primary)] border-[var(--accent-primary)] text-white shadow-lg scale-105"
+                : "bg-[var(--bg-secondary)] border-[var(--border-default)] text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:border-[var(--border-hover)] hover:text-[var(--text-primary)]"
             }`}
             title={tool.name}
           >
@@ -138,8 +138,8 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
               <span
                 className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] font-medium whitespace-nowrap transition-opacity duration-200 pointer-events-none ${
                   activeTool === tool.type
-                    ? "text-blue-400 opacity-100"
-                    : "text-gray-400 opacity-0 group-hover:opacity-100"
+                    ? "text-[var(--accent-primary)] opacity-100"
+                    : "text-[var(--text-muted)] opacity-0 group-hover:opacity-100"
                 }`}
               >
                 {tool.name}
@@ -150,14 +150,14 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
       </div>
 
       {activeTool && (
-        <div className="border-t border-gray-700/50 mt-3 pt-3">
+        <div className="border-t border-[var(--border-subtle)] mt-4 pt-4">
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="w-full flex items-center justify-between px-2 py-1.5 text-xs font-medium text-gray-300 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all duration-200"
+            className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded-lg transition-all duration-200"
           >
             <span className="flex items-center gap-2">
               <svg
-                className="w-3 h-3"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -172,7 +172,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
               Tool Settings
             </span>
             <svg
-              className={`w-3 h-3 transform transition-transform ${showConfig ? "rotate-180" : ""}`}
+              className={`w-4 h-4 transform transition-transform ${showConfig ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -187,20 +187,20 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
           </button>
 
           {showConfig && (
-            <div className="mt-3 space-y-4 bg-gray-900/50 rounded-lg p-3">
+            <div className="mt-3 space-y-4 bg-[var(--bg-secondary)] rounded-lg p-4">
               <div>
-                <label className="block text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                <label className="block text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
                   Color
                 </label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-2">
                   {PRESET_COLORS.map((color) => (
                     <button
                       key={color}
                       onClick={() => handleColorChange(color)}
-                      className={`w-7 h-7 rounded-lg border-2 transition-all duration-200 ${
+                      className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
                         toolConfig.color === color
-                          ? "border-white shadow-lg scale-110 ring-2 ring-white/20"
-                          : "border-gray-600/50 hover:border-gray-400/50 hover:scale-105"
+                          ? "border-[var(--accent-primary)] shadow-lg scale-110 ring-2 ring-[var(--accent-primary)]/20"
+                          : "border-[var(--border-default)] hover:border-[var(--border-hover)] hover:scale-105"
                       }`}
                       style={{ backgroundColor: color }}
                       title={color}
@@ -211,7 +211,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                       type="color"
                       value={toolConfig.color}
                       onChange={(e) => handleColorChange(e.target.value)}
-                      className="w-7 h-7 rounded-lg border-2 border-gray-600/50 bg-transparent cursor-pointer hover:border-gray-400/50 transition-colors"
+                      className="w-8 h-8 rounded-lg border-2 border-[var(--border-default)] bg-transparent cursor-pointer hover:border-[var(--border-hover)] transition-colors"
                       title="Custom color"
                     />
                   </div>
@@ -219,9 +219,9 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
               </div>
 
               <div>
-                <label className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                <label className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
                   <span>Opacity</span>
-                  <span className="text-gray-500 normal-case font-normal">
+                  <span className="text-[var(--text-secondary)] normal-case font-normal">
                     {Math.round(toolConfig.opacity * 100)}%
                   </span>
                 </label>
@@ -234,18 +234,18 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                   onChange={(e) =>
                     handleOpacityChange(parseFloat(e.target.value))
                   }
-                  className="w-full h-1.5 bg-gray-700/50 rounded-full appearance-none cursor-pointer slider hover:bg-gray-700 transition-colors"
+                  className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full appearance-none cursor-pointer slider hover:bg-[var(--bg-quaternary)] transition-colors"
                   style={{
-                    background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${toolConfig.opacity * 100}%, rgb(55 65 81 / 0.5) ${toolConfig.opacity * 100}%, rgb(55 65 81 / 0.5) 100%)`,
+                    background: `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${toolConfig.opacity * 100}%, var(--bg-tertiary) ${toolConfig.opacity * 100}%, var(--bg-tertiary) 100%)`,
                   }}
                 />
               </div>
 
               {activeTool !== AnnotationType.HIGHLIGHT && (
                 <div>
-                  <label className="flex items-center justify-between text-[11px] font-semibold text-gray-400 mb-2 uppercase tracking-wider">
+                  <label className="flex items-center justify-between text-xs font-semibold text-[var(--text-muted)] mb-2 uppercase tracking-wider">
                     <span>Stroke Width</span>
-                    <span className="text-gray-500 normal-case font-normal">
+                    <span className="text-[var(--text-secondary)] normal-case font-normal">
                       {toolConfig.strokeWidth}px
                     </span>
                   </label>
@@ -258,9 +258,9 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                     onChange={(e) =>
                       handleStrokeWidthChange(parseInt(e.target.value))
                     }
-                    className="w-full h-1.5 bg-gray-700/50 rounded-full appearance-none cursor-pointer slider hover:bg-gray-700 transition-colors"
+                    className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full appearance-none cursor-pointer slider hover:bg-[var(--bg-quaternary)] transition-colors"
                     style={{
-                      background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(toolConfig.strokeWidth - 1) * 11.11}%, rgb(55 65 81 / 0.5) ${(toolConfig.strokeWidth - 1) * 11.11}%, rgb(55 65 81 / 0.5) 100%)`,
+                      background: `linear-gradient(to right, var(--accent-primary) 0%, var(--accent-primary) ${(toolConfig.strokeWidth - 1) * 11.11}%, var(--bg-tertiary) ${(toolConfig.strokeWidth - 1) * 11.11}%, var(--bg-tertiary) 100%)`,
                     }}
                   />
                 </div>

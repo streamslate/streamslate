@@ -29,18 +29,30 @@ function App() {
   const [presenterMode, setPresenterMode] = useState(false);
   const [transparentBg, setTransparentBg] = useState(false);
   const [borderlessMode, setBorderlessMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize dark mode from localStorage or system preference
+    const stored = localStorage.getItem("theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   // Get PDF state and functions
   const { openPDF, isLoaded } = usePDF();
 
-  // Debug logging
-  useEffect(() => {
-    console.log("[App Debug] PDF state:", { isLoaded });
-  }, [isLoaded]);
-
   // Get WebSocket state from integration store
   const websocketState = useIntegrationStore((state) => state.websocket);
   const { connectWebSocket, disconnectWebSocket } = useIntegrationStore();
+
+  // Manage dark mode
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
 
   // Auto-connect WebSocket on mount
   useEffect(() => {
@@ -62,14 +74,22 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [presenterMode]);
 
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+
   return (
     <div
-      className={`h-screen flex flex-col ${transparentBg ? "bg-transparent" : "bg-gray-900"}`}
+      className={`h-screen flex flex-col ${
+        transparentBg ? "bg-transparent" : "bg-[rgb(var(--color-bg-primary))]"
+      }`}
     >
       {/* Window Controls for Borderless Mode */}
       {borderlessMode && !presenterMode && (
         <div
-          className={`flex items-center justify-between ${transparentBg ? "bg-gray-800/90 backdrop-blur-sm" : "bg-gray-800"} px-3 py-2 animate-fade-in`}
+          className={`flex items-center justify-between ${
+            transparentBg
+              ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-sm"
+              : "bg-[rgb(var(--color-surface-primary))]"
+          } px-3 py-2 border-b border-[rgb(var(--color-border-primary))] animate-fade-in`}
         >
           <div className="flex items-center space-x-2">
             <div
@@ -86,21 +106,27 @@ function App() {
               title="Maximize"
             ></div>
           </div>
-          <div className="flex-1 text-center text-sm font-medium bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent -ml-16">
-            StreamSlate
+          <div className="flex-1 text-center text-sm font-medium">
+            <span className="bg-gradient-text">StreamSlate</span>
           </div>
         </div>
       )}
 
       {/* Header */}
       <header
-        className={`${transparentBg ? "bg-gray-800/90 backdrop-blur-md" : "bg-gray-800/95 backdrop-blur-sm"} border-b border-gray-700/50 px-6 py-3 flex-shrink-0 ${presenterMode || borderlessMode ? "hidden" : ""} animate-fade-in`}
+        className={`${
+          transparentBg
+            ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-md"
+            : "bg-[rgb(var(--color-surface-primary))]"
+        } border-b border-[rgb(var(--color-border-primary))] px-6 py-3 flex-shrink-0 ${
+          presenterMode || borderlessMode ? "hidden" : ""
+        } animate-fade-in`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all duration-200 hover:scale-105"
+              className="p-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] rounded-lg transition-all duration-150"
               title="Toggle Sidebar"
             >
               <svg
@@ -117,17 +143,14 @@ function App() {
                 />
               </svg>
             </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
-              StreamSlate
+            <h1 className="text-2xl font-bold">
+              <span className="bg-gradient-text">StreamSlate</span>
             </h1>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             {/* Open PDF Button - Always visible in header */}
             {!isLoaded && (
-              <button
-                onClick={openPDF}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg hover:shadow-blue-600/20"
-              >
+              <button onClick={openPDF} className="btn btn-primary">
                 <div className="flex items-center space-x-2">
                   <svg
                     className="w-4 h-4"
@@ -147,12 +170,49 @@ function App() {
               </button>
             )}
 
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] rounded-lg transition-all duration-150"
+              title={darkMode ? "Light Mode" : "Dark Mode"}
+            >
+              {darkMode ? (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                  />
+                </svg>
+              )}
+            </button>
+
             <button
               onClick={() => setPresenterMode(!presenterMode)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 hover:scale-105 hover:shadow-lg ${
+              className={`btn ${
                 presenterMode
-                  ? "bg-green-600 hover:bg-green-700 text-white hover:shadow-green-600/20"
-                  : "bg-gray-700/70 hover:bg-gray-600 text-gray-300 hover:text-white"
+                  ? "bg-[rgb(var(--color-success))] hover:bg-[rgb(var(--color-success))]/90 text-white"
+                  : "btn-secondary"
               }`}
               title={
                 presenterMode ? "Exit Presenter Mode" : "Enter Presenter Mode"
@@ -175,12 +235,17 @@ function App() {
                 <span>{presenterMode ? "Exit" : "Presenter"}</span>
               </div>
             </button>
-            <div className="flex items-center space-x-2 px-4 py-2 bg-gray-700/30 rounded-lg">
+
+            <div className="flex items-center space-x-2 px-3 py-1.5 bg-[rgb(var(--color-surface-secondary))] rounded-lg border border-[rgb(var(--color-border-primary))]">
               <div
-                className={`w-2 h-2 rounded-full ${websocketState.connected ? "bg-green-500" : "bg-red-500 animate-pulse"}`}
+                className={`w-2 h-2 rounded-full ${
+                  websocketState.connected
+                    ? "bg-[rgb(var(--color-success))]"
+                    : "bg-[rgb(var(--color-error))] animate-pulse"
+                }`}
               ></div>
-              <span className="text-sm text-gray-400">
-                PDF Annotation Tool for Streamers
+              <span className="text-sm text-[rgb(var(--color-text-secondary))]">
+                {websocketState.connected ? "Connected" : "Disconnected"}
               </span>
             </div>
           </div>
@@ -191,19 +256,23 @@ function App() {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <aside
-          className={`${transparentBg ? "bg-gray-800/90 backdrop-blur-md" : "bg-gray-800/95 backdrop-blur-sm"} border-r border-gray-700/50 transition-all duration-300 flex-shrink-0 ${
+          className={`${
+            transparentBg
+              ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-md"
+              : "bg-[rgb(var(--color-surface-primary))]"
+          } border-r border-[rgb(var(--color-border-primary))] transition-all duration-300 flex-shrink-0 ${
             sidebarOpen && !presenterMode ? "w-72" : "w-0"
           } overflow-hidden`}
         >
           <div className="h-full flex flex-col">
             {/* Panel Tabs */}
-            <div className="flex border-b border-gray-700/50 p-2 gap-2">
+            <div className="flex border-b border-[rgb(var(--color-border-primary))] p-2 gap-2">
               <button
                 onClick={() => setActivePanel("files")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
                   activePanel === "files"
-                    ? "text-blue-400 bg-blue-600/20 border border-blue-600/30 shadow-lg shadow-blue-600/10"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50 border border-transparent"
+                    ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
+                    : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))]"
                 }`}
               >
                 <svg
@@ -223,10 +292,10 @@ function App() {
               </button>
               <button
                 onClick={() => setActivePanel("annotations")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
                   activePanel === "annotations"
-                    ? "text-purple-400 bg-purple-600/20 border border-purple-600/30 shadow-lg shadow-purple-600/10"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50 border border-transparent"
+                    ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
+                    : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))]"
                 }`}
               >
                 <svg
@@ -246,10 +315,10 @@ function App() {
               </button>
               <button
                 onClick={() => setActivePanel("settings")}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
                   activePanel === "settings"
-                    ? "text-blue-400 bg-blue-600/20 border border-blue-600/30 shadow-lg shadow-blue-600/10"
-                    : "text-gray-400 hover:text-white hover:bg-gray-700/50 border border-transparent"
+                    ? "bg-[rgb(var(--color-primary))]/10 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))]/20"
+                    : "text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))]"
                 }`}
               >
                 <svg
@@ -278,11 +347,11 @@ function App() {
             {/* Panel Content */}
             <div className="flex-1 p-6 overflow-y-auto animate-fade-in">
               {activePanel === "files" && (
-                <div className="text-gray-300">
-                  <div className="bg-gray-700/30 rounded-xl border border-gray-600/30 p-6 animate-slide-up">
+                <div className="space-y-4">
+                  <div className="card p-6 animate-slide-up">
                     <div className="flex items-center gap-3 mb-4">
                       <svg
-                        className="w-6 h-6 text-blue-400"
+                        className="w-6 h-6 text-[rgb(var(--color-primary))]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -294,17 +363,19 @@ function App() {
                           d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                         />
                       </svg>
-                      <h3 className="text-lg font-semibold">PDF Files</h3>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                        PDF Files
+                      </h3>
                     </div>
 
                     {/* Open PDF Button */}
                     <div className="mb-4">
                       <button
                         onClick={openPDF}
-                        className="flex items-center justify-center gap-3 w-full px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-600/30 text-blue-400 rounded-lg cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-600/20"
+                        className="flex items-center justify-center gap-3 w-full px-4 py-3 btn-ghost border-2 border-dashed border-[rgb(var(--color-border-secondary))] hover:border-[rgb(var(--color-primary))] hover:bg-[rgb(var(--color-primary))]/5 group"
                       >
                         <svg
-                          className="w-5 h-5"
+                          className="w-5 h-5 text-[rgb(var(--color-text-tertiary))] group-hover:text-[rgb(var(--color-primary))]"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -316,12 +387,14 @@ function App() {
                             d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                           />
                         </svg>
-                        <span className="font-medium">Open PDF File</span>
+                        <span className="font-medium text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-primary))]">
+                          Open PDF File
+                        </span>
                       </button>
                     </div>
 
-                    <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-600/20">
-                      <p className="text-sm text-gray-500 text-center">
+                    <div className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-md border border-[rgb(var(--color-border-primary))]">
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] text-center">
                         {isLoaded ? "PDF loaded successfully" : "No PDF loaded"}
                       </p>
                     </div>
@@ -329,11 +402,11 @@ function App() {
                 </div>
               )}
               {activePanel === "annotations" && (
-                <div className="text-gray-300">
-                  <div className="bg-gray-700/30 rounded-xl border border-gray-600/30 p-6 animate-slide-up">
+                <div className="space-y-4">
+                  <div className="card p-6 animate-slide-up">
                     <div className="flex items-center gap-3 mb-4">
                       <svg
-                        className="w-6 h-6 text-purple-400"
+                        className="w-6 h-6 text-[rgb(var(--color-primary))]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -345,12 +418,12 @@ function App() {
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      <h3 className="text-lg font-semibold">
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
                         Annotations List
                       </h3>
                     </div>
-                    <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-600/20">
-                      <p className="text-sm text-gray-500 text-center">
+                    <div className="p-4 bg-[rgb(var(--color-bg-secondary))] rounded-md border border-[rgb(var(--color-border-primary))]">
+                      <p className="text-sm text-[rgb(var(--color-text-tertiary))] text-center">
                         No annotations yet
                       </p>
                     </div>
@@ -358,11 +431,11 @@ function App() {
                 </div>
               )}
               {activePanel === "settings" && (
-                <div className="text-gray-300">
-                  <div className="bg-gray-700/30 rounded-xl border border-gray-600/30 p-6 animate-slide-up">
+                <div className="space-y-4">
+                  <div className="card p-6 animate-slide-up">
                     <div className="flex items-center gap-3 mb-6">
                       <svg
-                        className="w-6 h-6 text-blue-400"
+                        className="w-6 h-6 text-[rgb(var(--color-primary))]"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -380,73 +453,76 @@ function App() {
                           d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
                         />
                       </svg>
-                      <h3 className="text-lg font-semibold">Settings</h3>
+                      <h3 className="text-lg font-semibold text-[rgb(var(--color-text-primary))]">
+                        Settings
+                      </h3>
                     </div>
                     <div className="space-y-4">
-                      <label className="flex items-center p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-all cursor-pointer group">
+                      <label className="flex items-center p-3 bg-[rgb(var(--color-surface-secondary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mr-3"
-                          defaultChecked
+                          className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
+                          checked={darkMode}
+                          onChange={(e) => setDarkMode(e.target.checked)}
                         />
-                        <span className="text-sm font-medium group-hover:text-blue-400 transition-colors">
+                        <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
                           Dark Theme
                         </span>
                       </label>
-                      <label className="flex items-center p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-all cursor-pointer group">
+                      <label className="flex items-center p-3 bg-[rgb(var(--color-surface-secondary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mr-3"
+                          className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
                           defaultChecked
                         />
-                        <span className="text-sm font-medium group-hover:text-blue-400 transition-colors">
+                        <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
                           Auto-save
                         </span>
                       </label>
-                      <label className="flex items-center p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-all cursor-pointer group">
+                      <label className="flex items-center p-3 bg-[rgb(var(--color-surface-secondary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mr-3"
+                          className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
                           checked={transparentBg}
                           onChange={(e) => setTransparentBg(e.target.checked)}
                         />
                         <div className="flex-1">
-                          <span className="text-sm font-medium group-hover:text-blue-400 transition-colors">
+                          <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
                             Transparent Background
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
                             Enable window capture in OBS with transparency
                             support
                           </p>
                         </div>
                       </label>
                       {transparentBg && (
-                        <div className="ml-4 p-3 bg-blue-600/10 border border-blue-600/30 rounded-lg animate-slide-up">
-                          <p className="text-sm text-blue-400">
+                        <div className="ml-4 p-3 bg-[rgb(var(--color-info))]/10 border border-[rgb(var(--color-info))]/30 rounded-lg animate-slide-up">
+                          <p className="text-sm text-[rgb(var(--color-info))]">
                             ✨ Transparent mode is active! Perfect for stream
                             overlays.
                           </p>
                         </div>
                       )}
-                      <label className="flex items-center p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-all cursor-pointer group">
+                      <label className="flex items-center p-3 bg-[rgb(var(--color-surface-secondary))] rounded-lg border border-[rgb(var(--color-border-primary))] hover:bg-[rgb(var(--color-surface-tertiary))] transition-all cursor-pointer group">
                         <input
                           type="checkbox"
-                          className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 focus:ring-2 mr-3"
+                          className="w-4 h-4 text-[rgb(var(--color-primary))] bg-[rgb(var(--color-surface-primary))] border-[rgb(var(--color-border-secondary))] rounded focus:ring-[rgb(var(--color-primary))] focus:ring-2 mr-3"
                           checked={borderlessMode}
                           onChange={(e) => setBorderlessMode(e.target.checked)}
                         />
                         <div className="flex-1">
-                          <span className="text-sm font-medium group-hover:text-blue-400 transition-colors">
+                          <span className="text-sm font-medium text-[rgb(var(--color-text-primary))]">
                             Borderless Window
                           </span>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-[rgb(var(--color-text-tertiary))] mt-1">
                             Clean window mode for streaming
                           </p>
                         </div>
                       </label>
                       {borderlessMode && (
-                        <div className="ml-4 p-3 bg-purple-600/10 border border-purple-600/30 rounded-lg animate-slide-up">
-                          <p className="text-sm text-purple-400">
+                        <div className="ml-4 p-3 bg-[rgb(var(--color-primary))]/10 border border-[rgb(var(--color-primary))]/30 rounded-lg animate-slide-up">
+                          <p className="text-sm text-[rgb(var(--color-primary))]">
                             🖼️ Borderless mode enabled! Minimal UI for
                             streaming.
                           </p>
@@ -466,15 +542,21 @@ function App() {
 
           {/* Status Bar */}
           <div
-            className={`${transparentBg ? "bg-gray-800/90 backdrop-blur-sm" : "bg-gray-800/95"} border-t border-gray-700/50 px-6 py-2 flex items-center justify-between text-xs text-gray-400 ${presenterMode || borderlessMode ? "hidden" : ""}`}
+            className={`${
+              transparentBg
+                ? "bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-sm"
+                : "bg-[rgb(var(--color-surface-primary))]"
+            } border-t border-[rgb(var(--color-border-primary))] px-6 py-2 flex items-center justify-between text-xs text-[rgb(var(--color-text-tertiary))] ${
+              presenterMode || borderlessMode ? "hidden" : ""
+            }`}
           >
             <div className="flex items-center space-x-6">
-              <span className="flex items-center space-x-2 px-3 py-1 bg-gray-700/30 rounded-full">
+              <span className="flex items-center space-x-2 px-3 py-1 bg-[rgb(var(--color-surface-secondary))] rounded-full">
                 <div
                   className={`w-2 h-2 rounded-full ${
                     websocketState.connected
-                      ? "bg-green-500"
-                      : "bg-red-500 animate-pulse"
+                      ? "bg-[rgb(var(--color-success))]"
+                      : "bg-[rgb(var(--color-error))] animate-pulse"
                   }`}
                 ></div>
                 <span>
@@ -483,16 +565,16 @@ function App() {
                     : "WebSocket Disconnected"}
                 </span>
               </span>
-              <span className="text-gray-500">Ready</span>
+              <span>Ready</span>
             </div>
             <div className="flex items-center space-x-6">
               {presenterMode && (
-                <span className="flex items-center space-x-2 text-green-400 px-3 py-1 bg-green-600/10 border border-green-600/30 rounded-full">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="flex items-center space-x-2 text-[rgb(var(--color-success))] px-3 py-1 bg-[rgb(var(--color-success))]/10 border border-[rgb(var(--color-success))]/30 rounded-full">
+                  <div className="w-2 h-2 bg-[rgb(var(--color-success))] rounded-full animate-pulse"></div>
                   <span>Presenter Mode Active</span>
                 </span>
               )}
-              <span className="text-gray-500">StreamSlate v0.0.1</span>
+              <span>StreamSlate v0.0.1</span>
             </div>
           </div>
 
@@ -500,7 +582,7 @@ function App() {
           {presenterMode && (
             <button
               onClick={() => setPresenterMode(false)}
-              className="absolute bottom-6 right-6 px-5 py-3 bg-gray-700/90 hover:bg-gray-600 backdrop-blur-sm text-white rounded-xl shadow-2xl flex items-center space-x-3 transition-all opacity-30 hover:opacity-100 hover:scale-105"
+              className="absolute bottom-6 right-6 px-5 py-3 bg-[rgb(var(--color-surface-secondary))]/90 hover:bg-[rgb(var(--color-surface-tertiary))]/90 backdrop-blur-sm text-[rgb(var(--color-text-primary))] rounded-xl shadow-large flex items-center space-x-3 transition-all opacity-30 hover:opacity-100"
               title="Exit Presenter Mode (ESC)"
             >
               <svg
@@ -522,10 +604,10 @@ function App() {
 
           {/* Floating Toolbar for Borderless Mode */}
           {borderlessMode && !presenterMode && (
-            <div className="absolute top-4 right-4 flex items-center space-x-3 bg-gray-800/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-xl opacity-20 hover:opacity-100 transition-all duration-200">
+            <div className="absolute top-4 right-4 flex items-center space-x-3 bg-[rgb(var(--color-surface-primary))]/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-large opacity-20 hover:opacity-100 transition-all duration-200">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all"
+                className="p-1.5 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] rounded-lg transition-all"
                 title="Toggle Sidebar"
               >
                 <svg
@@ -542,10 +624,10 @@ function App() {
                   />
                 </svg>
               </button>
-              <div className="w-px h-5 bg-gray-600/50"></div>
+              <div className="w-px h-5 bg-[rgb(var(--color-border-primary))]"></div>
               <button
                 onClick={() => setPresenterMode(true)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all"
+                className="p-1.5 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] rounded-lg transition-all"
                 title="Presenter Mode"
               >
                 <svg
@@ -562,10 +644,10 @@ function App() {
                   />
                 </svg>
               </button>
-              <div className="w-px h-5 bg-gray-600/50"></div>
+              <div className="w-px h-5 bg-[rgb(var(--color-border-primary))]"></div>
               <button
                 onClick={() => setBorderlessMode(false)}
-                className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-all"
+                className="p-1.5 text-[rgb(var(--color-text-secondary))] hover:text-[rgb(var(--color-text-primary))] hover:bg-[rgb(var(--color-surface-secondary))] rounded-lg transition-all"
                 title="Exit Borderless"
               >
                 <svg
