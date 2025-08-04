@@ -26,12 +26,14 @@ RUN npm run build
 FROM rust:1.82-slim AS rust-builder
 
 # Install dependencies for Tauri
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     libgtk-3-dev \
     libwebkit2gtk-4.0-dev \
     libayatana-appindicator3-dev \
     librsvg2-dev \
     pkg-config \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
