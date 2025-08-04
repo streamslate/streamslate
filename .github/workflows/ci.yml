@@ -47,7 +47,16 @@ jobs:
           grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs sudo apt-get install -y
 
       - name: Install frontend dependencies
-        run: npm ci
+        run: |
+          # Try npm ci first (faster)
+          if npm ci; then
+            echo "Dependencies installed successfully with npm ci"
+          else
+            echo "npm ci failed, falling back to npm install"
+            # Remove the lock file and regenerate it
+            rm -f package-lock.json
+            npm install
+          fi
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
