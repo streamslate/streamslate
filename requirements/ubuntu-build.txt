@@ -15,6 +15,7 @@ libayatana-appindicator3-dev
 librsvg2-dev
 pkg-config
 libsoup2.4-dev
+libjavascriptcoregtk-4.1-dev
 
 # Additional build tools
 git

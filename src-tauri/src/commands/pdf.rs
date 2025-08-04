@@ -55,7 +55,7 @@ pub async fn open_pdf(path: String) -> Result<PdfInfo, String> {
 
     // Get file metadata
     let metadata =
-        std::fs::metadata(&pdf_path).map_err(|e| format!("Failed to read file metadata: {}", e))?;
+        std::fs::metadata(&pdf_path).map_err(|e| format!("Failed to read file metadata: {e}"))?;
 
     // For now, return basic info. In a full implementation, you'd use a PDF library
     // to extract actual PDF metadata like page count, title, etc.

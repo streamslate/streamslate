@@ -90,7 +90,7 @@ pub async fn close_presenter_mode(window: Window) -> Result<(), String> {
     if let Some(presenter_window) = app_handle.get_window("presenter") {
         presenter_window
             .close()
-            .map_err(|e| format!("Failed to close presenter window: {}", e))?;
+            .map_err(|e| format!("Failed to close presenter window: {e}"))?;
     }
 
     Ok(())
@@ -108,25 +108,25 @@ pub async fn update_presenter_config(
         // Apply configuration changes
         presenter_window
             .set_always_on_top(config.always_on_top)
-            .map_err(|e| format!("Failed to set always on top: {}", e))?;
+            .map_err(|e| format!("Failed to set always on top: {e}"))?;
 
         presenter_window
             .set_decorations(!config.borderless)
-            .map_err(|e| format!("Failed to set decorations: {}", e))?;
+            .map_err(|e| format!("Failed to set decorations: {e}"))?;
 
         presenter_window
             .set_size(tauri::Size::Physical(tauri::PhysicalSize {
                 width: config.size.width,
                 height: config.size.height,
             }))
-            .map_err(|e| format!("Failed to set size: {}", e))?;
+            .map_err(|e| format!("Failed to set size: {e}"))?;
 
         presenter_window
             .set_position(tauri::Position::Physical(tauri::PhysicalPosition {
                 x: config.position.x,
                 y: config.position.y,
             }))
-            .map_err(|e| format!("Failed to set position: {}", e))?;
+            .map_err(|e| format!("Failed to set position: {e}"))?;
     }
 
     Ok(())
@@ -170,7 +170,7 @@ pub async fn set_presenter_page(window: Window, page: u32) -> Result<(), String>
         // Emit event to update page in presenter window
         presenter_window
             .emit("page-changed", page)
-            .map_err(|e| format!("Failed to emit page change event: {}", e))?;
+            .map_err(|e| format!("Failed to emit page change event: {e}"))?;
     }
 
     Ok(())

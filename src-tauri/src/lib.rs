@@ -25,7 +25,7 @@ use state::AppState;
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
 fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+    format!("Hello, {name}! You've been greeted from Rust!")
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -48,7 +48,7 @@ pub fn run() {
             toggle_presenter_mode,
             set_presenter_page
         ])
-        .setup(|app| {
+        .setup(|_app| {
             // Initialize WebSocket server on port 11451
             // This would be implemented in a future phase
             Ok(())

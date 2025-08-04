@@ -31,7 +31,7 @@ pub struct PdfState {
     pub is_loaded: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PresenterState {
     pub is_active: bool,
     pub window_id: Option<String>,
@@ -66,7 +66,7 @@ pub struct WebSocketState {
     pub active_connections: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct IntegrationState {
     pub obs_connected: bool,
     pub stream_deck_connected: bool,
@@ -76,10 +76,15 @@ pub struct IntegrationState {
 /// Main application state
 #[derive(Debug)]
 pub struct AppState {
+    #[allow(dead_code)]
     pub pdf: Arc<Mutex<PdfState>>,
+    #[allow(dead_code)]
     pub presenter: Arc<Mutex<PresenterState>>,
+    #[allow(dead_code)]
     pub websocket: Arc<Mutex<WebSocketState>>,
+    #[allow(dead_code)]
     pub integration: Arc<Mutex<IntegrationState>>,
+    #[allow(dead_code)]
     pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>, // page_number -> annotations
 }
 
@@ -110,32 +115,12 @@ impl Default for PresenterConfig {
     }
 }
 
-impl Default for PresenterState {
-    fn default() -> Self {
-        Self {
-            is_active: false,
-            window_id: None,
-            config: PresenterConfig::default(),
-        }
-    }
-}
-
 impl Default for WebSocketState {
     fn default() -> Self {
         Self {
             is_connected: false,
             port: 11451,
             active_connections: 0,
-        }
-    }
-}
-
-impl Default for IntegrationState {
-    fn default() -> Self {
-        Self {
-            obs_connected: false,
-            stream_deck_connected: false,
-            ndi_enabled: false,
         }
     }
 }
@@ -152,57 +137,63 @@ impl AppState {
     }
 
     /// Get current PDF state
+    #[allow(dead_code)]
     pub fn get_pdf_state(&self) -> Result<PdfState, String> {
         self.pdf
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock PDF state: {}", e))
+            .map_err(|e| format!("Failed to lock PDF state: {e}"))
     }
 
     /// Update PDF state
+    #[allow(dead_code)]
     pub fn update_pdf_state<F>(&self, update_fn: F) -> Result<(), String>
     where
         F: FnOnce(&mut PdfState),
     {
         self.pdf
             .lock()
-            .map(|mut state| update_fn(&mut *state))
-            .map_err(|e| format!("Failed to lock PDF state: {}", e))
+            .map(|mut state| update_fn(&mut state))
+            .map_err(|e| format!("Failed to lock PDF state: {e}"))
     }
 
     /// Get current presenter state
+    #[allow(dead_code)]
     pub fn get_presenter_state(&self) -> Result<PresenterState, String> {
         self.presenter
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock presenter state: {}", e))
+            .map_err(|e| format!("Failed to lock presenter state: {e}"))
     }
 
     /// Update presenter state
+    #[allow(dead_code)]
     pub fn update_presenter_state<F>(&self, update_fn: F) -> Result<(), String>
     where
         F: FnOnce(&mut PresenterState),
     {
         self.presenter
             .lock()
-            .map(|mut state| update_fn(&mut *state))
-            .map_err(|e| format!("Failed to lock presenter state: {}", e))
+            .map(|mut state| update_fn(&mut state))
+            .map_err(|e| format!("Failed to lock presenter state: {e}"))
     }
 
     /// Get WebSocket state
+    #[allow(dead_code)]
     pub fn get_websocket_state(&self) -> Result<WebSocketState, String> {
         self.websocket
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock WebSocket state: {}", e))
+            .map_err(|e| format!("Failed to lock WebSocket state: {e}"))
     }
 
     /// Get integration state
+    #[allow(dead_code)]
     pub fn get_integration_state(&self) -> Result<IntegrationState, String> {
         self.integration
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock integration state: {}", e))
+            .map_err(|e| format!("Failed to lock integration state: {e}"))
     }
 }
 
