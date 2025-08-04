@@ -20,7 +20,7 @@ jobs:
           - platform: ubuntu-20.04
             runner: streamslate-runner-set
           - platform: macos-latest
-            runner: [self-hosted, macOS, ARM64]
+            runner: macos-latest
           - platform: windows-latest
             runner: windows-latest
 
@@ -44,7 +44,7 @@ jobs:
         if: matrix.platform == 'ubuntu-20.04'
         run: |
           sudo apt-get update
-          grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs sudo apt-get install -y
+          grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs sudo apt-get install -y
 
       - name: Install frontend dependencies
         run: npm ci
