@@ -14,6 +14,7 @@ libssl-dev
 libayatana-appindicator3-dev
 librsvg2-dev
 pkg-config
+libsoup2.4-dev
 
 # Additional build tools
 git
