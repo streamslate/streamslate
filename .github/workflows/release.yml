@@ -34,8 +34,26 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+            echo "::notice::Using workflow_dispatch tag: ${{ github.event.inputs.tag }}"
           else
             echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            echo "::notice::Using git tag: ${GITHUB_REF#refs/tags/}"
+          fi
+          echo "::notice::Final tag value: $(cat $GITHUB_OUTPUT | grep tag= | cut -d= -f2)"
+
+      - name: Validate tag exists
+        run: |
+          TAG="${{ steps.get-tag.outputs.tag }}"
+          echo "::notice::Checking if tag $TAG exists..."
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Tag $TAG exists in repository"
+          else
+            echo "::warning::Tag $TAG does not exist in repository"
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::notice::Creating tag $TAG from current commit"
+              git tag "$TAG"
+              git push origin "$TAG"
+            fi
           fi
 
       - name: Create Release
@@ -49,6 +67,12 @@ jobs:
           draft: true
           prerelease: false
           generate_release_notes: true
+
+      - name: Log release creation
+        run: |
+          echo "::notice::Created release with ID: ${{ steps.create-release.outputs.id }}"
+          echo "::notice::Release URL: ${{ steps.create-release.outputs.html_url }}"
+          echo "::notice::Upload URL: ${{ steps.create-release.outputs.upload_url }}"
 
   build-tauri:
     needs: create-release
@@ -163,3 +187,22 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64,linux/arm64
+
+  publish-release:
+    needs: [create-release, build-tauri, docker-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.create-release.outputs.release_tag }}
+          draft: false
+
+      - name: Log final release
+        run: |
+          echo "::notice::Published release ${{ needs.create-release.outputs.release_tag }}"
+          echo "::notice::Release should now be visible at: https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release.outputs.release_tag }}"
