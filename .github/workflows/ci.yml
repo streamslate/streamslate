@@ -20,7 +20,7 @@ jobs:
           - platform: ubuntu-20.04
             runner: streamslate-runner-set
           - platform: macos-latest
-            runner: macos-latest
+            runner: Codys-Air
           - platform: windows-latest
             runner: windows-latest
 
@@ -65,14 +65,14 @@ jobs:
       - name: Run linting
         run: npm run lint
 
-      - name: Run Rust clippy
-        run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
-
       - name: Create dist directory for Rust tests
         run: mkdir -p dist
 
       - name: Run Rust tests
         run: cd src-tauri && cargo test
+
+      - name: Run Rust clippy (post-dist)
+        run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run frontend tests
         run: npm run test:headless
