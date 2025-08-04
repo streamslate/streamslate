@@ -35,6 +35,14 @@ jobs:
           node-version: "18"
           cache: "npm"
 
+      - name: Install Xcode Command Line Tools (macOS only)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # Ensure Xcode Command Line Tools are installed
+          xcode-select --install 2>/dev/null || true
+          # Accept license if needed
+          sudo xcodebuild -license accept || true
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -47,16 +55,8 @@ jobs:
           grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs sudo apt-get install -y
 
       - name: Install frontend dependencies
-        run: |
-          # Try npm ci first (faster)
-          if npm ci; then
-            echo "Dependencies installed successfully with npm ci"
-          else
-            echo "npm ci failed, falling back to npm install"
-            # Remove the lock file and regenerate it
-            rm -f package-lock.json
-            npm install
-          fi
+        run: npm ci || (echo "npm ci failed, falling back to npm install" && rm -f package-lock.json && npm install)
+        shell: bash
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
