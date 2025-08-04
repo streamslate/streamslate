@@ -23,7 +23,7 @@ COPY . .
 RUN npm run build
 
 # Rust builder stage
-FROM rust:1.75-slim AS rust-builder
+FROM rust:1.82-slim AS rust-builder
 
 # Install dependencies for Tauri
 RUN apt-get update && apt-get install -y \
