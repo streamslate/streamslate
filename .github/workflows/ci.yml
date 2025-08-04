@@ -52,6 +52,9 @@ jobs:
         if: matrix.platform == 'ubuntu-20.04'
         run: |
           sudo apt-get update
+          # First install build requirements
+          grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs sudo apt-get install -y
+          # Then install dev requirements (excluding the -r line)
           grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs sudo apt-get install -y
 
       - name: Install frontend dependencies
