@@ -77,3 +77,14 @@ When adding new system dependencies:
 - curl, wget for downloads
 - pkg-config for library detection
 - OpenSSL for secure connections (WebSocket TLS)
+
+## Automated Issue Resolution
+
+The pre-push hook includes automatic fixes for common development issues:
+
+**Cypress Installation Issues:**
+
+- Automatically detects corrupted Cypress installations
+- Clears cache and reinstalls Cypress if module resolution fails
+- Retries tests after fix before failing the push
+- Manual fix: `npx cypress cache clear && npx cypress install`

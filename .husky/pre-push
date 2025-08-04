@@ -13,9 +13,30 @@ echo "🧪 Running frontend tests..."
 if [ -d "cypress/e2e" ] && [ "$(find cypress/e2e -name '*.cy.ts' -o -name '*.cy.js' | wc -l)" -gt 0 ]; then
   # Check if dev server is running
   if curl -s -o /dev/null -w "%{http_code}" http://localhost:1420 | grep -q "200\|301\|302"; then
-    if ! npm run test:headless; then
-      echo "❌ Frontend tests failed. Please fix them before pushing."
-      exit 1
+    # Function to fix Cypress if it's broken
+    fix_cypress() {
+      echo "🔧 Detected Cypress installation issue. Attempting automatic fix..."
+      echo "   Clearing Cypress cache..."
+      npx cypress cache clear > /dev/null 2>&1
+      echo "   Reinstalling Cypress..."
+      npx cypress install > /dev/null 2>&1
+      echo "✅ Cypress fix completed. Retrying tests..."
+    }
+    
+    # Try running tests, fix Cypress if it fails with installation issues
+    if ! npm run test:headless 2>&1; then
+      # Check if the error is related to Cypress installation
+      if npm run test:headless 2>&1 | grep -q "Cannot find module\|ENOENT\|cypress.*not found\|installation"; then
+        fix_cypress
+        # Retry tests after fix
+        if ! npm run test:headless; then
+          echo "❌ Frontend tests still failing after Cypress fix. Please check manually."
+          exit 1
+        fi
+      else
+        echo "❌ Frontend tests failed. Please fix them before pushing."
+        exit 1
+      fi
     fi
   else
     echo "⚠️  Dev server not running at http://localhost:1420. Skipping Cypress E2E tests..."
