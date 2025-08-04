@@ -80,9 +80,16 @@ jobs:
           npm run dev &
           # Store the PID
           DEV_PID=$!
-          # Wait for the server to be ready
+          # Wait for the server to be ready (simple retry logic)
           echo "Waiting for dev server to start..."
-          npx wait-on http://localhost:1420 -t 30000
+          for i in {1..30}; do
+            if curl -s http://localhost:1420 > /dev/null; then
+              echo "Dev server is ready!"
+              break
+            fi
+            echo "Waiting... (attempt $i/30)"
+            sleep 1
+          done
           # Run the tests
           npm run test:headless
           # Kill the dev server
