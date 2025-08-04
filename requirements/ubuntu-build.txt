@@ -16,6 +16,7 @@ librsvg2-dev
 pkg-config
 libsoup2.4-dev
 libjavascriptcoregtk-4.1-dev
+libjavascriptcoregtk-4.0-dev
 
 # Additional build tools
 git
