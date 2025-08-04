@@ -1,0 +1,16 @@
+# StreamSlate - Ubuntu/Debian Development Requirements
+#
+# System packages required for development on Ubuntu/Debian systems
+# Install with: xargs -a requirements/ubuntu-dev.txt sudo apt-get install -y
+#
+# Include all build requirements
+-r ubuntu-build.txt
+
+# Additional development tools
+webkit2gtk-driver
+xvfb
+patchelf
+
+# Cross-compilation support (optional)
+gcc-arm-linux-gnueabihf
+gcc-aarch64-linux-gnu

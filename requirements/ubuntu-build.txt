@@ -1,0 +1,19 @@
+# StreamSlate - Ubuntu/Debian Build Requirements
+# 
+# System packages required to build Tauri applications on Ubuntu/Debian systems
+# Install with: xargs -a requirements/ubuntu-build.txt sudo apt-get install -y
+#
+# Core Tauri dependencies (official requirements)
+libwebkit2gtk-4.1-dev
+build-essential
+curl
+wget
+file
+libxdo-dev
+libssl-dev
+libayatana-appindicator3-dev
+librsvg2-dev
+pkg-config
+
+# Additional build tools
+git

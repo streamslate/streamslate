@@ -1,0 +1,20 @@
+# StreamSlate - Arch Linux Build Requirements
+#
+# System packages required to build Tauri applications on Arch Linux systems
+# Install with: xargs -a requirements/arch-build.txt sudo pacman -S --needed
+#
+# Core Tauri dependencies (official requirements)
+webkit2gtk-4.1
+base-devel
+curl
+wget
+file
+openssl
+appmenu-gtk-module
+libappindicator-gtk3
+librsvg
+xdotool
+pkg-config
+
+# Additional build tools
+git
