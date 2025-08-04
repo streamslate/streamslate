@@ -20,7 +20,7 @@ jobs:
           - platform: ubuntu-20.04
             runner: streamslate-runner-set
           - platform: macos-latest
-            runner: self-hosted
+            runner: [self-hosted, macOS, ARM64]
           - platform: windows-latest
             runner: windows-latest
 
