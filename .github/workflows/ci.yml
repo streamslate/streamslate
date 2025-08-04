@@ -87,6 +87,7 @@ jobs:
         run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Start dev server and run frontend tests
+        shell: bash
         run: |
           # Start the dev server in the background
           npm run dev &
