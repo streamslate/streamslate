@@ -92,13 +92,15 @@ jobs:
           # Wait for the server to be ready (simple retry logic)
           echo "Waiting for dev server to start..."
           for i in {1..30}; do
-            if curl -s http://localhost:1420 > /dev/null; then
+            if curl -f -s -o /dev/null http://localhost:1420 2>/dev/null; then
               echo "Dev server is ready!"
               break
             fi
             echo "Waiting... (attempt $i/30)"
-            sleep 1
+            sleep 2
           done
+          # Give it a bit more time to fully initialize
+          sleep 5
           # Run the tests
           npm run test:headless
           # Kill the dev server
