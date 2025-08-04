@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-20.04
-            runner: ubuntu-20.04
+            runner: streamslate-runner-set
           - platform: macos-latest
             runner: macos-latest
           - platform: windows-latest
