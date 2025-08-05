@@ -82,7 +82,12 @@
       "copyright": "",
       "category": "Productivity",
       "shortDescription": "PDF annotation tool for streamers",
-      "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration"
+      "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration",
+      "macOS": {
+        "signingIdentity": null,
+        "hardenedRuntime": true,
+        "entitlements": null
+      }
     },
     "security": {
       "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' asset: https://asset.localhost http://localhost:* ws://localhost:*; font-src 'self' data:;"

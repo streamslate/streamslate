@@ -50,3 +50,4 @@ coverage/
 *.msi
 *.exe
 *.AppImage
+certs/Cody_Blevins.p12
