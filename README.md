@@ -5,7 +5,7 @@ Mark it. Show it. – A lightning-fast PDF annotator built specifically for stre
 <p align="center">
   <a href="https://github.com/streamslate/streamslate/actions"><img src="https://github.com/streamslate/streamslate/workflows/CI/badge.svg" alt="build status"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPLv3%20or%20Commercial-blue" alt="license"></a>
-  <a href="https://discord.gg/streamslate"><img src="https://img.shields.io/discord/000000000000000000?label=discord" alt="discord"></a>
+  <a href="https://discord.gg/streamslate"><img src="https://img.shields.io/discord/streamslate?label=discord" alt="discord"></a>
 </p>
 
 ⸻

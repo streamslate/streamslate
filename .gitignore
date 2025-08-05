@@ -51,3 +51,16 @@ coverage/
 *.exe
 *.AppImage
 certs/Cody_Blevins.p12
+certs/tls.key
+.gitignore
+.gitignore
+.gitignore
+certs/fullchain.pem
+certs/developerID_application.cer
+certs/cf_access_secret
+certs/cf_client_id
+certs/ca-additional.pem
+certs/tls.crt
+certs/origin.crt
+.gitignore
+.gitignore

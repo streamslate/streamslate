@@ -84,9 +84,14 @@
       "shortDescription": "PDF annotation tool for streamers",
       "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration",
       "macOS": {
-        "signingIdentity": null,
+        "signingIdentity": "$APPLE_SIGNING_IDENTITY",
         "hardenedRuntime": true,
         "entitlements": null
+      },
+      "windows": {
+        "certificateThumbprint": null,
+        "digestAlgorithm": "sha256",
+        "timestampUrl": ""
       }
     },
     "security": {
