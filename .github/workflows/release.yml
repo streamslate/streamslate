@@ -110,6 +110,33 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
+      - name: Import Apple Certificate and Setup Keychain (macOS only)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          # Create keychain
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+
+          # Download and import Apple Intermediate Certificate
+          wget -O AppleWWDRCAG3.cer "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer"
+          security import AppleWWDRCAG3.cer -k build.keychain -T /usr/bin/codesign
+
+          # Set partition list for codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+
+          # Debug: List available identities
+          echo "Available signing identities:"
+          security find-identity -v -p codesigning build.keychain
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -136,6 +163,14 @@ jobs:
         run: npm ci || (echo "npm ci failed, falling back to npm install" && rm -f package-lock.json && npm install)
         shell: bash
 
+      - name: Clear npm cache and reinstall (fix Tauri CLI binary issue)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          npm cache clean --force
+          rm -rf node_modules package-lock.json
+          npm install
+        shell: bash
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0.5.5
         env:
@@ -148,7 +183,6 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: "--config src-tauri/tauri.conf.json"
           includeUpdaterJson: false
 
   docker-release:
