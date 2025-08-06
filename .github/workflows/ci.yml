@@ -62,8 +62,19 @@ jobs:
         uses: microsoft/setup-msbuild@v2
 
       - name: Install frontend dependencies
-        run: npm ci || (echo "npm ci failed, falling back to npm install" && rm -f package-lock.json && npm install)
         shell: bash
+        run: |
+          if [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]] || [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            # Platform-specific npm dependency handling for native modules
+            echo "Handling native module dependencies for ${{ matrix.platform }}..."
+            npm cache clean --force
+            rm -rf node_modules package-lock.json
+            npm install --no-optional
+            npm install
+          else
+            # Standard install for other platforms
+            npm ci || (echo "npm ci failed, falling back to npm install" && rm -f package-lock.json && npm install)
+          fi
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2

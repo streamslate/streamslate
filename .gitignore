@@ -64,3 +64,4 @@ certs/tls.crt
 certs/origin.crt
 .gitignore
 .gitignore
+.github/workflows/release.yml
