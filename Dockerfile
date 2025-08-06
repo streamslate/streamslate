@@ -13,10 +13,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with proper handling for multi-arch builds
-# Use npm ci for reproducible builds and force rebuild of native modules
-RUN npm ci --include=optional && \
-    npm rebuild --force
+# Install dependencies with workaround for npm optional dependencies bug
+# https://github.com/npm/cli/issues/4828
+RUN rm -rf package-lock.json node_modules && \
+    npm install && \
+    npm install
 
 # Copy source code
 COPY . .
