@@ -13,8 +13,11 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with fallback
-RUN npm ci || (echo "npm ci failed, falling back to npm install" && rm -f package-lock.json && npm install)
+# Install dependencies with better handling for optional deps
+RUN npm cache clean --force && \
+    npm install --ignore-scripts --no-optional && \
+    npm rebuild && \
+    npm install
 
 # Copy source code
 COPY . .

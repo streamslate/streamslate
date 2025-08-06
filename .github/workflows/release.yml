@@ -51,6 +51,9 @@ jobs:
             echo "::warning::Tag $TAG does not exist in repository"
             if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
               echo "::notice::Creating tag $TAG from current commit"
+              # Configure git for tag creation
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
               git tag "$TAG"
               git push origin "$TAG"
             fi
@@ -113,13 +116,14 @@ jobs:
       - name: Import Apple Certificate and Setup Keychain (macOS only)
         if: matrix.platform == 'macos-latest'
         run: |
-          # Create keychain
-          security create-keychain -p "" build.keychain
+          # Create keychain with password
+          KEYCHAIN_PASSWORD="actions"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
 
-          # Import certificate with better debugging
+          # Import certificate
           echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
           echo "Importing certificate..."
           security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
@@ -129,20 +133,28 @@ jobs:
           wget -O AppleWWDRCAG3.cer "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer"
           security import AppleWWDRCAG3.cer -k build.keychain -T /usr/bin/codesign
 
-          # Set partition list for codesign with more specific permissions
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
+          # Set partition list for codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
-          # Debug: Check all certificates in keychain
-          echo "=== All certificates in keychain ==="
-          security find-certificate -a build.keychain
+          # Add keychain to search list
+          security list-keychains -d user -s build.keychain $(security list-keychains -d user | sed 's/\"//g')
 
-          # Debug: List available identities with more detail
-          echo "=== Code signing identities ==="
-          security find-identity -v -p codesigning build.keychain
+          # Extract signing identity
+          SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | awk -F'"' '{print $2}' | head -1)
 
-          # Debug: Check system identities as well
-          echo "=== System code signing identities ==="
-          security find-identity -v -p codesigning
+          if [ -z "$SIGNING_IDENTITY" ]; then
+            echo "::error::No signing identity found!"
+            exit 1
+          fi
+
+          echo "Detected signing identity: $SIGNING_IDENTITY"
+          echo "APPLE_SIGNING_IDENTITY=$SIGNING_IDENTITY" >> $GITHUB_ENV
+
+          # Debug: Verify keychain is unlocked and accessible
+          security show-keychain-info build.keychain
+
+          # Clean up certificate file
+          rm -f certificate.p12 AppleWWDRCAG3.cer
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -177,7 +189,8 @@ jobs:
             echo "Handling native module dependencies for ${{ matrix.platform }}..."
             npm cache clean --force
             rm -rf node_modules package-lock.json
-            npm install --no-optional
+            npm install --ignore-scripts --no-optional
+            npm rebuild
             npm install
           else
             # Standard install for other platforms
@@ -190,7 +203,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          # APPLE_SIGNING_IDENTITY is already set in the environment from the keychain step
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}

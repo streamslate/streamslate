@@ -18,7 +18,7 @@ jobs:
       matrix:
         include:
           - platform: ubuntu-22.04
-            runner: streamslate-runner-set
+            runner: ubuntu-22.04
           - platform: macos-latest
             runner: macos-latest
           - platform: windows-latest
@@ -69,7 +69,8 @@ jobs:
             echo "Handling native module dependencies for ${{ matrix.platform }}..."
             npm cache clean --force
             rm -rf node_modules package-lock.json
-            npm install --no-optional
+            npm install --ignore-scripts --no-optional
+            npm rebuild
             npm install
           else
             # Standard install for other platforms
