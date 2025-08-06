@@ -13,11 +13,10 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with better handling for optional deps
-RUN npm cache clean --force && \
-    npm install --ignore-scripts --no-optional && \
-    npm rebuild && \
-    npm install
+# Install dependencies with proper handling for multi-arch builds
+# Use npm ci for reproducible builds and force rebuild of native modules
+RUN npm ci --include=optional && \
+    npm rebuild --force
 
 # Copy source code
 COPY . .
