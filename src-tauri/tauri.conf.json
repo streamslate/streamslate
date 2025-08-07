@@ -86,7 +86,7 @@
       "macOS": {
         "hardenedRuntime": true,
         "entitlements": null,
-        "signingIdentity": "-"
+        "signingIdentity": null
       },
       "windows": {
         "certificateThumbprint": null,
