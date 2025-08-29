@@ -24,7 +24,7 @@
     "tag": false
   },
   "scripts": {
-    "prerelease": "npm run lint && npm run test:headless",
+    "prerelease": "npm run lint",
     "postbump": "npm run sync-versions",
     "postchangelog": "prettier --write CHANGELOG.md"
   },

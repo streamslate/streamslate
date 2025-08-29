@@ -127,7 +127,7 @@ jobs:
 
           # Add keychain to search list BEFORE importing certificates
           security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | sed 's/"//g')
-          security set-default-keychain -d user -s $KEYCHAIN_PATH
+          security default-keychain -d user -s $KEYCHAIN_PATH
 
           # Import certificate with error checking
           echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
