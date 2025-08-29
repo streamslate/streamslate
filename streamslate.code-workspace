@@ -1,19 +1,19 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../../Downloads/logs_42850773174"
-		}
-	],
-	"settings": {
-		"typescript.preferences.includePackageJsonAutoImports": "auto",
-		"files.associations": {
-			"*.rs": "rust"
-		},
-		"emmet.includeLanguages": {
-			"rust": "html"
-		}
-	}
+  "folders": [
+    {
+      "path": ".",
+    },
+    {
+      "path": "../../Downloads/logs_42850773174",
+    },
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "files.associations": {
+      "*.rs": "rust",
+    },
+    "emmet.includeLanguages": {
+      "rust": "html",
+    },
+  },
 }
