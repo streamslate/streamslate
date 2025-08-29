@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2-beta.4](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.3...v0.0.2-beta.4) (2025-08-29)
+
+### 🔧 Chores
+
+- **build:** optimize Dockerfile and ignore Cargo.lock ([bb15fe2](https://github.com/cblevins/streamslate/commit/bb15fe2cf96859ec8d4f700d1c686e8b2cbe005e))
+
 ### [0.0.2-beta.3](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.2...v0.0.2-beta.3) (2025-08-29)
 
 ### 🔧 Chores
