@@ -429,3 +429,7 @@ The combination of standard-version, GitHub CLI, and VSCode tasks provides a pro
 ---
 
 _Research compiled on January 23, 2025_
+
+### Windows MSI version normalization (implementation note)
+
+WiX/MSI requires a numeric-only optional pre-release that maps to the 4th version field and must be ≤ 65535. To keep SemVer tags like `v0.0.2-beta.2` but satisfy MSI constraints, the GitHub Actions workflow runs `scripts/normalize-windows-version.js` on Windows only, converting `0.0.2-beta.2` → `0.0.2-2`, then syncs `Cargo.toml` and `src-tauri/tauri.conf.json` via `scripts/sync-versions.js`. macOS and Linux builds retain the original prerelease string.
