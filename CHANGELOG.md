@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2-beta.5](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.4...v0.0.2-beta.5) (2025-08-29)
+
+### 🔧 Chores
+
+- **build:** update Dockerfile and version for release ([0114a8d](https://github.com/cblevins/streamslate/commit/0114a8de48848473cec3aa91f7293359bb5103ca))
+
 ### [0.0.2-beta.4](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.3...v0.0.2-beta.4) (2025-08-29)
 
 ### 🔧 Chores
