@@ -1,8 +1,9 @@
+# syntax=docker/dockerfile:1.7
 # Multi-stage build for StreamSlate
 FROM node:18-slim AS frontend-builder
 
 # Install dependencies for building
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
@@ -13,14 +14,14 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with workaround for npm optional dependencies bug
-# https://github.com/npm/cli/issues/4828
-RUN rm -rf package-lock.json node_modules && \
-    npm install && \
-    npm install
+# Install dependencies deterministically
+# Use BuildKit cache to speed up repeated installs
+RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Copy source code
-COPY . .
+# Copy only the frontend sources to avoid cache busts
+COPY src ./src
+COPY public ./public
+COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.config.js ./
 
 # Build frontend
 RUN npm run build
@@ -30,7 +31,7 @@ FROM rust:1.82-slim AS rust-builder
 
 # Install dependencies for Tauri
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-dev \
     libwebkit2gtk-4.0-dev \
     libayatana-appindicator3-dev \
@@ -41,21 +42,30 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy Rust files
-COPY src-tauri ./src-tauri
+# Pre-cache Rust dependencies by copying manifests first
+COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/src-tauri/target \
+    cargo fetch --locked
+
+# Copy Rust sources (after fetch so code changes don't invalidate dep cache)
+COPY src-tauri/src ./src-tauri/src
+COPY src-tauri/build.rs ./src-tauri/build.rs
 
 # Copy built frontend from previous stage
 COPY --from=frontend-builder /app/dist ./dist
 
-# Build Rust binary
+# Build Rust binary with cached registry/target
 WORKDIR /app/src-tauri
-RUN cargo build --release
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/src-tauri/target \
+    cargo build --release --locked
 
 # Final runtime stage
 FROM ubuntu:22.04
 
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
     libwebkit2gtk-4.0-37 \
     libayatana-appindicator3-1 \

@@ -10,7 +10,7 @@ yarn-error.log
 # Rust
 target
 **/*.rs.bk
-Cargo.lock
+/Cargo.lock
 
 # IDE
 .vscode
@@ -47,3 +47,11 @@ docs
 
 # Tauri
 src-tauri/target
+
+# Secrets / not needed in image
+certs/
+
+# Tests and dev-only assets
+cypress/
+requirements/
+.husky/
