@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2-beta.2](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.1...v0.0.2-beta.2) (2025-08-29)
+
+### 🔧 Chores
+
+- **release:** update version and release workflow ([a21c2c9](https://github.com/cblevins/streamslate/commit/a21c2c9f2e377e0900792b1b20373c8c2ac398b4))
+
 ### [0.0.2-beta.1](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.0...v0.0.2-beta.1) (2025-08-29)
 
 ### 0.0.2-beta.0 (2025-08-29)
