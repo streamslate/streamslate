@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.2-beta.3](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.2...v0.0.2-beta.3) (2025-08-29)
+
+### 🔧 Chores
+
+- **build:** normalize Windows MSI version for releases ([0292624](https://github.com/cblevins/streamslate/commit/02926248807a75928e32495cab256311dcf2b6ac))
+
 ### [0.0.2-beta.2](https://github.com/cblevins/streamslate/compare/v0.0.2-beta.1...v0.0.2-beta.2) (2025-08-29)
 
 ### 🔧 Chores
