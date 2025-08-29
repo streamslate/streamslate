@@ -26,6 +26,17 @@ import globals from "globals";
 export default [
   js.configs.recommended,
   {
+    files: ["**/*.{js,mjs,cjs}"],
+    languageOptions: {
+      ecmaVersion: 2020,
+      sourceType: "module",
+      globals: {
+        ...globals.node,
+        ...globals.es2020,
+      },
+    },
+  },
+  {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       parser: typescriptParser,
