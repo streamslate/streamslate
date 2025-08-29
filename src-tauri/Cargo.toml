@@ -1,6 +1,6 @@
 [package]
 name = "streamslate"
-version = "0.0.2-beta.3"
+version = "0.0.2-beta.4"
 description = "A desktop PDF-annotation app for live streamers and YouTubers"
 authors = ["StreamSlate Contributors"]
 license = "GPL-3.0-or-later"

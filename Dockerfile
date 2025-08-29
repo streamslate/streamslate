@@ -42,11 +42,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Pre-cache Rust dependencies by copying manifests first
-COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
+# Pre-cache Rust dependencies by copying manifest first (lock may be absent)
+COPY src-tauri/Cargo.toml ./src-tauri/
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo fetch --locked
+    cargo fetch
 
 # Copy Rust sources (after fetch so code changes don't invalidate dep cache)
 COPY src-tauri/src ./src-tauri/src
@@ -59,7 +59,7 @@ COPY --from=frontend-builder /app/dist ./dist
 WORKDIR /app/src-tauri
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo build --release --locked
+    cargo build --release
 
 # Final runtime stage
 FROM ubuntu:22.04
