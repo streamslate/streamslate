@@ -65,3 +65,4 @@ certs/origin.crt
 .gitignore
 .gitignore
 .github/workflows/release.yml
+certs/AuthKey_Y9W3R75FTF.p8

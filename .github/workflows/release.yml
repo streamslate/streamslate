@@ -118,40 +118,55 @@ jobs:
         run: |
           # Create keychain with password
           KEYCHAIN_PASSWORD="actions"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
-          security set-keychain-settings -t 3600 -u build.keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
-          # Import certificate
+          # Create new keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Add keychain to search list BEFORE importing certificates
+          security list-keychains -d user -s $KEYCHAIN_PATH $(security list-keychains -d user | sed 's/"//g')
+          security set-default-keychain -d user -s $KEYCHAIN_PATH
+
+          # Import certificate with error checking
           echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
           echo "Importing certificate..."
-          security import certificate.p12 -k build.keychain -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          if ! security import certificate.p12 -k $KEYCHAIN_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security; then
+            echo "Error: Failed to import certificate"
+            exit 1
+          fi
 
           # Download and import Apple Intermediate Certificate
           echo "Downloading Apple Intermediate Certificate..."
           wget -O AppleWWDRCAG3.cer "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer"
-          security import AppleWWDRCAG3.cer -k build.keychain -T /usr/bin/codesign
+          security import AppleWWDRCAG3.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
 
           # Set partition list for codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
 
-          # Add keychain to search list
-          security list-keychains -d user -s build.keychain $(security list-keychains -d user | sed 's/\"//g')
-
-          # Extract signing identity
-          SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep "Developer ID Application" | awk -F'"' '{print $2}' | head -1)
+          # Extract and verify signing identity
+          SIGNING_IDENTITY=$(security find-identity -v -p codesigning $KEYCHAIN_PATH | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
 
           if [ -z "$SIGNING_IDENTITY" ]; then
-            echo "::error::No signing identity found!"
+            echo "Error: No signing identity found in keychain"
+            security find-identity -v -p codesigning $KEYCHAIN_PATH
             exit 1
           fi
 
-          echo "Detected signing identity: $SIGNING_IDENTITY"
+          echo "Found signing identity: $SIGNING_IDENTITY"
           echo "APPLE_SIGNING_IDENTITY=$SIGNING_IDENTITY" >> $GITHUB_ENV
 
+          # Verify the certificate can be used
+          if ! security find-identity -v -p codesigning $KEYCHAIN_PATH | grep -q "$SIGNING_IDENTITY"; then
+            echo "Error: Signing identity verification failed"
+            exit 1
+          fi
+
           # Debug: Verify keychain is unlocked and accessible
-          security show-keychain-info build.keychain
+          security show-keychain-info $KEYCHAIN_PATH
+
+          echo "Certificate setup completed successfully"
 
           # Clean up certificate file
           rm -f certificate.p12 AppleWWDRCAG3.cer
@@ -204,8 +219,10 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          # API Key authentication (instead of APPLE_ID/APPLE_PASSWORD)
+          APPLE_API_ISSUER: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_ISSUER || '' }}
+          APPLE_API_KEY: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY || '' }}
+          APPLE_API_KEY_BASE64: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY_BASE64 || '' }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}

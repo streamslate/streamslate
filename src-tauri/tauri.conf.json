@@ -85,7 +85,7 @@
       "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration",
       "macOS": {
         "hardenedRuntime": true,
-        "entitlements": null,
+        "entitlements": "./entitlements.plist",
         "signingIdentity": null
       },
       "windows": {
