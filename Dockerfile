@@ -46,7 +46,7 @@ WORKDIR /app
 COPY src-tauri/Cargo.toml ./src-tauri/
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo fetch
+    cargo fetch --manifest-path ./src-tauri/Cargo.toml
 
 # Copy Rust sources (after fetch so code changes don't invalidate dep cache)
 COPY src-tauri/src ./src-tauri/src
