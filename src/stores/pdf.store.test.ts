@@ -160,7 +160,9 @@ describe("usePDFStore", () => {
   describe("setFitMode", () => {
     it("should set fit mode to FIT_WIDTH", () => {
       usePDFStore.getState().setFitMode(FitMode.FIT_WIDTH);
-      expect(usePDFStore.getState().viewerState.fitMode).toBe(FitMode.FIT_WIDTH);
+      expect(usePDFStore.getState().viewerState.fitMode).toBe(
+        FitMode.FIT_WIDTH
+      );
     });
 
     it("should set fit mode to FIT_PAGE", () => {
@@ -353,9 +355,7 @@ describe("usePDFStore", () => {
     });
 
     it("should clear error when starting to load", () => {
-      usePDFStore
-        .getState()
-        .setError({ code: "TEST", message: "Test error" });
+      usePDFStore.getState().setError({ code: "TEST", message: "Test error" });
       usePDFStore.getState().setLoading(true, LoadingStage.OPENING);
       expect(usePDFStore.getState().error).toBeNull();
     });
@@ -376,9 +376,7 @@ describe("usePDFStore", () => {
     });
 
     it("should clear error when set to null", () => {
-      usePDFStore
-        .getState()
-        .setError({ code: "TEST", message: "Test" });
+      usePDFStore.getState().setError({ code: "TEST", message: "Test" });
       usePDFStore.getState().setError(null);
       expect(usePDFStore.getState().error).toBeNull();
     });
@@ -424,7 +422,9 @@ describe("usePDFStore", () => {
         });
         usePDFStore.getState().addAnnotation(annotation);
 
-        usePDFStore.getState().updateAnnotation("ann-1", { content: "Updated" });
+        usePDFStore
+          .getState()
+          .updateAnnotation("ann-1", { content: "Updated" });
 
         const pageAnnotations = usePDFStore.getState().getPageAnnotations(1);
         expect(pageAnnotations[0].content).toBe("Updated");
@@ -439,7 +439,9 @@ describe("usePDFStore", () => {
         });
         usePDFStore.getState().addAnnotation(annotation);
 
-        usePDFStore.getState().updateAnnotation("ann-1", { content: "Updated" });
+        usePDFStore
+          .getState()
+          .updateAnnotation("ann-1", { content: "Updated" });
 
         const pageAnnotations = usePDFStore.getState().getPageAnnotations(1);
         expect(pageAnnotations[0].color).toBe("#ff0000");
@@ -450,7 +452,9 @@ describe("usePDFStore", () => {
         usePDFStore.getState().addAnnotation(annotation);
 
         // Should not throw
-        usePDFStore.getState().updateAnnotation("non-existent", { content: "X" });
+        usePDFStore
+          .getState()
+          .updateAnnotation("non-existent", { content: "X" });
 
         const pageAnnotations = usePDFStore.getState().getPageAnnotations(1);
         expect(pageAnnotations[0].content).toBe("Test annotation");
@@ -526,13 +530,17 @@ describe("usePDFStore", () => {
       });
 
       it("should return true when not on last page", () => {
-        usePDFStore.getState().setDocument(createMockDocument({ pageCount: 10 }));
+        usePDFStore
+          .getState()
+          .setDocument(createMockDocument({ pageCount: 10 }));
         usePDFStore.getState().setCurrentPage(5);
         expect(usePDFStore.getState().canGoToNextPage()).toBe(true);
       });
 
       it("should return false when on last page", () => {
-        usePDFStore.getState().setDocument(createMockDocument({ pageCount: 10 }));
+        usePDFStore
+          .getState()
+          .setDocument(createMockDocument({ pageCount: 10 }));
         usePDFStore.getState().setCurrentPage(10);
         expect(usePDFStore.getState().canGoToNextPage()).toBe(false);
       });
@@ -551,14 +559,18 @@ describe("usePDFStore", () => {
 
     describe("goToNextPage", () => {
       it("should increment page when possible", () => {
-        usePDFStore.getState().setDocument(createMockDocument({ pageCount: 10 }));
+        usePDFStore
+          .getState()
+          .setDocument(createMockDocument({ pageCount: 10 }));
         usePDFStore.getState().setCurrentPage(5);
         usePDFStore.getState().goToNextPage();
         expect(usePDFStore.getState().viewerState.currentPage).toBe(6);
       });
 
       it("should not increment page when on last page", () => {
-        usePDFStore.getState().setDocument(createMockDocument({ pageCount: 10 }));
+        usePDFStore
+          .getState()
+          .setDocument(createMockDocument({ pageCount: 10 }));
         usePDFStore.getState().setCurrentPage(10);
         usePDFStore.getState().goToNextPage();
         expect(usePDFStore.getState().viewerState.currentPage).toBe(10);
