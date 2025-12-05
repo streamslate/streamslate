@@ -175,9 +175,7 @@ pub fn is_within_allowed_scope(path: &Path) -> bool {
     .collect();
 
     // Check if the path starts with any allowed directory
-    allowed_dirs
-        .iter()
-        .any(|allowed| path.starts_with(allowed))
+    allowed_dirs.iter().any(|allowed| path.starts_with(allowed))
 }
 
 /// Sanitize a string for logging (remove potentially sensitive data)

@@ -44,7 +44,11 @@ pub struct PdfPage {
 }
 
 /// Extract a string value from a PDF dictionary
-fn extract_string_from_dict(doc: &Document, dict: &lopdf::Dictionary, key: &[u8]) -> Option<String> {
+fn extract_string_from_dict(
+    doc: &Document,
+    dict: &lopdf::Dictionary,
+    key: &[u8],
+) -> Option<String> {
     dict.get(key).ok().and_then(|obj| {
         match obj {
             lopdf::Object::String(bytes, _) => {
@@ -71,15 +75,13 @@ fn extract_string_from_dict(doc: &Document, dict: &lopdf::Dictionary, key: &[u8]
                         .ok()
                 }
             }
-            lopdf::Object::Reference(obj_id) => {
-                doc.get_object(*obj_id).ok().and_then(|resolved| {
-                    if let lopdf::Object::String(bytes, _) = resolved {
-                        String::from_utf8(bytes.clone()).ok()
-                    } else {
-                        None
-                    }
-                })
-            }
+            lopdf::Object::Reference(obj_id) => doc.get_object(*obj_id).ok().and_then(|resolved| {
+                if let lopdf::Object::String(bytes, _) = resolved {
+                    String::from_utf8(bytes.clone()).ok()
+                } else {
+                    None
+                }
+            }),
             _ => None,
         }
     })
@@ -91,13 +93,36 @@ fn parse_pdf_date(date_str: &str) -> Option<String> {
     if cleaned.len() >= 4 {
         // Extract year at minimum
         let year = &cleaned[0..4];
-        let month = if cleaned.len() >= 6 { &cleaned[4..6] } else { "01" };
-        let day = if cleaned.len() >= 8 { &cleaned[6..8] } else { "01" };
-        let hour = if cleaned.len() >= 10 { &cleaned[8..10] } else { "00" };
-        let minute = if cleaned.len() >= 12 { &cleaned[10..12] } else { "00" };
-        let second = if cleaned.len() >= 14 { &cleaned[12..14] } else { "00" };
+        let month = if cleaned.len() >= 6 {
+            &cleaned[4..6]
+        } else {
+            "01"
+        };
+        let day = if cleaned.len() >= 8 {
+            &cleaned[6..8]
+        } else {
+            "01"
+        };
+        let hour = if cleaned.len() >= 10 {
+            &cleaned[8..10]
+        } else {
+            "00"
+        };
+        let minute = if cleaned.len() >= 12 {
+            &cleaned[10..12]
+        } else {
+            "00"
+        };
+        let second = if cleaned.len() >= 14 {
+            &cleaned[12..14]
+        } else {
+            "00"
+        };
 
-        Some(format!("{}-{}-{}T{}:{}:{}Z", year, month, day, hour, minute, second))
+        Some(format!(
+            "{}-{}-{}T{}:{}:{}Z",
+            year, month, day, hour, minute, second
+        ))
     } else {
         None
     }
@@ -182,13 +207,15 @@ pub async fn open_pdf(path: String, state: State<'_, AppState>) -> Result<PdfInf
         return Err("PDF file does not exist".to_string());
     }
 
-    if !pdf_path.extension().map_or(false, |ext| ext.eq_ignore_ascii_case("pdf")) {
+    if !pdf_path
+        .extension()
+        .map_or(false, |ext| ext.eq_ignore_ascii_case("pdf"))
+    {
         return Err("File is not a PDF".to_string());
     }
 
     // Get file metadata
-    let metadata =
-        std::fs::metadata(&pdf_path).map_err(|_| "Unable to read file".to_string())?;
+    let metadata = std::fs::metadata(&pdf_path).map_err(|_| "Unable to read file".to_string())?;
 
     // Load PDF with lopdf
     let doc = Document::load(&pdf_path).map_err(|_| "Unable to open PDF file".to_string())?;
