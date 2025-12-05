@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build for StreamSlate
-FROM node:18-slim AS frontend-builder
+FROM node:20.18-slim AS frontend-builder
 
 # Install dependencies for building
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,11 +42,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Pre-cache Rust dependencies by copying manifest first (lock may be absent)
-COPY src-tauri/Cargo.toml ./src-tauri/
+# Pre-cache Rust dependencies by copying manifest and lock file
+COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo fetch --manifest-path ./src-tauri/Cargo.toml
+    cargo fetch --manifest-path ./src-tauri/Cargo.toml --locked
 
 # Copy Rust sources (after fetch so code changes don't invalidate dep cache)
 COPY src-tauri/src ./src-tauri/src
@@ -59,7 +59,7 @@ COPY --from=frontend-builder /app/dist ./dist
 WORKDIR /app/src-tauri
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo build --release
+    cargo build --release --locked
 
 # Final runtime stage
 FROM ubuntu:22.04
@@ -87,6 +87,10 @@ USER streamslate
 
 # Set working directory
 WORKDIR /home/streamslate
+
+# Healthcheck - verify binary exists and is executable
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD test -x /usr/local/bin/streamslate || exit 1
 
 # Entry point
 ENTRYPOINT ["/usr/local/bin/streamslate"]

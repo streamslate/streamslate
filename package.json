@@ -4,6 +4,9 @@
   "version": "0.0.2-beta.5",
   "description": "A desktop PDF-annotation app for live streamers and YouTubers",
   "type": "module",
+  "engines": {
+    "node": ">=20.18.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -14,6 +17,10 @@
     "tauri:build:win": "node scripts/normalize-windows-version.js && node scripts/sync-versions.js && tauri build",
     "test": "cypress open",
     "test:headless": "cypress run",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:unit:coverage": "vitest run --coverage",
+    "test:all": "npm run test:unit && npm run test:headless",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "lint:fix": "eslint . --ext ts,tsx --fix",
     "format": "prettier --write .",
@@ -51,11 +58,15 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@tauri-apps/cli": "^1.6.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-react": "^4.3.3",
+    "@vitest/coverage-v8": "^4.0.15",
     "autoprefixer": "^10.4.20",
     "cypress": "^13.16.1",
     "eslint": "^9.16.0",
@@ -63,13 +74,15 @@
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^16.3.0",
     "husky": "^9.1.7",
+    "jsdom": "^27.2.0",
     "lint-staged": "^15.2.10",
     "postcss": "^8.5.1",
     "prettier": "^3.4.2",
     "standard-version": "^9.5.0",
     "tailwindcss": "^3.4.15",
     "typescript": "^5.7.2",
-    "vite": "^6.0.2"
+    "vite": "^6.0.2",
+    "vitest": "^4.0.15"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

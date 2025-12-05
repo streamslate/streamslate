@@ -16,16 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//! Tauri commands for StreamSlate application
+//! WebSocket server for streaming integrations
 //!
-//! This module contains all the Tauri commands that can be invoked from the frontend.
-//! Commands are organized by functionality into separate modules.
+//! This module provides a WebSocket server that allows external tools
+//! (OBS, Stream Deck, etc.) to communicate with StreamSlate.
 
-pub mod pdf;
-pub mod presenter;
-pub mod websocket;
+pub mod messages;
+pub mod server;
 
-// Re-export all commands for easy access
-pub use pdf::*;
-pub use presenter::*;
-pub use websocket::*;
+pub use messages::*;
+pub use server::*;

@@ -17,10 +17,15 @@
  */
 
 //! Application state management for StreamSlate
+//!
+//! Some state accessors are prepared for future integration features.
 
+#![allow(dead_code)]
+
+use lopdf::Document;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfState {
@@ -74,18 +79,28 @@ pub struct IntegrationState {
 }
 
 /// Main application state
-#[derive(Debug)]
 pub struct AppState {
-    #[allow(dead_code)]
     pub pdf: Arc<Mutex<PdfState>>,
-    #[allow(dead_code)]
     pub presenter: Arc<Mutex<PresenterState>>,
-    #[allow(dead_code)]
     pub websocket: Arc<Mutex<WebSocketState>>,
-    #[allow(dead_code)]
     pub integration: Arc<Mutex<IntegrationState>>,
-    #[allow(dead_code)]
-    pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>, // page_number -> annotations
+    pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>,
+    /// Cached PDF document for page operations
+    pdf_document: Arc<Mutex<Option<Document>>>,
+}
+
+// Implement Debug manually since lopdf::Document doesn't implement Debug
+impl std::fmt::Debug for AppState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppState")
+            .field("pdf", &self.pdf)
+            .field("presenter", &self.presenter)
+            .field("websocket", &self.websocket)
+            .field("integration", &self.integration)
+            .field("annotations", &self.annotations)
+            .field("pdf_document", &"<Document>")
+            .finish()
+    }
 }
 
 impl Default for PdfState {
@@ -133,11 +148,11 @@ impl AppState {
             websocket: Arc::new(Mutex::new(WebSocketState::default())),
             integration: Arc::new(Mutex::new(IntegrationState::default())),
             annotations: Arc::new(Mutex::new(HashMap::new())),
+            pdf_document: Arc::new(Mutex::new(None)),
         }
     }
 
     /// Get current PDF state
-    #[allow(dead_code)]
     pub fn get_pdf_state(&self) -> Result<PdfState, String> {
         self.pdf
             .lock()
@@ -146,7 +161,6 @@ impl AppState {
     }
 
     /// Update PDF state
-    #[allow(dead_code)]
     pub fn update_pdf_state<F>(&self, update_fn: F) -> Result<(), String>
     where
         F: FnOnce(&mut PdfState),
@@ -158,7 +172,6 @@ impl AppState {
     }
 
     /// Get current presenter state
-    #[allow(dead_code)]
     pub fn get_presenter_state(&self) -> Result<PresenterState, String> {
         self.presenter
             .lock()
@@ -167,7 +180,6 @@ impl AppState {
     }
 
     /// Update presenter state
-    #[allow(dead_code)]
     pub fn update_presenter_state<F>(&self, update_fn: F) -> Result<(), String>
     where
         F: FnOnce(&mut PresenterState),
@@ -179,7 +191,6 @@ impl AppState {
     }
 
     /// Get WebSocket state
-    #[allow(dead_code)]
     pub fn get_websocket_state(&self) -> Result<WebSocketState, String> {
         self.websocket
             .lock()
@@ -187,13 +198,50 @@ impl AppState {
             .map_err(|e| format!("Failed to lock WebSocket state: {e}"))
     }
 
+    /// Update WebSocket state
+    pub fn update_websocket_state<F>(&self, update_fn: F) -> Result<(), String>
+    where
+        F: FnOnce(&mut WebSocketState),
+    {
+        self.websocket
+            .lock()
+            .map(|mut state| update_fn(&mut state))
+            .map_err(|e| format!("Failed to lock WebSocket state: {e}"))
+    }
+
     /// Get integration state
-    #[allow(dead_code)]
     pub fn get_integration_state(&self) -> Result<IntegrationState, String> {
         self.integration
             .lock()
             .map(|state| state.clone())
             .map_err(|e| format!("Failed to lock integration state: {e}"))
+    }
+
+    /// Store the PDF document for later operations
+    pub fn set_pdf_document(&self, doc: Document) -> Result<(), String> {
+        self.pdf_document
+            .lock()
+            .map(|mut guard| {
+                *guard = Some(doc);
+            })
+            .map_err(|e| format!("Failed to lock PDF document: {e}"))
+    }
+
+    /// Get a reference to the PDF document
+    pub fn get_pdf_document(&self) -> Result<MutexGuard<'_, Option<Document>>, String> {
+        self.pdf_document
+            .lock()
+            .map_err(|e| format!("Failed to lock PDF document: {e}"))
+    }
+
+    /// Clear the PDF document from memory
+    pub fn clear_pdf_document(&self) -> Result<(), String> {
+        self.pdf_document
+            .lock()
+            .map(|mut guard| {
+                *guard = None;
+            })
+            .map_err(|e| format!("Failed to lock PDF document: {e}"))
     }
 }
 
