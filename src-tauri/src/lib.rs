@@ -17,10 +17,15 @@
  */
 
 mod commands;
+mod errors;
+mod security;
 mod state;
+mod websocket;
 
 use commands::*;
 use state::AppState;
+use tauri::Manager;
+use websocket::init_websocket_server;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -46,11 +51,38 @@ pub fn run() {
             update_presenter_config,
             get_presenter_state,
             toggle_presenter_mode,
-            set_presenter_page
+            set_presenter_page,
+            // WebSocket commands
+            get_websocket_status,
+            broadcast_websocket_message,
+            broadcast_page_change,
+            broadcast_pdf_opened,
+            broadcast_pdf_closed,
+            broadcast_presenter_mode
         ])
-        .setup(|_app| {
-            // Initialize WebSocket server on port 11451
-            // This would be implemented in a future phase
+        .setup(|app| {
+            let app_handle = app.handle();
+
+            // Initialize and start WebSocket server on port 11451
+            let handle_clone = app_handle.clone();
+            tokio::spawn(async move {
+                let server = init_websocket_server(11451).await;
+                server.set_app_handle(handle_clone).await;
+
+                // Update state to reflect server is running
+                if let Some(state) = app_handle.try_state::<AppState>() {
+                    let _ = state.update_websocket_state(|ws_state| {
+                        ws_state.is_connected = true;
+                        ws_state.port = 11451;
+                    });
+                }
+
+                // Start the server (this runs indefinitely)
+                if let Err(e) = server.start().await {
+                    eprintln!("WebSocket server error: {}", e);
+                }
+            });
+
             Ok(())
         })
         .run(tauri::generate_context!())

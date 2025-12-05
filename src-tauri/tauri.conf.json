@@ -18,17 +18,24 @@
         "open": true
       },
       "fs": {
-        "all": true,
+        "all": false,
         "readFile": true,
         "writeFile": true,
         "readDir": true,
-        "copyFile": true,
+        "copyFile": false,
         "createDir": true,
-        "removeDir": true,
-        "removeFile": true,
-        "renameFile": true,
+        "removeDir": false,
+        "removeFile": false,
+        "renameFile": false,
         "exists": true,
-        "scope": ["$RESOURCE/*", "$HOME/**", "$DOCUMENT/**", "$DESKTOP/**"]
+        "scope": [
+          "$RESOURCE/*",
+          "$DOCUMENT/StreamSlate/**",
+          "$DESKTOP/*.pdf",
+          "$DOWNLOAD/*.pdf",
+          "$HOME/Documents/**/*.pdf",
+          "$HOME/Downloads/**/*.pdf"
+        ]
       },
       "path": {
         "all": true
@@ -63,7 +70,12 @@
       "protocol": {
         "all": false,
         "asset": true,
-        "assetScope": ["**"]
+        "assetScope": [
+          "$RESOURCE/*",
+          "$DOCUMENT/StreamSlate/**",
+          "$DESKTOP/*.pdf",
+          "$DOWNLOAD/*.pdf"
+        ]
       }
     },
     "bundle": {
@@ -95,7 +107,7 @@
       }
     },
     "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' asset: https://asset.localhost http://localhost:* ws://localhost:*; font-src 'self' data:;"
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' asset: https://asset.localhost http://localhost:11451 ws://localhost:11451; font-src 'self' data:;"
     },
     "windows": [
       {
