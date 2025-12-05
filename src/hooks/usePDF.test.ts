@@ -20,7 +20,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { usePDF } from "./usePDF";
 import { usePDFStore } from "../stores/pdf.store";
-import { FitMode, ViewMode, LoadingStage } from "../types/pdf.types";
+import { FitMode, ViewMode } from "../types/pdf.types";
 
 // Mock the Tauri dialog API
 vi.mock("@tauri-apps/api/dialog", () => ({
