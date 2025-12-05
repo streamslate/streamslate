@@ -17,6 +17,11 @@
  */
 
 //! WebSocket server implementation for StreamSlate
+//!
+//! This module is prepared for integration and will be started when the
+//! application initializes. Some methods are not yet called from the main app.
+
+#![allow(dead_code)]
 
 use super::messages::{IntegrationMessage, IntegrationMessageType};
 use futures_util::{SinkExt, StreamExt};

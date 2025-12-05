@@ -17,6 +17,12 @@
  */
 
 //! Security utilities for input validation and path sanitization
+//!
+//! These utilities are prepared for integration into PDF commands and other
+//! security-sensitive operations. Currently used in tests and will be
+//! integrated into the main application flow.
+
+#![allow(dead_code)]
 
 use std::path::{Path, PathBuf};
 
@@ -71,17 +77,15 @@ pub fn validate_path(path: &str) -> Result<PathBuf, SecurityError> {
         return Err(SecurityError::PathTraversal);
     }
 
-    // Additional traversal checks for various OS patterns
-    let suspicious_patterns = [
-        "..", // Parent directory
-        "~",  // Home directory expansion (shell)
-        "%",  // URL encoding
-    ];
+    // Check for URL encoding which could be used to bypass checks
+    if path.contains('%') {
+        return Err(SecurityError::PathTraversal);
+    }
 
-    for pattern in suspicious_patterns {
-        if path.contains(pattern) {
-            return Err(SecurityError::PathTraversal);
-        }
+    // Check for home directory expansion (Unix shell feature)
+    // Only check at the start of the path, as Windows 8.3 short names can contain ~
+    if path.starts_with('~') {
+        return Err(SecurityError::PathTraversal);
     }
 
     let path_buf = PathBuf::from(path);
@@ -142,18 +146,16 @@ pub fn validate_window_config(
     height: u32,
 ) -> Result<(), SecurityError> {
     // Reasonable bounds for window position (-10000 to 10000)
-    const MAX_COORD: i32 = 10000;
-    const MIN_COORD: i32 = -10000;
+    const COORD_RANGE: std::ops::RangeInclusive<i32> = -10000..=10000;
 
-    if x < MIN_COORD || x > MAX_COORD || y < MIN_COORD || y > MAX_COORD {
+    if !COORD_RANGE.contains(&x) || !COORD_RANGE.contains(&y) {
         return Err(SecurityError::InvalidPath); // Generic error for config
     }
 
     // Reasonable bounds for window size (1 to 10000)
-    const MAX_SIZE: u32 = 10000;
-    const MIN_SIZE: u32 = 1;
+    const SIZE_RANGE: std::ops::RangeInclusive<u32> = 1..=10000;
 
-    if width < MIN_SIZE || width > MAX_SIZE || height < MIN_SIZE || height > MAX_SIZE {
+    if !SIZE_RANGE.contains(&width) || !SIZE_RANGE.contains(&height) {
         return Err(SecurityError::InvalidPath);
     }
 

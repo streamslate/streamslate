@@ -19,6 +19,9 @@
 //! WebSocket message types for StreamSlate integrations
 //!
 //! These types match the frontend TypeScript definitions in integration.types.ts
+//! Some struct constructors are prepared for future use.
+
+#![allow(dead_code)]
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

@@ -17,6 +17,10 @@
  */
 
 //! Application state management for StreamSlate
+//!
+//! Some state accessors are prepared for future integration features.
+
+#![allow(dead_code)]
 
 use lopdf::Document;
 use serde::{Deserialize, Serialize};
