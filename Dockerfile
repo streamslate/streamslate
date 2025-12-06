@@ -14,9 +14,10 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies - use npm install to properly resolve optional deps
+# Install dependencies - force fresh install to resolve optional deps correctly
 # npm ci has issues with optional dependencies in multi-arch builds
-RUN npm install --legacy-peer-deps
+# Using --force ensures native binaries are fetched for the correct platform
+RUN npm install --force && npm rebuild
 
 # Copy only the frontend sources to avoid cache busts
 COPY src ./src
