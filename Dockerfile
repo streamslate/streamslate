@@ -14,9 +14,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies deterministically
-# Use BuildKit cache to speed up repeated installs
-RUN --mount=type=cache,target=/root/.npm npm ci
+# Install dependencies - use npm install to properly resolve optional deps
+# npm ci has issues with optional dependencies in multi-arch builds
+RUN npm install --legacy-peer-deps
 
 # Copy only the frontend sources to avoid cache busts
 COPY src ./src
@@ -27,7 +27,7 @@ COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.
 RUN npm run build
 
 # Rust builder stage
-FROM rust:1.82-slim AS rust-builder
+FROM rust:1.86-slim AS rust-builder
 
 # Install dependencies for Tauri
 ENV DEBIAN_FRONTEND=noninteractive
@@ -44,11 +44,16 @@ WORKDIR /app
 
 # Pre-cache Rust dependencies by copying manifest and lock file
 COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
+
+# Create dummy main.rs for cargo fetch (Cargo needs source files to parse manifest)
+RUN mkdir -p ./src-tauri/src && echo "fn main() {}" > ./src-tauri/src/main.rs
+
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
     cargo fetch --manifest-path ./src-tauri/Cargo.toml --locked
 
-# Copy Rust sources (after fetch so code changes don't invalidate dep cache)
+# Remove dummy and copy real Rust sources
+RUN rm -rf ./src-tauri/src
 COPY src-tauri/src ./src-tauri/src
 COPY src-tauri/build.rs ./src-tauri/build.rs
 
