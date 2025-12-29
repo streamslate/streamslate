@@ -1,5 +1,4 @@
-
-
+#!/bin/sh
 # Run lint-staged for JavaScript/TypeScript files
 npx lint-staged
 
