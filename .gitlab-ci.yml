@@ -53,11 +53,8 @@ build:macos:
   tags:
     - macos
   script:
-    # Requires CI/CD Variables: APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, etc.
     - npm ci
-    # Setup signing
     - ./scripts/import-certificate.sh
-    # Source the environment variable (APPLE_SIGNING_IDENTITY)
     - source build.env
     - echo "Signing with identity: $APPLE_SIGNING_IDENTITY"
     - npm run tauri:build
