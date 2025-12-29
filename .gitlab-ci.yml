@@ -1,0 +1,95 @@
+stages:
+  - test
+  - build
+  - release
+
+variables:
+  CARGO_TERM_COLOR: always
+  # Use cached dependencies
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  RUST_BACKTRACE: 1
+
+default:
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
+      - src-tauri/target/
+      - ~/.cargo/registry/
+      - ~/.cargo/git/
+
+test:linux:
+  stage: test
+  image: rust:latest
+  before_script:
+    - apt-get update
+    - apt-get install -y npm nodejs
+    # Install dependencies from files
+    - xargs -a requirements/ubuntu-build.txt apt-get install -y
+    # Filter out -r lines for dev requirements
+    - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
+  script:
+    - npm ci
+    # TypeScript, Format, Lint
+    - npx tsc --noEmit
+    - npm run format:check
+    - npm run lint
+    - cd src-tauri && cargo fmt --all -- --check
+    - cargo clippy --all-targets --all-features -- -D warnings
+    # Tests
+    - cargo test
+    # Return to root for frontend tests
+    - cd ..
+    # Start dev server in background
+    - npm run dev &
+    - export PID=$!
+    # Wait for server (simple wait loop or sleep)
+    - sleep 15
+    - npm run test:headless
+    - kill $PID || true
+
+build:macos:
+  stage: build
+  tags:
+    - macos
+  script:
+    # Requires CI/CD Variables: APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, etc.
+    - npm ci
+    # Setup signing
+    - ./scripts/import-certificate.sh
+    # Source the environment variable (APPLE_SIGNING_IDENTITY)
+    - source build.env
+    - echo "Signing with identity: $APPLE_SIGNING_IDENTITY"
+    - npm run tauri:build
+  after_script:
+    # Cleanup keychain
+    - security delete-keychain app-signing.keychain-db || true
+  artifacts:
+    paths:
+      - src-tauri/target/release/bundle/dmg/*.dmg
+      - src-tauri/target/release/bundle/macos/*.app
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+docker:build:
+  stage: release
+  image: docker:24.0.7
+  services:
+    - docker:24.0.7-dind
+  variables:
+    DOCKER_DRIVER: overlay2
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
+        docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+        docker push $CI_REGISTRY_IMAGE:latest
+      fi
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH == "develop"

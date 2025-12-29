@@ -3,9 +3,6 @@
     {
       "path": ".",
     },
-    {
-      "path": "../../Downloads/logs_42850773174",
-    },
   ],
   "settings": {
     "typescript.preferences.includePackageJsonAutoImports": "auto",

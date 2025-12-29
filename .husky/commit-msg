@@ -20,11 +20,11 @@ if ! grep -qE "$commit_regex" "$1"; then
   exit 1
 fi
 
-# Check commit message length (relaxed to 72 characters)
+# Check commit message length (relaxed to 100 characters)
 subject=$(head -n1 "$1" | sed 's/^[^:]*: //')
-if [ ${#subject} -gt 72 ]; then
-  echo "❌ Commit subject is too long (${#subject} chars, max 72)"
-  echo "Please keep the subject line under 72 characters."
+if [ ${#subject} -gt 100 ]; then
+  echo "❌ Commit subject is too long (${#subject} chars, max 100)"
+  echo "Please keep the subject line under 100 characters."
   exit 1
 fi
 
