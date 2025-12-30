@@ -16,9 +16,128 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { usePDF } from "../../hooks/usePDF";
+import { AnnotationType } from "../../types/pdf.types";
+import type { Annotation } from "../../types/pdf.types";
 
 type Panel = "files" | "annotations" | "settings";
+
+/** Get a human-readable label for an annotation type */
+function getAnnotationTypeLabel(type: AnnotationType): string {
+  const labels: Record<AnnotationType, string> = {
+    [AnnotationType.TEXT]: "Text",
+    [AnnotationType.HIGHLIGHT]: "Highlight",
+    [AnnotationType.UNDERLINE]: "Underline",
+    [AnnotationType.STRIKETHROUGH]: "Strikethrough",
+    [AnnotationType.ARROW]: "Arrow",
+    [AnnotationType.RECTANGLE]: "Rectangle",
+    [AnnotationType.CIRCLE]: "Circle",
+    [AnnotationType.FREE_DRAW]: "Drawing",
+    [AnnotationType.STAMP]: "Stamp",
+    [AnnotationType.NOTE]: "Note",
+  };
+  return labels[type] || type;
+}
+
+/** Get an icon for an annotation type */
+function getAnnotationIcon(type: AnnotationType): React.ReactElement {
+  switch (type) {
+    case AnnotationType.HIGHLIGHT:
+      return (
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+        </svg>
+      );
+    case AnnotationType.RECTANGLE:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" strokeWidth={2} />
+        </svg>
+      );
+    case AnnotationType.CIRCLE:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="12" cy="12" r="9" strokeWidth={2} />
+        </svg>
+      );
+    case AnnotationType.ARROW:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 8l4 4m0 0l-4 4m4-4H3"
+          />
+        </svg>
+      );
+    case AnnotationType.FREE_DRAW:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+          />
+        </svg>
+      );
+    case AnnotationType.TEXT:
+    case AnnotationType.NOTE:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+      );
+    default:
+      return (
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
+          />
+        </svg>
+      );
+  }
+}
 
 interface SidebarProps {
   transparentBg: boolean;
@@ -49,6 +168,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSetBorderlessMode,
   borderlessMode,
 }) => {
+  // Access annotation state and actions from PDF hook
+  const { annotations, goToPage, removeAnnotation, updateAnnotation } =
+    usePDF();
+
+  // Compute total annotation count and grouped list
+  const { totalCount, groupedAnnotations } = useMemo(() => {
+    let count = 0;
+    const grouped: Array<{ pageNumber: number; items: Annotation[] }> = [];
+
+    // Sort page numbers for consistent ordering
+    const pageNumbers = Array.from(annotations.keys()).sort((a, b) => a - b);
+
+    for (const pageNum of pageNumbers) {
+      const pageAnnotations = annotations.get(pageNum) || [];
+      if (pageAnnotations.length > 0) {
+        count += pageAnnotations.length;
+        grouped.push({
+          pageNumber: pageNum,
+          items: [...pageAnnotations].sort(
+            (a, b) => b.modified.getTime() - a.modified.getTime()
+          ),
+        });
+      }
+    }
+
+    return { totalCount: count, groupedAnnotations: grouped };
+  }, [annotations]);
+
+  // Handle clicking on an annotation to navigate to its page
+  const handleAnnotationClick = (annotation: Annotation) => {
+    goToPage(annotation.pageNumber);
+  };
+
+  // Handle toggling annotation visibility
+  const handleToggleVisibility = (annotation: Annotation) => {
+    updateAnnotation(annotation.id, { visible: !annotation.visible });
+  };
+
+  // Handle deleting an annotation
+  const handleDeleteAnnotation = (
+    e: React.MouseEvent,
+    annotation: Annotation
+  ) => {
+    e.stopPropagation();
+    removeAnnotation(annotation.id);
+  };
+
   return (
     <aside
       className={`${
@@ -87,7 +253,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
           <button
             onClick={() => onSetActivePanel("annotations")}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 relative ${
               activePanel === "annotations"
                 ? "bg-primary/10 text-primary border border-primary/20"
                 : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
@@ -107,6 +273,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
             </svg>
             <span>Annotations</span>
+            {totalCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {totalCount > 99 ? "99+" : totalCount}
+              </span>
+            )}
           </button>
           <button
             onClick={() => onSetActivePanel("settings")}
@@ -209,14 +380,173 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                   </svg>
                   <h3 className="text-lg font-semibold text-text-primary">
-                    Annotations List
+                    Annotations
                   </h3>
+                  {totalCount > 0 && (
+                    <span className="ml-auto text-sm text-text-secondary">
+                      {totalCount} total
+                    </span>
+                  )}
                 </div>
-                <div className="p-4 bg-bg-tertiary rounded-md border border-border-primary">
-                  <p className="text-sm text-text-tertiary text-center">
-                    No annotations yet
-                  </p>
-                </div>
+
+                {totalCount === 0 ? (
+                  <div className="p-4 bg-bg-tertiary rounded-md border border-border-primary">
+                    <p className="text-sm text-text-tertiary text-center">
+                      No annotations yet
+                    </p>
+                    <p className="text-xs text-text-tertiary text-center mt-2">
+                      Use the toolbar to add highlights, shapes, or drawings
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[calc(100vh-320px)] overflow-y-auto">
+                    {groupedAnnotations.map(({ pageNumber, items }) => (
+                      <div key={pageNumber} className="space-y-2">
+                        {/* Page header */}
+                        <button
+                          onClick={() => goToPage(pageNumber)}
+                          className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-primary transition-colors w-full"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+                          Page {pageNumber}
+                          <span className="ml-auto text-xs text-text-tertiary">
+                            {items.length} annotation
+                            {items.length !== 1 ? "s" : ""}
+                          </span>
+                        </button>
+
+                        {/* Annotation items */}
+                        <div className="space-y-1 ml-2">
+                          {items.map((annotation) => (
+                            <div
+                              key={annotation.id}
+                              onClick={() => handleAnnotationClick(annotation)}
+                              className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-all group ${
+                                annotation.visible
+                                  ? "bg-bg-tertiary hover:bg-surface-tertiary border border-border-primary"
+                                  : "bg-bg-tertiary/50 hover:bg-surface-tertiary/50 border border-border-primary/50 opacity-60"
+                              }`}
+                            >
+                              {/* Color indicator */}
+                              <div
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{
+                                  backgroundColor: annotation.color,
+                                  opacity: annotation.opacity,
+                                }}
+                              />
+
+                              {/* Icon and type */}
+                              <span className="text-text-secondary flex-shrink-0">
+                                {getAnnotationIcon(annotation.type)}
+                              </span>
+
+                              {/* Type label and content preview */}
+                              <div className="flex-1 min-w-0">
+                                <span className="text-sm text-text-primary truncate block">
+                                  {getAnnotationTypeLabel(annotation.type)}
+                                </span>
+                                {annotation.content && (
+                                  <span className="text-xs text-text-tertiary truncate block">
+                                    {annotation.content}
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {/* Toggle visibility */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleVisibility(annotation);
+                                  }}
+                                  className="p-1 rounded hover:bg-bg-primary text-text-tertiary hover:text-text-primary transition-colors"
+                                  title={
+                                    annotation.visible
+                                      ? "Hide annotation"
+                                      : "Show annotation"
+                                  }
+                                >
+                                  {annotation.visible ? (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                      />
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                      />
+                                    </svg>
+                                  ) : (
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                                      />
+                                    </svg>
+                                  )}
+                                </button>
+
+                                {/* Delete */}
+                                <button
+                                  onClick={(e) =>
+                                    handleDeleteAnnotation(e, annotation)
+                                  }
+                                  className="p-1 rounded hover:bg-red-500/20 text-text-tertiary hover:text-red-500 transition-colors"
+                                  title="Delete annotation"
+                                >
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
