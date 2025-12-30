@@ -65,6 +65,14 @@ const TOOLS: Tool[] = [
     config: { color: "#0000ff", opacity: 0.8, strokeWidth: 3 },
   },
   {
+    id: "free-draw",
+    name: "Draw",
+    type: AnnotationType.FREE_DRAW,
+    icon: "✏️",
+    active: false,
+    config: { color: "#ff0000", opacity: 1.0, strokeWidth: 3 },
+  },
+  {
     id: "text",
     name: "Text",
     type: AnnotationType.TEXT,

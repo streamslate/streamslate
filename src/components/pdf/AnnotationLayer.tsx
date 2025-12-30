@@ -23,6 +23,7 @@
 import React, { useRef, useCallback, useState } from "react";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
+import { TextAnnotationEditor } from "../annotation/TextAnnotationEditor";
 
 interface AnnotationLayerProps {
   pageNumber: number;
@@ -47,6 +48,116 @@ interface AnnotationLayerProps {
 interface Point {
   x: number;
   y: number;
+}
+
+/**
+ * Convert an array of points to a smooth SVG path using Catmull-Rom splines.
+ * This creates smooth curves through all points rather than jagged polylines.
+ */
+function pointsToSmoothPath(points: Point[], scale: number): string {
+  if (points.length < 2) return "";
+  if (points.length === 2) {
+    // Just draw a line for 2 points
+    return `M ${points[0].x * scale},${points[0].y * scale} L ${points[1].x * scale},${points[1].y * scale}`;
+  }
+
+  // Simplify points if there are too many (performance optimization)
+  const simplified = simplifyPoints(points, 1.5);
+  if (simplified.length < 2) return "";
+
+  const scaledPoints = simplified.map((p) => ({
+    x: p.x * scale,
+    y: p.y * scale,
+  }));
+
+  // Start the path
+  let path = `M ${scaledPoints[0].x},${scaledPoints[0].y}`;
+
+  // Use Catmull-Rom spline interpolation
+  for (let i = 0; i < scaledPoints.length - 1; i++) {
+    const p0 = scaledPoints[Math.max(0, i - 1)];
+    const p1 = scaledPoints[i];
+    const p2 = scaledPoints[Math.min(scaledPoints.length - 1, i + 1)];
+    const p3 = scaledPoints[Math.min(scaledPoints.length - 1, i + 2)];
+
+    // Calculate control points for cubic bezier
+    const tension = 0.5;
+    const cp1x = p1.x + ((p2.x - p0.x) * tension) / 3;
+    const cp1y = p1.y + ((p2.y - p0.y) * tension) / 3;
+    const cp2x = p2.x - ((p3.x - p1.x) * tension) / 3;
+    const cp2y = p2.y - ((p3.y - p1.y) * tension) / 3;
+
+    path += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+  }
+
+  return path;
+}
+
+/**
+ * Douglas-Peucker algorithm for point simplification.
+ * Reduces the number of points while preserving the shape.
+ */
+function simplifyPoints(points: Point[], tolerance: number): Point[] {
+  if (points.length <= 2) return points;
+
+  // Find the point with maximum distance from the line between start and end
+  let maxDist = 0;
+  let maxIndex = 0;
+
+  const start = points[0];
+  const end = points[points.length - 1];
+
+  for (let i = 1; i < points.length - 1; i++) {
+    const dist = perpendicularDistance(points[i], start, end);
+    if (dist > maxDist) {
+      maxDist = dist;
+      maxIndex = i;
+    }
+  }
+
+  // If max distance is greater than tolerance, recursively simplify
+  if (maxDist > tolerance) {
+    const left = simplifyPoints(points.slice(0, maxIndex + 1), tolerance);
+    const right = simplifyPoints(points.slice(maxIndex), tolerance);
+    return [...left.slice(0, -1), ...right];
+  }
+
+  // Otherwise, just return start and end
+  return [start, end];
+}
+
+/**
+ * Calculate perpendicular distance from a point to a line.
+ */
+function perpendicularDistance(
+  point: Point,
+  lineStart: Point,
+  lineEnd: Point
+): number {
+  const dx = lineEnd.x - lineStart.x;
+  const dy = lineEnd.y - lineStart.y;
+  const lineLengthSq = dx * dx + dy * dy;
+
+  if (lineLengthSq === 0) {
+    // Start and end are the same point
+    return Math.sqrt(
+      (point.x - lineStart.x) ** 2 + (point.y - lineStart.y) ** 2
+    );
+  }
+
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) /
+        lineLengthSq
+    )
+  );
+
+  const projX = lineStart.x + t * dx;
+  const projY = lineStart.y + t * dy;
+
+  return Math.sqrt((point.x - projX) ** 2 + (point.y - projY) ** 2);
 }
 
 interface DrawingState {
@@ -81,8 +192,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(
     null
   );
-  const [editingTextId, setEditingTextId] = useState<string | null>(null);
-  const [textInput, setTextInput] = useState("");
+  const [editingTextAnnotation, setEditingTextAnnotation] =
+    useState<Annotation | null>(null);
 
   // Get cursor style based on active tool
   const getCursorStyle = () => {
@@ -126,9 +237,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       event.preventDefault();
       const { x, y } = screenToPdfCoords(event.clientX, event.clientY);
 
-      // TEXT annotation: create immediately on click
+      // TEXT annotation: create immediately on click and open editor
       if (activeTool === AnnotationType.TEXT) {
-        const annotation: Partial<Annotation> = {
+        const newAnnotation: Annotation = {
           id: crypto.randomUUID(),
           type: AnnotationType.TEXT,
           pageNumber,
@@ -143,10 +254,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           modified: new Date(),
           visible: true,
         };
-        onAnnotationCreate(annotation);
-        // Start editing the newly created text annotation
-        setEditingTextId(annotation.id!);
-        setTextInput("");
+        onAnnotationCreate(newAnnotation);
+        // Open the text editor modal for the new annotation
+        setEditingTextAnnotation(newAnnotation);
         return;
       }
 
@@ -429,15 +539,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
         if (points.length < 2) return null;
 
-        // Convert points to SVG polyline format
-        const pointsString = points
-          .map((p) => `${p.x * viewport.scale},${p.y * viewport.scale}`)
-          .join(" ");
+        // Convert points to smooth SVG path
+        const pathData = pointsToSmoothPath(points, viewport.scale);
 
         return (
-          <polyline
+          <path
             key={key}
-            points={pointsString}
+            d={pathData}
             stroke={isSelected ? "#00ff00" : annotation.color}
             strokeWidth={isSelected ? strokeWidth + 1 : strokeWidth}
             fill="none"
@@ -509,12 +617,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
       case AnnotationType.FREE_DRAW: {
         if (points.length < 2) return null;
-        const pointsString = points
-          .map((p) => `${p.x * viewport.scale},${p.y * viewport.scale}`)
-          .join(" ");
+        // Use smooth path for preview as well
+        const pathData = pointsToSmoothPath(points, viewport.scale);
         return (
-          <polyline
-            points={pointsString}
+          <path
+            d={pathData}
             stroke={toolConfig.color}
             strokeWidth={toolConfig.strokeWidth}
             fill="none"
@@ -530,55 +637,44 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     }
   };
 
-  // Handle text annotation editing
+  // Handle text annotation editing - open the modal
   const handleTextEdit = useCallback(
     (annotationId: string) => {
       const annotation = annotations.find((a) => a.id === annotationId);
       if (annotation && annotation.type === AnnotationType.TEXT) {
-        setEditingTextId(annotationId);
-        setTextInput(annotation.content);
+        setEditingTextAnnotation(annotation);
       }
     },
     [annotations]
   );
 
-  // Handle text input change
-  const handleTextInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTextInput(e.target.value);
-    },
-    []
-  );
-
-  // Handle text input submit
-  const handleTextInputSubmit = useCallback(() => {
-    if (editingTextId) {
-      onAnnotationUpdate(editingTextId, {
-        content: textInput,
-        modified: new Date(),
-      });
-      setEditingTextId(null);
-      setTextInput("");
-    }
-  }, [editingTextId, textInput, onAnnotationUpdate]);
-
-  // Handle text input key press
-  const handleTextInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "Enter") {
-        handleTextInputSubmit();
-      } else if (e.key === "Escape") {
-        setEditingTextId(null);
-        setTextInput("");
+  // Handle saving text annotation from modal
+  const handleTextEditorSave = useCallback(
+    (updates: Partial<Annotation>) => {
+      if (editingTextAnnotation) {
+        onAnnotationUpdate(editingTextAnnotation.id, updates);
+        setEditingTextAnnotation(null);
       }
     },
-    [handleTextInputSubmit]
+    [editingTextAnnotation, onAnnotationUpdate]
   );
 
-  // Get editing text annotation position
-  const getEditingAnnotation = useCallback(() => {
-    return annotations.find((a) => a.id === editingTextId);
-  }, [annotations, editingTextId]);
+  // Handle canceling text editor
+  const handleTextEditorCancel = useCallback(() => {
+    // If the annotation was just created and has no content, delete it
+    if (editingTextAnnotation && !editingTextAnnotation.content) {
+      onAnnotationDelete(editingTextAnnotation.id);
+    }
+    setEditingTextAnnotation(null);
+  }, [editingTextAnnotation, onAnnotationDelete]);
+
+  // Handle deleting from text editor
+  const handleTextEditorDelete = useCallback(() => {
+    if (editingTextAnnotation) {
+      onAnnotationDelete(editingTextAnnotation.id);
+      setEditingTextAnnotation(null);
+    }
+  }, [editingTextAnnotation, onAnnotationDelete]);
 
   return (
     <div className={`absolute inset-0 pointer-events-auto ${className}`}>
@@ -648,37 +744,15 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         </div>
       )}
 
-      {/* Text editing overlay */}
-      {editingTextId &&
-        (() => {
-          const editingAnnotation = getEditingAnnotation();
-          if (!editingAnnotation) return null;
-
-          return (
-            <div
-              className="absolute"
-              style={{
-                left: editingAnnotation.x * viewport.scale,
-                top: editingAnnotation.y * viewport.scale - 14 * viewport.scale,
-              }}
-            >
-              <input
-                type="text"
-                value={textInput}
-                onChange={handleTextInputChange}
-                onKeyDown={handleTextInputKeyDown}
-                onBlur={handleTextInputSubmit}
-                autoFocus
-                className="px-2 py-1 text-sm border border-blue-500 rounded shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
-                style={{
-                  color: editingAnnotation.color,
-                  minWidth: "200px",
-                }}
-                placeholder="Enter text..."
-              />
-            </div>
-          );
-        })()}
+      {/* Text annotation editor modal */}
+      {editingTextAnnotation && (
+        <TextAnnotationEditor
+          annotation={editingTextAnnotation}
+          onSave={handleTextEditorSave}
+          onCancel={handleTextEditorCancel}
+          onDelete={handleTextEditorDelete}
+        />
+      )}
     </div>
   );
 };
