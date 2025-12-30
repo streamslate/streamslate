@@ -33,6 +33,7 @@ src-tauri/Cargo.lock
 .env.development.local
 .env.test.local
 .env.production.local
+build.env
 
 # OS generated files
 Thumbs.db
@@ -50,19 +51,5 @@ coverage/
 *.msi
 *.exe
 *.AppImage
-certs/Cody_Blevins.p12
-certs/tls.key
-.gitignore
-.gitignore
-.gitignore
-certs/fullchain.pem
-certs/developerID_application.cer
-certs/cf_access_secret
-certs/cf_client_id
-certs/ca-additional.pem
-certs/tls.crt
-certs/origin.crt
-.gitignore
-.gitignore
-.github/workflows/release.yml
-certs/AuthKey_Y9W3R75FTF.p8
+# Certificates and secrets (should never be committed)
+certs/

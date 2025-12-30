@@ -1,3 +1,28 @@
+# StreamSlate GitLab CI/CD Configuration
+#
+# Required CI/CD Variables (Settings > CI/CD > Variables):
+# ─────────────────────────────────────────────────────────
+#
+# For macOS Code Signing (build:macos job):
+#   APPLE_CERTIFICATE          - Base64-encoded .p12 certificate file (or File type variable)
+#   APPLE_CERTIFICATE_PASSWORD - Password for the .p12 certificate
+#
+# For macOS Notarization (optional, recommended for distribution):
+#   APPLE_ID                   - Apple ID email for notarization
+#   APPLE_ID_PASSWORD          - App-specific password (not Apple ID password)
+#   APPLE_TEAM_ID              - Apple Developer Team ID
+#
+# For Container Registry (docker:build job):
+#   Uses built-in GitLab CI variables:
+#   - CI_REGISTRY, CI_REGISTRY_USER, CI_REGISTRY_PASSWORD, CI_REGISTRY_IMAGE
+#   (Automatically available when Container Registry is enabled)
+#
+# Runner Requirements:
+#   - Linux runner for test:linux job (any GitLab runner)
+#   - macOS runner with tag 'macos' for build:macos job
+#   - Docker-in-Docker for docker:build job
+#
+
 stages:
   - test
   - build
@@ -26,7 +51,7 @@ test:linux:
     - apt-get install -y npm nodejs
     # Install dependencies from files
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
-    # Filter out -r lines for dev requirements
+    # Filter out -r lines and comments for dev requirements
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
   script:
     - npm ci
@@ -36,17 +61,26 @@ test:linux:
     - npm run lint
     - cd src-tauri && cargo fmt --all -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
-    # Tests
+    # Rust tests
     - cargo test
     # Return to root for frontend tests
     - cd ..
+    # Start xvfb for headless browser testing (Cypress requires a display)
+    - Xvfb :99 -screen 0 1920x1080x24 &
+    - export DISPLAY=:99
     # Start dev server in background
     - npm run dev &
-    - export PID=$!
-    # Wait for server (simple wait loop or sleep)
-    - sleep 15
+    - export DEV_PID=$!
+    # Wait for server to be ready (poll instead of fixed sleep)
+    - |
+      for i in $(seq 1 30); do
+        curl -s http://localhost:1420 > /dev/null && break
+        echo "Waiting for dev server... ($i/30)"
+        sleep 2
+      done
+    # Run Cypress E2E tests
     - npm run test:headless
-    - kill $PID || true
+    - kill $DEV_PID || true
 
 build:macos:
   stage: build
