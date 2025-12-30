@@ -44,12 +44,18 @@ interface AnnotationLayerProps {
   className?: string;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
 interface DrawingState {
   isDrawing: boolean;
   startX: number;
   startY: number;
   currentX: number;
   currentY: number;
+  points: Point[]; // For free-draw
 }
 
 export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
@@ -59,7 +65,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   activeTool,
   toolConfig = { color: "#ffff00", opacity: 0.5, strokeWidth: 2 },
   onAnnotationCreate,
-  onAnnotationUpdate: _onAnnotationUpdate,
+  onAnnotationUpdate,
   onAnnotationDelete,
   className = "",
 }) => {
@@ -70,10 +76,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     startY: 0,
     currentX: 0,
     currentY: 0,
+    points: [],
   });
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(
     null
   );
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
+  const [textInput, setTextInput] = useState("");
 
   // Get cursor style based on active tool
   const getCursorStyle = () => {
@@ -84,11 +93,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         return "text";
       case AnnotationType.RECTANGLE:
       case AnnotationType.CIRCLE:
+      case AnnotationType.ARROW:
         return "crosshair";
       case AnnotationType.FREE_DRAW:
         return "crosshair";
-      case AnnotationType.ARROW:
-        return "crosshair";
+      case AnnotationType.TEXT:
+        return "text";
       default:
         return "default";
     }
@@ -116,15 +126,54 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       event.preventDefault();
       const { x, y } = screenToPdfCoords(event.clientX, event.clientY);
 
+      // TEXT annotation: create immediately on click
+      if (activeTool === AnnotationType.TEXT) {
+        const annotation: Partial<Annotation> = {
+          id: crypto.randomUUID(),
+          type: AnnotationType.TEXT,
+          pageNumber,
+          x,
+          y,
+          width: 200, // Default width for text box
+          height: 30, // Default height for text box
+          content: "",
+          color: toolConfig.color,
+          opacity: 1.0,
+          created: new Date(),
+          modified: new Date(),
+          visible: true,
+        };
+        onAnnotationCreate(annotation);
+        // Start editing the newly created text annotation
+        setEditingTextId(annotation.id!);
+        setTextInput("");
+        return;
+      }
+
+      // FREE_DRAW: start collecting points
+      if (activeTool === AnnotationType.FREE_DRAW) {
+        setDrawingState({
+          isDrawing: true,
+          startX: x,
+          startY: y,
+          currentX: x,
+          currentY: y,
+          points: [{ x, y }],
+        });
+        return;
+      }
+
+      // Other tools: standard rectangle-based drawing
       setDrawingState({
         isDrawing: true,
         startX: x,
         startY: y,
         currentX: x,
         currentY: y,
+        points: [],
       });
     },
-    [activeTool, screenToPdfCoords]
+    [activeTool, screenToPdfCoords, pageNumber, toolConfig, onAnnotationCreate]
   );
 
   // Handle mouse move for updating annotation preview
@@ -134,20 +183,73 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
       const { x, y } = screenToPdfCoords(event.clientX, event.clientY);
 
+      // FREE_DRAW: add point to the path
+      if (activeTool === AnnotationType.FREE_DRAW) {
+        setDrawingState((prev) => ({
+          ...prev,
+          currentX: x,
+          currentY: y,
+          points: [...prev.points, { x, y }],
+        }));
+        return;
+      }
+
+      // Other tools: update current position
       setDrawingState((prev) => ({
         ...prev,
         currentX: x,
         currentY: y,
       }));
     },
-    [drawingState.isDrawing, screenToPdfCoords]
+    [drawingState.isDrawing, screenToPdfCoords, activeTool]
   );
 
   // Handle mouse up for completing annotation creation
   const handleMouseUp = useCallback(() => {
     if (!drawingState.isDrawing || !activeTool) return;
 
-    const { startX, startY, currentX, currentY } = drawingState;
+    const { startX, startY, currentX, currentY, points } = drawingState;
+
+    // FREE_DRAW: create annotation with points
+    if (activeTool === AnnotationType.FREE_DRAW && points.length > 2) {
+      // Calculate bounding box from points
+      const xs = points.map((p) => p.x);
+      const ys = points.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+
+      const annotation: Partial<Annotation> & { points?: Point[] } = {
+        id: crypto.randomUUID(),
+        type: AnnotationType.FREE_DRAW,
+        pageNumber,
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY,
+        content: JSON.stringify(points), // Store points in content as JSON
+        color: toolConfig.color,
+        opacity: toolConfig.opacity,
+        created: new Date(),
+        modified: new Date(),
+        visible: true,
+      };
+
+      onAnnotationCreate(annotation);
+
+      setDrawingState({
+        isDrawing: false,
+        startX: 0,
+        startY: 0,
+        currentX: 0,
+        currentY: 0,
+        points: [],
+      });
+      return;
+    }
+
+    // Other tools: rectangle-based
     const width = Math.abs(currentX - startX);
     const height = Math.abs(currentY - startY);
 
@@ -178,6 +280,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       startY: 0,
       currentX: 0,
       currentY: 0,
+      points: [],
     });
   }, [drawingState, activeTool, pageNumber, toolConfig, onAnnotationCreate]);
 
@@ -276,6 +379,79 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         );
       }
 
+      case AnnotationType.TEXT: {
+        const x = annotation.x * viewport.scale;
+        const y = annotation.y * viewport.scale;
+        const fontSize = 14 * viewport.scale;
+
+        return (
+          <g
+            key={key}
+            onClick={(e: React.MouseEvent) =>
+              handleAnnotationClick(annotation.id, e)
+            }
+          >
+            {/* Background for text visibility */}
+            <rect
+              x={x - 2}
+              y={y - fontSize}
+              width={annotation.width * viewport.scale + 4}
+              height={fontSize + 8}
+              fill="rgba(255, 255, 255, 0.8)"
+              stroke={isSelected ? "#00ff00" : "transparent"}
+              strokeWidth={isSelected ? 2 : 0}
+              rx={3}
+              cursor="pointer"
+            />
+            <text
+              x={x}
+              y={y}
+              fill={annotation.color}
+              fontSize={fontSize}
+              fontFamily="system-ui, sans-serif"
+              cursor="pointer"
+              style={{ userSelect: "none" }}
+            >
+              {annotation.content || "Click to edit..."}
+            </text>
+          </g>
+        );
+      }
+
+      case AnnotationType.FREE_DRAW: {
+        // Parse points from content JSON
+        let points: Point[] = [];
+        try {
+          points = JSON.parse(annotation.content || "[]");
+        } catch {
+          points = [];
+        }
+
+        if (points.length < 2) return null;
+
+        // Convert points to SVG polyline format
+        const pointsString = points
+          .map((p) => `${p.x * viewport.scale},${p.y * viewport.scale}`)
+          .join(" ");
+
+        return (
+          <polyline
+            key={key}
+            points={pointsString}
+            stroke={isSelected ? "#00ff00" : annotation.color}
+            strokeWidth={isSelected ? strokeWidth + 1 : strokeWidth}
+            fill="none"
+            strokeOpacity={annotation.opacity}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            cursor="pointer"
+            onClick={(e: React.MouseEvent) =>
+              handleAnnotationClick(annotation.id, e)
+            }
+          />
+        );
+      }
+
       default:
         return null;
     }
@@ -285,7 +461,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   const renderDrawingPreview = () => {
     if (!drawingState.isDrawing || !activeTool) return null;
 
-    const { startX, startY, currentX, currentY } = drawingState;
+    const { startX, startY, currentX, currentY, points } = drawingState;
     const x = Math.min(startX, currentX) * viewport.scale;
     const y = Math.min(startY, currentY) * viewport.scale;
     const width = Math.abs(currentX - startX) * viewport.scale;
@@ -331,10 +507,78 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           />
         );
 
+      case AnnotationType.FREE_DRAW: {
+        if (points.length < 2) return null;
+        const pointsString = points
+          .map((p) => `${p.x * viewport.scale},${p.y * viewport.scale}`)
+          .join(" ");
+        return (
+          <polyline
+            points={pointsString}
+            stroke={toolConfig.color}
+            strokeWidth={toolConfig.strokeWidth}
+            fill="none"
+            strokeOpacity={toolConfig.opacity}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        );
+      }
+
       default:
         return null;
     }
   };
+
+  // Handle text annotation editing
+  const handleTextEdit = useCallback(
+    (annotationId: string) => {
+      const annotation = annotations.find((a) => a.id === annotationId);
+      if (annotation && annotation.type === AnnotationType.TEXT) {
+        setEditingTextId(annotationId);
+        setTextInput(annotation.content);
+      }
+    },
+    [annotations]
+  );
+
+  // Handle text input change
+  const handleTextInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTextInput(e.target.value);
+    },
+    []
+  );
+
+  // Handle text input submit
+  const handleTextInputSubmit = useCallback(() => {
+    if (editingTextId) {
+      onAnnotationUpdate(editingTextId, {
+        content: textInput,
+        modified: new Date(),
+      });
+      setEditingTextId(null);
+      setTextInput("");
+    }
+  }, [editingTextId, textInput, onAnnotationUpdate]);
+
+  // Handle text input key press
+  const handleTextInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        handleTextInputSubmit();
+      } else if (e.key === "Escape") {
+        setEditingTextId(null);
+        setTextInput("");
+      }
+    },
+    [handleTextInputSubmit]
+  );
+
+  // Get editing text annotation position
+  const getEditingAnnotation = useCallback(() => {
+    return annotations.find((a) => a.id === editingTextId);
+  }, [annotations, editingTextId]);
 
   return (
     <div className={`absolute inset-0 pointer-events-auto ${className}`}>
@@ -379,16 +623,62 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         </defs>
       </svg>
 
-      {/* Delete button for selected annotation */}
+      {/* Action buttons for selected annotation */}
       {selectedAnnotation && (
-        <button
-          onClick={() => handleDeleteAnnotation(selectedAnnotation)}
-          className="absolute top-2 right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
-          title="Delete annotation"
-        >
-          ✕
-        </button>
+        <div className="absolute top-2 right-2 flex gap-1">
+          {/* Edit button for text annotations */}
+          {annotations.find(
+            (a) => a.id === selectedAnnotation && a.type === AnnotationType.TEXT
+          ) && (
+            <button
+              onClick={() => handleTextEdit(selectedAnnotation)}
+              className="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs"
+              title="Edit text"
+            >
+              ✎
+            </button>
+          )}
+          <button
+            onClick={() => handleDeleteAnnotation(selectedAnnotation)}
+            className="p-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+            title="Delete annotation"
+          >
+            ✕
+          </button>
+        </div>
       )}
+
+      {/* Text editing overlay */}
+      {editingTextId &&
+        (() => {
+          const editingAnnotation = getEditingAnnotation();
+          if (!editingAnnotation) return null;
+
+          return (
+            <div
+              className="absolute"
+              style={{
+                left: editingAnnotation.x * viewport.scale,
+                top: editingAnnotation.y * viewport.scale - 14 * viewport.scale,
+              }}
+            >
+              <input
+                type="text"
+                value={textInput}
+                onChange={handleTextInputChange}
+                onKeyDown={handleTextInputKeyDown}
+                onBlur={handleTextInputSubmit}
+                autoFocus
+                className="px-2 py-1 text-sm border border-blue-500 rounded shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                style={{
+                  color: editingAnnotation.color,
+                  minWidth: "200px",
+                }}
+                placeholder="Enter text..."
+              />
+            </div>
+          );
+        })()}
     </div>
   );
 };

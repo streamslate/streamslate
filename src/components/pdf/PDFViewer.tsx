@@ -403,30 +403,16 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     let renderTimeout: ReturnType<typeof setTimeout>;
 
     const renderPage = async () => {
-      console.log("[PDFCanvasRenderer] renderPage called with:", {
-        hasCanvas: !!canvasRef.current,
-        pdfPath: pdfDocument?.path,
-        currentPage,
-        zoom: zoom,
-        rotation,
-        fitMode,
-      });
-
       if (!canvasRef.current || !pdfDocument?.path) {
-        console.error("[PDFCanvasRenderer] Missing canvas or PDF path", {
-          hasCanvas: !!canvasRef.current,
-          pdfPath: pdfDocument?.path,
-        });
         return;
       }
 
       // Cancel any existing render task to prevent overlap
       if (renderTaskRef.current) {
-        console.log("[PDFCanvasRenderer] Cancelling previous render task");
         try {
           renderTaskRef.current.cancel?.();
-        } catch (e) {
-          console.log("[PDFCanvasRenderer] Error cancelling render task:", e);
+        } catch {
+          // Ignore cancellation errors
         }
         renderTaskRef.current = null;
       }
@@ -437,12 +423,10 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       try {
         // Load document if not already loaded
         if (!pdfRenderer.isLoaded) {
-          console.log("[PDFCanvasRenderer] Loading document...");
           await pdfRenderer.loadDocument(pdfDocument.path);
         }
 
         // Render the current page
-        console.log("[PDFCanvasRenderer] Calling pdfRenderer.renderPage...");
         const result = await pdfRenderer.renderPage(
           currentPage,
           canvasRef.current,
@@ -455,13 +439,6 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         // Store render task reference for potential cancellation
         renderTaskRef.current = result;
 
-        console.log("[PDFCanvasRenderer] Render result:", {
-          canvasWidth: result.canvas.width,
-          canvasHeight: result.canvas.height,
-          viewportWidth: result.viewport.width,
-          viewportHeight: result.viewport.height,
-        });
-
         if (isMounted) {
           setIsRendering(false);
 
@@ -469,15 +446,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           if (canvasRef.current) {
             try {
               const dataUrl = canvasRef.current.toDataURL("image/png");
-              console.log(
-                "[PDFCanvasRenderer] Created fallback image for WebView compatibility"
-              );
               setImageDataUrl(dataUrl);
-            } catch (e) {
-              console.warn(
-                "[PDFCanvasRenderer] Failed to create fallback image:",
-                e
-              );
+            } catch {
+              // Fallback image creation failed - canvas rendering will still work
             }
           }
 
@@ -487,10 +458,6 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
               width: canvasRef.current.width,
               height: canvasRef.current.height,
             };
-            console.log(
-              "[PDFCanvasRenderer] Calling onCanvasSizeChange with:",
-              size
-            );
             onCanvasSizeChange(size);
           }
         }
@@ -500,11 +467,8 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           error instanceof Error &&
           error.name === "RenderingCancelledException"
         ) {
-          console.log("[PDFCanvasRenderer] Rendering cancelled, will retry");
           return;
         }
-
-        console.error("[PDFCanvasRenderer] Error rendering PDF:", error);
         if (isMounted) {
           setRenderError(
             error instanceof Error ? error.message : "Failed to render PDF"
@@ -525,11 +489,10 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       // Cancel any ongoing render task on cleanup
       if (renderTaskRef.current) {
-        console.log("[PDFCanvasRenderer] Cleanup: Cancelling render task");
         try {
           renderTaskRef.current.cancel?.();
-        } catch (e) {
-          console.log("[PDFCanvasRenderer] Cleanup error:", e);
+        } catch {
+          // Ignore cleanup errors
         }
         renderTaskRef.current = null;
       }
@@ -542,19 +505,6 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     onCanvasSizeChange,
     fitMode,
   ]);
-
-  // Add debug logging for canvas size
-  useEffect(() => {
-    if (canvasRef.current) {
-      console.log("[PDFCanvasRenderer] Canvas element dimensions:", {
-        width: canvasRef.current.width,
-        height: canvasRef.current.height,
-        offsetWidth: canvasRef.current.offsetWidth,
-        offsetHeight: canvasRef.current.offsetHeight,
-        style: canvasRef.current.style.cssText,
-      });
-    }
-  }, [isRendering]);
 
   if (renderError) {
     return (
@@ -575,18 +525,6 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       </div>
     );
   }
-
-  console.log("[PDFCanvasRenderer] Render state:", {
-    isRendering,
-    renderError,
-  });
-
-  console.log("[PDFCanvasRenderer] Component render - about to return JSX");
-  console.log("[PDFCanvasRenderer] imageDataUrl exists:", !!imageDataUrl);
-  console.log(
-    "[PDFCanvasRenderer] imageDataUrl length:",
-    imageDataUrl ? imageDataUrl.length : 0
-  );
 
   return (
     <div
@@ -645,12 +583,6 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
             WebkitTransform: "translateZ(0)",
             WebkitBackfaceVisibility: "hidden",
           }}
-          onLoad={() =>
-            console.log("[PDFCanvasRenderer] Image loaded successfully")
-          }
-          onError={(e) =>
-            console.error("[PDFCanvasRenderer] Image load error:", e)
-          }
         />
       ) : (
         <div className="flex items-center justify-center w-full h-64 bg-gray-200 text-gray-500">

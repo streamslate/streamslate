@@ -46,6 +46,7 @@ export default [
         ...globals.browser,
         ...globals.es2020,
         ...globals.node,
+        __APP_VERSION__: "readonly",
       },
     },
     plugins: {

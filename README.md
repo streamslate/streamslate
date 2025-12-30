@@ -25,10 +25,10 @@ Teaching live, reacting to research papers, or breaking down patch notes on stre
 Category What you get Status
 ✏️ Annotations Highlight • underline • free-ink • shapes • call-outs ✅
 🌙 Dark-First UI Adaptive page inversion, WCAG-contrast color swatches ✅
-🎥 Presenter Mode Borderless window/Browser Source, transparent bg toggle ✅
-🖥️ OBS / Stream Deck Global hotkeys + plug-in, WebSocket control ✅
-🌐 Collaboration Live cursors & comments for co-hosts 🔜 Beta
-📦 Export Embed annotations back into PDF or JSON layer 🛠️
+🎥 Presenter Mode Borderless window/Browser Source, transparent bg toggle 🛠️
+🖥️ OBS / Stream Deck Global hotkeys + plug-in, WebSocket control 🛠️
+🌐 Collaboration Live cursors & comments for co-hosts 🔜 Planned
+📦 Export Embed annotations back into PDF or JSON layer 🔜 Planned
 
 ⸻
 

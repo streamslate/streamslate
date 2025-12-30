@@ -16,20 +16,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import App from "./App";
-import { PresenterView } from "./components/presenter/PresenterView";
-import "./styles/globals.css";
+//! WebSocket server module for external control of StreamSlate
+//!
+//! This module provides a WebSocket server that allows external clients
+//! (OBS, Stream Deck, custom scripts) to control PDF navigation and
+//! receive state updates.
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/presenter" element={<PresenterView />} />
-      </Routes>
-    </BrowserRouter>
-  </React.StrictMode>
-);
+mod handlers;
+mod protocol;
+mod server;
+
+#[allow(unused_imports)]
+pub use protocol::{WebSocketCommand, WebSocketEvent};
+pub use server::{start_server, DEFAULT_PORT};

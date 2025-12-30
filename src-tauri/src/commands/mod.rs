@@ -21,9 +21,11 @@
 //! This module contains all the Tauri commands that can be invoked from the frontend.
 //! Commands are organized by functionality into separate modules.
 
+pub mod annotations;
 pub mod pdf;
 pub mod presenter;
 
 // Re-export all commands for easy access
+pub use annotations::*;
 pub use pdf::*;
 pub use presenter::*;

@@ -20,12 +20,57 @@
  * Custom hooks for PDF operations
  */
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/api/dialog";
-import { PDFCommands } from "../lib/tauri/commands";
+import { PDFCommands, AnnotationCommands } from "../lib/tauri/commands";
+import type { AnnotationDTO } from "../lib/tauri/commands";
 import { usePDFStore } from "../stores/pdf.store";
 import { LoadingStage } from "../types/pdf.types";
-import type { PDFDocument, PDFError } from "../types/pdf.types";
+import type { PDFDocument, PDFError, Annotation } from "../types/pdf.types";
+import {
+  emitPageChanged,
+  emitPdfOpened,
+  emitPdfClosed,
+  emitZoomChanged,
+} from "../lib/tauri/events";
+
+// Convert frontend Annotation to backend DTO
+function annotationToDTO(annotation: Annotation): AnnotationDTO {
+  return {
+    id: annotation.id,
+    type: annotation.type,
+    pageNumber: annotation.pageNumber,
+    x: annotation.x,
+    y: annotation.y,
+    width: annotation.width,
+    height: annotation.height,
+    content: annotation.content,
+    color: annotation.color,
+    opacity: annotation.opacity,
+    created: annotation.created.toISOString(),
+    modified: annotation.modified.toISOString(),
+    visible: annotation.visible,
+  };
+}
+
+// Convert backend DTO to frontend Annotation
+function dtoToAnnotation(dto: AnnotationDTO): Annotation {
+  return {
+    id: dto.id,
+    type: dto.type as Annotation["type"],
+    pageNumber: dto.pageNumber,
+    x: dto.x,
+    y: dto.y,
+    width: dto.width,
+    height: dto.height,
+    content: dto.content,
+    color: dto.color,
+    opacity: dto.opacity,
+    created: new Date(dto.created),
+    modified: new Date(dto.modified),
+    visible: dto.visible,
+  };
+}
 
 export const usePDF = () => {
   const {
@@ -33,14 +78,15 @@ export const usePDF = () => {
     viewerState,
     loadingState,
     error,
+    annotations,
     setDocument,
     setLoading,
     setError,
     reset,
     canGoToNextPage,
     canGoToPreviousPage,
-    goToNextPage,
-    goToPreviousPage,
+    goToNextPage: storeGoToNextPage,
+    goToPreviousPage: storeGoToPreviousPage,
     setCurrentPage,
     setZoom,
     setRotation,
@@ -48,7 +94,15 @@ export const usePDF = () => {
     setViewMode,
     toggleSidebar,
     toggleToolbar,
+    addAnnotation,
+    updateAnnotation,
+    removeAnnotation,
+    clearAnnotations: storeClearAnnotations,
   } = usePDFStore();
+
+  // Track if we have unsaved changes
+  const hasUnsavedChanges = useRef(false);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Open a PDF file dialog and load the selected file
@@ -97,6 +151,31 @@ export const usePDF = () => {
       setCurrentPage(1);
       setError(null);
 
+      // Emit event for cross-window sync (presenter mode)
+      await emitPdfOpened({
+        path: pdfDocument.path,
+        pageCount: pdfDocument.pageCount,
+        title: pdfDocument.title,
+      });
+      await emitPageChanged({
+        page: 1,
+        totalPages: pdfDocument.pageCount,
+        pdfPath: pdfDocument.path,
+      });
+
+      // Load saved annotations if they exist
+      try {
+        const savedAnnotations = await AnnotationCommands.loadAnnotations();
+        // Convert DTOs to Annotation objects and add to store
+        for (const pageAnnotations of Object.values(savedAnnotations)) {
+          for (const dto of pageAnnotations) {
+            addAnnotation(dtoToAnnotation(dto));
+          }
+        }
+      } catch {
+        // Annotations not loading is not critical - may not exist yet
+      }
+
       // Complete loading after a brief delay to show success message
       setTimeout(() => {
         setLoading(false);
@@ -110,15 +189,43 @@ export const usePDF = () => {
       setError(error);
       setLoading(false, LoadingStage.ERROR, 0, error.message);
     }
-  }, [setDocument, setLoading, setError, setCurrentPage]);
+  }, [setDocument, setLoading, setError, setCurrentPage, addAnnotation]);
+
+  /**
+   * Save annotations to the sidecar file
+   */
+  const saveAnnotations = useCallback(async () => {
+    if (!document || annotations.size === 0) return;
+
+    try {
+      // Convert Map to Record<number, AnnotationDTO[]>
+      const annotationsRecord: Record<number, AnnotationDTO[]> = {};
+      for (const [pageNum, pageAnnotations] of annotations.entries()) {
+        annotationsRecord[pageNum] = pageAnnotations.map(annotationToDTO);
+      }
+
+      await AnnotationCommands.saveAnnotations(annotationsRecord);
+      hasUnsavedChanges.current = false;
+    } catch {
+      // Failed to save annotations - will retry on next change
+    }
+  }, [document, annotations]);
 
   /**
    * Close the currently open PDF
    */
   const closePDF = useCallback(async () => {
     try {
+      // Save annotations before closing
+      if (annotations.size > 0) {
+        await saveAnnotations();
+      }
+
       await PDFCommands.closePdf();
       reset();
+
+      // Emit event for cross-window sync (presenter mode)
+      await emitPdfClosed();
     } catch (err) {
       const error: PDFError = {
         code: "CLOSE_ERROR",
@@ -127,17 +234,92 @@ export const usePDF = () => {
       };
       setError(error);
     }
-  }, [reset, setError]);
+  }, [reset, setError, annotations, saveAnnotations]);
+
+  /**
+   * Debounced auto-save for annotations
+   */
+  const debouncedSave = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    hasUnsavedChanges.current = true;
+    saveTimeoutRef.current = setTimeout(() => {
+      saveAnnotations();
+    }, 1000); // 1 second debounce
+  }, [saveAnnotations]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  /**
+   * Add annotation with auto-save
+   */
+  const addAnnotationWithSave = useCallback(
+    (annotation: Annotation) => {
+      addAnnotation(annotation);
+      debouncedSave();
+    },
+    [addAnnotation, debouncedSave]
+  );
+
+  /**
+   * Update annotation with auto-save
+   */
+  const updateAnnotationWithSave = useCallback(
+    (id: string, updates: Partial<Annotation>) => {
+      updateAnnotation(id, updates);
+      debouncedSave();
+    },
+    [updateAnnotation, debouncedSave]
+  );
+
+  /**
+   * Remove annotation with auto-save
+   */
+  const removeAnnotationWithSave = useCallback(
+    (id: string) => {
+      removeAnnotation(id);
+      debouncedSave();
+    },
+    [removeAnnotation, debouncedSave]
+  );
+
+  /**
+   * Clear all annotations with save
+   */
+  const clearAnnotations = useCallback(async () => {
+    storeClearAnnotations();
+    try {
+      await AnnotationCommands.clearAnnotations();
+    } catch {
+      // Failed to clear annotations file - not critical
+    }
+  }, [storeClearAnnotations]);
 
   /**
    * Navigate to a specific page
    */
   const goToPage = useCallback(
-    (pageNumber: number) => {
+    async (pageNumber: number) => {
       if (!document) return;
 
       const page = Math.max(1, Math.min(pageNumber, document.pageCount));
       setCurrentPage(page);
+
+      // Emit event for cross-window sync (presenter mode)
+      await emitPageChanged({
+        page,
+        totalPages: document.pageCount,
+        pdfPath: document.path,
+      });
     },
     [document, setCurrentPage]
   );
@@ -146,9 +328,12 @@ export const usePDF = () => {
    * Zoom to a specific level
    */
   const zoomTo = useCallback(
-    (zoomLevel: number) => {
+    async (zoomLevel: number) => {
       const zoom = Math.max(0.1, Math.min(zoomLevel, 5.0));
       setZoom(zoom);
+
+      // Emit event for cross-window sync (presenter mode)
+      await emitZoomChanged({ zoom });
     },
     [setZoom]
   );
@@ -209,6 +394,45 @@ export const usePDF = () => {
     canPrevious: canGoToPreviousPage(),
   };
 
+  /**
+   * Go to next page with event emission
+   */
+  const goToNextPage = useCallback(async () => {
+    if (!document || !canGoToNextPage()) return;
+
+    storeGoToNextPage();
+    const newPage = viewerState.currentPage + 1;
+
+    // Emit event for cross-window sync (presenter mode)
+    await emitPageChanged({
+      page: newPage,
+      totalPages: document.pageCount,
+      pdfPath: document.path,
+    });
+  }, [document, viewerState.currentPage, canGoToNextPage, storeGoToNextPage]);
+
+  /**
+   * Go to previous page with event emission
+   */
+  const goToPreviousPage = useCallback(async () => {
+    if (!document || !canGoToPreviousPage()) return;
+
+    storeGoToPreviousPage();
+    const newPage = viewerState.currentPage - 1;
+
+    // Emit event for cross-window sync (presenter mode)
+    await emitPageChanged({
+      page: newPage,
+      totalPages: document.pageCount,
+      pdfPath: document.path,
+    });
+  }, [
+    document,
+    viewerState.currentPage,
+    canGoToPreviousPage,
+    storeGoToPreviousPage,
+  ]);
+
   return {
     // State
     document,
@@ -218,8 +442,9 @@ export const usePDF = () => {
     isLoaded,
     isLoading,
     currentPageInfo,
+    annotations,
 
-    // Actions
+    // Navigation actions
     openPDF,
     closePDF,
     goToPage,
@@ -233,5 +458,12 @@ export const usePDF = () => {
     setViewMode,
     toggleSidebar,
     toggleToolbar,
+
+    // Annotation actions
+    addAnnotation: addAnnotationWithSave,
+    updateAnnotation: updateAnnotationWithSave,
+    removeAnnotation: removeAnnotationWithSave,
+    clearAnnotations,
+    saveAnnotations,
   };
 };

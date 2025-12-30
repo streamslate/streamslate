@@ -19,6 +19,9 @@
 module.exports = {
   root: true,
   env: { browser: true, es2020: true },
+  globals: {
+    __APP_VERSION__: "readonly",
+  },
   extends: [
     "eslint:recommended",
     "@typescript-eslint/recommended",

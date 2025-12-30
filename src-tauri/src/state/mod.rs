@@ -18,6 +18,7 @@
 
 //! Application state management for StreamSlate
 
+use crate::error::{Result, StreamSlateError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -74,18 +75,45 @@ pub struct IntegrationState {
 }
 
 /// Main application state
-#[derive(Debug)]
+///
+/// This struct holds all application state that needs to be shared across
+/// Tauri commands. Each field is wrapped in Arc<Mutex<T>> for thread-safe access.
+///
+/// Clone is cheap because it only clones the Arc pointers, not the underlying data.
+#[derive(Clone)]
 pub struct AppState {
-    #[allow(dead_code)]
+    /// PDF metadata state (serializable, sent to frontend)
     pub pdf: Arc<Mutex<PdfState>>,
-    #[allow(dead_code)]
+
+    /// The actual loaded PDF document (not serializable)
+    /// This is stored separately because lopdf::Document doesn't impl Serialize
+    pub pdf_document: Arc<Mutex<Option<lopdf::Document>>>,
+
+    /// Presenter window state
     pub presenter: Arc<Mutex<PresenterState>>,
-    #[allow(dead_code)]
+
+    /// WebSocket server state
     pub websocket: Arc<Mutex<WebSocketState>>,
-    #[allow(dead_code)]
+
+    /// External integrations state
     pub integration: Arc<Mutex<IntegrationState>>,
-    #[allow(dead_code)]
-    pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>, // page_number -> annotations
+
+    /// Annotations per page (page_number -> list of annotation JSON strings)
+    pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>,
+}
+
+// Manual Debug impl since lopdf::Document doesn't implement Debug
+impl std::fmt::Debug for AppState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppState")
+            .field("pdf", &self.pdf)
+            .field("pdf_document", &"<lopdf::Document>")
+            .field("presenter", &self.presenter)
+            .field("websocket", &self.websocket)
+            .field("integration", &self.integration)
+            .field("annotations", &self.annotations)
+            .finish()
+    }
 }
 
 impl Default for PdfState {
@@ -129,6 +157,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             pdf: Arc::new(Mutex::new(PdfState::default())),
+            pdf_document: Arc::new(Mutex::new(None)),
             presenter: Arc::new(Mutex::new(PresenterState::default())),
             websocket: Arc::new(Mutex::new(WebSocketState::default())),
             integration: Arc::new(Mutex::new(IntegrationState::default())),
@@ -137,63 +166,77 @@ impl AppState {
     }
 
     /// Get current PDF state
-    #[allow(dead_code)]
-    pub fn get_pdf_state(&self) -> Result<PdfState, String> {
+    pub fn get_pdf_state(&self) -> Result<PdfState> {
         self.pdf
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock PDF state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("PDF state: {e}")))
     }
 
-    /// Update PDF state
-    #[allow(dead_code)]
-    pub fn update_pdf_state<F>(&self, update_fn: F) -> Result<(), String>
+    /// Update PDF state with a closure
+    pub fn update_pdf_state<F>(&self, update_fn: F) -> Result<()>
     where
         F: FnOnce(&mut PdfState),
     {
         self.pdf
             .lock()
             .map(|mut state| update_fn(&mut state))
-            .map_err(|e| format!("Failed to lock PDF state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("PDF state: {e}")))
+    }
+
+    /// Get the loaded PDF document
+    pub fn get_pdf_document(&self) -> Result<Option<lopdf::Document>> {
+        self.pdf_document
+            .lock()
+            .map(|doc| doc.clone())
+            .map_err(|e| StreamSlateError::StateLock(format!("PDF document: {e}")))
+    }
+
+    /// Set the loaded PDF document
+    pub fn set_pdf_document(&self, doc: Option<lopdf::Document>) -> Result<()> {
+        let mut guard = self
+            .pdf_document
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("PDF document: {e}")))?;
+        *guard = doc;
+        Ok(())
     }
 
     /// Get current presenter state
-    #[allow(dead_code)]
-    pub fn get_presenter_state(&self) -> Result<PresenterState, String> {
+    pub fn get_presenter_state(&self) -> Result<PresenterState> {
         self.presenter
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock presenter state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("Presenter state: {e}")))
     }
 
-    /// Update presenter state
-    #[allow(dead_code)]
-    pub fn update_presenter_state<F>(&self, update_fn: F) -> Result<(), String>
+    /// Update presenter state with a closure
+    pub fn update_presenter_state<F>(&self, update_fn: F) -> Result<()>
     where
         F: FnOnce(&mut PresenterState),
     {
         self.presenter
             .lock()
             .map(|mut state| update_fn(&mut state))
-            .map_err(|e| format!("Failed to lock presenter state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("Presenter state: {e}")))
     }
 
     /// Get WebSocket state
     #[allow(dead_code)]
-    pub fn get_websocket_state(&self) -> Result<WebSocketState, String> {
+    pub fn get_websocket_state(&self) -> Result<WebSocketState> {
         self.websocket
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock WebSocket state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("WebSocket state: {e}")))
     }
 
     /// Get integration state
     #[allow(dead_code)]
-    pub fn get_integration_state(&self) -> Result<IntegrationState, String> {
+    pub fn get_integration_state(&self) -> Result<IntegrationState> {
         self.integration
             .lock()
             .map(|state| state.clone())
-            .map_err(|e| format!("Failed to lock integration state: {e}"))
+            .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))
     }
 }
 

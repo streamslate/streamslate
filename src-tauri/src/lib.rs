@@ -17,10 +17,15 @@
  */
 
 mod commands;
+pub mod error;
 mod state;
+mod websocket;
 
 use commands::*;
 use state::AppState;
+use std::sync::Arc;
+use tauri::Manager;
+use tracing::{info, warn};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -46,11 +51,49 @@ pub fn run() {
             update_presenter_config,
             get_presenter_state,
             toggle_presenter_mode,
-            set_presenter_page
+            set_presenter_page,
+            // Annotation commands
+            save_annotations,
+            load_annotations,
+            get_page_annotations,
+            clear_annotations,
+            has_annotations
         ])
-        .setup(|_app| {
-            // Initialize WebSocket server on port 11451
-            // This would be implemented in a future phase
+        .setup(|app| {
+            // Initialize structured logging with tracing
+            tracing_subscriber::fmt()
+                .with_env_filter(
+                    tracing_subscriber::EnvFilter::try_from_default_env()
+                        .unwrap_or_else(|_| "streamslate=info".into()),
+                )
+                .init();
+
+            info!("StreamSlate starting...");
+
+            // Get the managed state and clone it for the WebSocket server
+            // Clone is cheap - only clones Arc pointers, not underlying data
+            let state: tauri::State<'_, AppState> = app.state::<AppState>();
+            let state_arc: Arc<AppState> = Arc::new(state.inner().clone());
+
+            // Get app handle for emitting events from WebSocket handlers
+            let app_handle = app.handle();
+
+            // Start WebSocket server on port 11451
+            tokio::spawn(async move {
+                match websocket::start_server(websocket::DEFAULT_PORT, state_arc, app_handle).await
+                {
+                    Ok(tx) => {
+                        info!("WebSocket server started, broadcast channel ready");
+                        // Store the broadcast sender for future use if needed
+                        // For now, the server handles its own broadcasting
+                        drop(tx);
+                    }
+                    Err(e) => {
+                        warn!(error = %e, "Failed to start WebSocket server");
+                    }
+                }
+            });
+
             Ok(())
         })
         .run(tauri::generate_context!())

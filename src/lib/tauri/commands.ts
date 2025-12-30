@@ -149,6 +149,68 @@ export class PresenterCommands {
   }
 }
 
+// Annotation types for Tauri commands
+export interface AnnotationDTO {
+  id: string;
+  type: string;
+  pageNumber: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  content: string;
+  color: string;
+  opacity: number;
+  created: string;
+  modified: string;
+  visible: boolean;
+  points?: { x: number; y: number }[];
+}
+
+// Annotation Commands
+export class AnnotationCommands {
+  /**
+   * Save annotations to a JSON sidecar file
+   */
+  static async saveAnnotations(
+    annotations: Record<number, AnnotationDTO[]>
+  ): Promise<void> {
+    return await invoke<void>("save_annotations", { annotations });
+  }
+
+  /**
+   * Load annotations from the JSON sidecar file
+   */
+  static async loadAnnotations(): Promise<Record<number, AnnotationDTO[]>> {
+    return await invoke<Record<number, AnnotationDTO[]>>("load_annotations");
+  }
+
+  /**
+   * Get annotations for a specific page
+   */
+  static async getPageAnnotations(
+    pageNumber: number
+  ): Promise<AnnotationDTO[]> {
+    return await invoke<AnnotationDTO[]>("get_page_annotations", {
+      pageNumber,
+    });
+  }
+
+  /**
+   * Clear all annotations for the current PDF
+   */
+  static async clearAnnotations(): Promise<void> {
+    return await invoke<void>("clear_annotations");
+  }
+
+  /**
+   * Check if annotations exist for a PDF
+   */
+  static async hasAnnotations(pdfPath: string): Promise<boolean> {
+    return await invoke<boolean>("has_annotations", { pdfPath });
+  }
+}
+
 // Legacy greet command for testing
 export async function greet(name: string): Promise<string> {
   return await invoke<string>("greet", { name });

@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import React, { useCallback, useState, useEffect } from "react";
+import { appWindow } from "@tauri-apps/api/window";
 
 interface BorderlessWindowControlsProps {
   transparentBg: boolean;
@@ -25,6 +26,31 @@ interface BorderlessWindowControlsProps {
 export const BorderlessWindowControls: React.FC<
   BorderlessWindowControlsProps
 > = ({ transparentBg }) => {
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  // Check initial maximized state
+  useEffect(() => {
+    appWindow.isMaximized().then(setIsMaximized);
+  }, []);
+
+  const handleClose = useCallback(async () => {
+    await appWindow.close();
+  }, []);
+
+  const handleMinimize = useCallback(async () => {
+    await appWindow.minimize();
+  }, []);
+
+  const handleMaximize = useCallback(async () => {
+    if (isMaximized) {
+      await appWindow.unmaximize();
+      setIsMaximized(false);
+    } else {
+      await appWindow.maximize();
+      setIsMaximized(true);
+    }
+  }, [isMaximized]);
+
   return (
     <div
       className={`flex items-center justify-between ${
@@ -37,15 +63,17 @@ export const BorderlessWindowControls: React.FC<
         <div
           className="w-3 h-3 bg-red-500 rounded-full hover:bg-red-600 cursor-pointer transition-colors"
           title="Close"
-          onClick={() => window.close()}
+          onClick={handleClose}
         ></div>
         <div
           className="w-3 h-3 bg-yellow-500 rounded-full hover:bg-yellow-600 cursor-pointer transition-colors"
           title="Minimize"
+          onClick={handleMinimize}
         ></div>
         <div
           className="w-3 h-3 bg-green-500 rounded-full hover:bg-green-600 cursor-pointer transition-colors"
-          title="Maximize"
+          title={isMaximized ? "Restore" : "Maximize"}
+          onClick={handleMaximize}
         ></div>
       </div>
       <div className="flex-1 text-center text-sm font-medium text-primary">

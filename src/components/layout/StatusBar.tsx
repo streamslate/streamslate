@@ -65,7 +65,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
             <span>Presenter Mode Active</span>
           </span>
         )}
-        <span>StreamSlate v0.0.1</span>
+        <span>StreamSlate v{__APP_VERSION__}</span>
       </div>
     </div>
   );

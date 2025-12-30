@@ -29,7 +29,6 @@ import type {
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 
 // Import PDF.js worker with Vite's ?url syntax
-// @ts-expect-error - Vite specific import
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 // Configure PDF.js worker
