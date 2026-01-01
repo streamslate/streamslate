@@ -1,4 +1,6 @@
-StreamSlate
+![StreamSlate Banner](assets/banner.png)
+
+# StreamSlate
 
 Mark it. Show it. – A lightning-fast PDF annotator built specifically for streamers, YouTubers, and on-air educators.
 

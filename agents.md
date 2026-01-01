@@ -89,4 +89,6 @@ npm run release:beta Draft GitHub release
 Always anchor your output to verifiable repository context.
 When uncertain, ask; when certain, be concise; when adding, document.
 
-Happy shipping!
+## Planning
+
+- See `ROADMAP.md` for project status and plans.
