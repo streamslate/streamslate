@@ -74,6 +74,7 @@ pub struct IntegrationState {
     pub obs_connected: bool,
     pub stream_deck_connected: bool,
     pub ndi_enabled: bool,
+    pub ndi_active: bool,
 }
 
 /// Main application state

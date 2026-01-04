@@ -20,6 +20,7 @@ import React, { useMemo } from "react";
 import { usePDF } from "../../hooks/usePDF";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
+import { NDIControls } from "../debug/NDIControls";
 
 type Panel = "files" | "annotations" | "settings";
 
@@ -675,6 +676,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </p>
                     </div>
                   )}
+
+                  {/* Experimental Section */}
+                  <div className="pt-6 border-t border-border-secondary space-y-4">
+                    <h4 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider">
+                      Experimental (NDI)
+                    </h4>
+                    <NDIControls />
+                  </div>
                 </div>
               </div>
             </div>

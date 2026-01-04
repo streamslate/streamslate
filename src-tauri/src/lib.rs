@@ -57,7 +57,11 @@ pub fn run() {
             load_annotations,
             get_page_annotations,
             clear_annotations,
-            has_annotations
+            has_annotations,
+            // NDI commands
+            start_ndi_sender,
+            stop_ndi_sender,
+            send_video_frame
         ])
         .setup(|app| {
             // Initialize structured logging with tracing

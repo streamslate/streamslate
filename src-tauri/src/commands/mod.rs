@@ -22,10 +22,12 @@
 //! Commands are organized by functionality into separate modules.
 
 pub mod annotations;
+pub mod ndi;
 pub mod pdf;
 pub mod presenter;
 
 // Re-export all commands for easy access
 pub use annotations::*;
+pub use ndi::*;
 pub use pdf::*;
 pub use presenter::*;
