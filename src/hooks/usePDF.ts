@@ -21,8 +21,10 @@
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import { open } from "@tauri-apps/api/dialog";
+import { open, save } from "@tauri-apps/api/dialog";
+import { writeBinaryFile } from "@tauri-apps/api/fs";
 import { PDFCommands, AnnotationCommands } from "../lib/tauri/commands";
+import { exportPDF } from "../lib/pdf/exporter";
 import type { AnnotationDTO } from "../lib/tauri/commands";
 import { usePDFStore } from "../stores/pdf.store";
 import { LoadingStage } from "../types/pdf.types";
@@ -465,5 +467,54 @@ export const usePDF = () => {
     removeAnnotation: removeAnnotationWithSave,
     clearAnnotations,
     saveAnnotations,
+    exportDocument: async () => {
+      if (!document) return;
+
+      try {
+        setLoading(true, LoadingStage.RENDERING, 0, "Generating PDF...");
+
+        // Open save dialog
+        const filePath = await save({
+          filters: [
+            {
+              name: "PDF Document",
+              extensions: ["pdf"],
+            },
+          ],
+          defaultPath: document.title
+            ? `${document.title}_annotated.pdf`
+            : "exported.pdf",
+        });
+
+        if (!filePath) {
+          setLoading(false);
+          return;
+        }
+
+        // Generate PDF
+        setLoading(
+          true,
+          LoadingStage.RENDERING,
+          50,
+          "Embedding annotations..."
+        );
+        const pdfBytes = await exportPDF(document.path, annotations);
+
+        // Write to file
+        setLoading(true, LoadingStage.RENDERING, 80, "Saving file...");
+        await writeBinaryFile(filePath, pdfBytes);
+
+        setLoading(true, LoadingStage.COMPLETE, 100, "Export complete");
+        setTimeout(() => setLoading(false), 1000);
+      } catch (err) {
+        const error: PDFError = {
+          code: "EXPORT_ERROR",
+          message: err instanceof Error ? err.message : "Failed to export PDF",
+          details: err,
+        };
+        setError(error);
+        setLoading(false, LoadingStage.ERROR, 0, error.message);
+      }
+    },
   };
 };

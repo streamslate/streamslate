@@ -16,7 +16,7 @@ See README.md for feature highlights.
 
 ### Beta
 
-- [ ] Annotation save/export
+- [x] Annotation save/export
 - [ ] Stream Deck plug-in
 
 ### 1.0

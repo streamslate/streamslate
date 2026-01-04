@@ -169,8 +169,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   borderlessMode,
 }) => {
   // Access annotation state and actions from PDF hook
-  const { annotations, goToPage, removeAnnotation, updateAnnotation } =
-    usePDF();
+  const {
+    annotations,
+    goToPage,
+    removeAnnotation,
+    updateAnnotation,
+    exportDocument,
+  } = usePDF();
 
   // Compute total annotation count and grouped list
   const { totalCount, groupedAnnotations } = useMemo(() => {
@@ -351,6 +356,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       />
                     </svg>
                     <span className="font-medium">Open PDF File</span>
+                  </button>
+                </div>
+
+                {/* Export PDF Button */}
+                <div className="mb-4">
+                  <button
+                    onClick={exportDocument}
+                    className="btn-dashed w-full justify-center"
+                    disabled={!isLoaded}
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    <span className="font-medium">Export with Annotations</span>
                   </button>
                 </div>
 
