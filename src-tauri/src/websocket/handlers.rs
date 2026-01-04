@@ -42,7 +42,56 @@ pub fn handle_command(
         WebSocketCommand::SetZoom { zoom } => handle_set_zoom(state, app_handle, zoom),
         WebSocketCommand::TogglePresenter => handle_toggle_presenter(state, app_handle),
         WebSocketCommand::Ping => WebSocketEvent::Pong,
+        WebSocketCommand::AddAnnotation { page, annotation } => {
+            handle_add_annotation(state, app_handle, page, annotation)
+        }
+        WebSocketCommand::ClearAnnotations => handle_clear_annotations(state, app_handle),
     }
+}
+
+fn handle_add_annotation(
+    state: &Arc<AppState>,
+    app_handle: &AppHandle,
+    page: u32,
+    annotation: serde_json::Value,
+) -> WebSocketEvent {
+    // 1. Serialize for storage
+    let annotation_str = match serde_json::to_string(&annotation) {
+        Ok(s) => s,
+        Err(e) => return WebSocketEvent::error(format!("Invalid annotation JSON: {}", e)),
+    };
+
+    // 2. Update State
+    if let Err(e) = state.annotations.lock().map(|mut map| {
+        map.entry(page).or_default().push(annotation_str.clone());
+    }) {
+        return WebSocketEvent::error(e.to_string());
+    }
+
+    // 3. Emit to Host UI (Tauri)
+    emit_annotation_added(app_handle, page, annotation.clone());
+
+    // 4. Return event for broadcast
+    // We construct a partial update for just this page
+    let mut updates = std::collections::HashMap::new();
+    updates.insert(page, vec![annotation]);
+
+    WebSocketEvent::AnnotationsUpdated {
+        annotations: updates,
+    }
+}
+
+fn handle_clear_annotations(state: &Arc<AppState>, app_handle: &AppHandle) -> WebSocketEvent {
+    // 1. Update State
+    if let Err(e) = state.annotations.lock().map(|mut map| map.clear()) {
+        return WebSocketEvent::error(e.to_string());
+    }
+
+    // 2. Emit to Host UI
+    emit_annotations_cleared(app_handle);
+
+    // 3. Return event for broadcast
+    WebSocketEvent::AnnotationsCleared
 }
 
 fn handle_next_page(state: &Arc<AppState>, app_handle: &AppHandle) -> WebSocketEvent {
@@ -238,5 +287,30 @@ fn emit_presenter_changed(app_handle: &AppHandle, active: bool) {
 
     if let Err(e) = app_handle.emit_all("presenter-changed", PresenterChangedPayload { active }) {
         warn!(error = %e, "Failed to emit presenter-changed event");
+    }
+}
+
+fn emit_annotation_added(app_handle: &AppHandle, page: u32, annotation: serde_json::Value) {
+    use tauri::Manager;
+
+    #[derive(serde::Serialize, Clone)]
+    struct AnnotationAddedPayload {
+        page: u32,
+        annotation: serde_json::Value,
+    }
+
+    if let Err(e) = app_handle.emit_all(
+        "annotation-added",
+        AnnotationAddedPayload { page, annotation },
+    ) {
+        warn!(error = %e, "Failed to emit annotation-added event");
+    }
+}
+
+fn emit_annotations_cleared(app_handle: &AppHandle) {
+    use tauri::Manager;
+
+    if let Err(e) = app_handle.emit_all("annotations-cleared", ()) {
+        warn!(error = %e, "Failed to emit annotations-cleared event");
     }
 }

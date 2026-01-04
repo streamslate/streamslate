@@ -1,0 +1,51 @@
+{
+  "project_name": "StreamSlate",
+  "uuid": "ai.flexinfer.streamslate",
+  "version": "1.0.0",
+  "sdk_version": 2,
+  "platforms": ["mac", "windows"],
+  "author": "FlexInfer",
+  "description": "Control StreamSlate PDF presenter from your Stream Deck",
+  "icon": "icon",
+  "actions": [
+    {
+      "uuid": "ai.flexinfer.streamslate.next-page",
+      "name": "Next Page",
+      "tooltip": "Go to next page",
+      "icon": "icons/next",
+      "states": [
+        {
+          "title": "Next"
+        }
+      ]
+    },
+    {
+      "uuid": "ai.flexinfer.streamslate.prev-page",
+      "name": "Previous Page",
+      "tooltip": "Go to previous page",
+      "icon": "icons/prev",
+      "states": [
+        {
+          "title": "Prev"
+        }
+      ]
+    },
+    {
+      "uuid": "ai.flexinfer.streamslate.toggle-presenter",
+      "name": "Toggle Presenter",
+      "tooltip": "Toggle presenter view",
+      "icon": "icons/presenter",
+      "states": [
+        {
+          "image": "icons/presenter_off",
+          "title": "Show"
+        },
+        {
+          "image": "icons/presenter_on",
+          "title": "Hide"
+        }
+      ]
+    }
+  ],
+  "category": "StreamSlate"
+}

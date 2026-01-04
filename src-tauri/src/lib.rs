@@ -18,8 +18,8 @@
 
 mod commands;
 pub mod error;
-mod state;
-mod websocket;
+pub mod state;
+pub mod websocket;
 
 use commands::*;
 use state::AppState;
@@ -80,13 +80,17 @@ pub fn run() {
 
             // Start WebSocket server on port 11451
             tokio::spawn(async move {
-                match websocket::start_server(websocket::DEFAULT_PORT, state_arc, app_handle).await
+                // Clone state for the server, keep one for setting sender
+                let server_state = state_arc.clone();
+                match websocket::start_server(websocket::DEFAULT_PORT, server_state, app_handle)
+                    .await
                 {
                     Ok(tx) => {
                         info!("WebSocket server started, broadcast channel ready");
-                        // Store the broadcast sender for future use if needed
-                        // For now, the server handles its own broadcasting
-                        drop(tx);
+                        // Store the broadcast sender for future use
+                        if let Err(e) = state_arc.set_broadcast_sender(tx) {
+                            warn!("Failed to set broadcast sender: {}", e);
+                        }
                     }
                     Err(e) => {
                         warn!(error = %e, "Failed to start WebSocket server");

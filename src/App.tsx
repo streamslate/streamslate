@@ -25,6 +25,7 @@ import { PresenterUI } from "./components/layout/PresenterUI";
 import { BorderlessUI } from "./components/layout/BorderlessUI";
 import { useIntegrationStore } from "./stores/integration.store";
 import { usePDF } from "./hooks/usePDF";
+import { useRemoteControl } from "./hooks/useRemoteControl";
 import { useTheme } from "./hooks/useTheme";
 import { useViewModes } from "./hooks/useViewModes";
 import { StatusBar } from "./components/layout/StatusBar";
@@ -46,6 +47,9 @@ function App() {
 
   // Get PDF state and functions
   const { openPDF, isLoaded } = usePDF();
+
+  // Enable remote control (Stream Deck / WebSocket)
+  useRemoteControl(setPresenterMode);
 
   // Get WebSocket state from integration store
   const websocketState = useIntegrationStore((state) => state.websocket);

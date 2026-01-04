@@ -147,6 +147,22 @@ pub async fn save_annotations(
 
     debug!(path = %annotations_path.display(), "Annotations saved successfully");
 
+    // Broadcast update to all connected clients (Live Collaboration)
+    let mut broadcast_annotations = HashMap::new();
+    for (page, page_annotations) in &file.annotations {
+        let values: Vec<serde_json::Value> = page_annotations
+            .iter()
+            .filter_map(|a| serde_json::to_value(a).ok())
+            .collect();
+        broadcast_annotations.insert(*page, values);
+    }
+
+    if let Err(e) = state.broadcast(crate::websocket::WebSocketEvent::AnnotationsUpdated {
+        annotations: broadcast_annotations,
+    }) {
+        warn!("Failed to broadcast annotations update: {}", e);
+    }
+
     Ok(())
 }
 

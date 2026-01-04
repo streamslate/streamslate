@@ -46,6 +46,15 @@ pub enum WebSocketCommand {
 
     /// Ping to keep connection alive
     Ping,
+
+    /// Add an annotation
+    AddAnnotation {
+        page: u32,
+        annotation: serde_json::Value,
+    },
+
+    /// Clear all annotations
+    ClearAnnotations,
 }
 
 /// Events that StreamSlate sends to clients
@@ -90,6 +99,15 @@ pub enum WebSocketEvent {
 
     /// Connection established confirmation
     Connected { version: String },
+
+    /// Annotations updated notification
+    AnnotationsUpdated {
+        /// Map of page number to list of annotations
+        annotations: std::collections::HashMap<u32, Vec<serde_json::Value>>,
+    },
+
+    /// All annotations cleared
+    AnnotationsCleared,
 }
 
 impl WebSocketEvent {

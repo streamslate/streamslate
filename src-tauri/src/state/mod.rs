@@ -19,9 +19,11 @@
 //! Application state management for StreamSlate
 
 use crate::error::{Result, StreamSlateError};
+use crate::websocket::WebSocketEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use tokio::sync::broadcast;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfState {
@@ -100,6 +102,9 @@ pub struct AppState {
 
     /// Annotations per page (page_number -> list of annotation JSON strings)
     pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>,
+
+    /// WebSocket broadcast sender (for sending events from commands)
+    pub broadcast_sender: Arc<Mutex<Option<broadcast::Sender<WebSocketEvent>>>>,
 }
 
 // Manual Debug impl since lopdf::Document doesn't implement Debug
@@ -112,6 +117,7 @@ impl std::fmt::Debug for AppState {
             .field("websocket", &self.websocket)
             .field("integration", &self.integration)
             .field("annotations", &self.annotations)
+            .field("broadcast_sender", &"<broadcast::Sender>")
             .finish()
     }
 }
@@ -162,6 +168,7 @@ impl AppState {
             websocket: Arc::new(Mutex::new(WebSocketState::default())),
             integration: Arc::new(Mutex::new(IntegrationState::default())),
             annotations: Arc::new(Mutex::new(HashMap::new())),
+            broadcast_sender: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -237,6 +244,30 @@ impl AppState {
             .lock()
             .map(|state| state.clone())
             .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))
+    }
+
+    /// Set the broadcast sender for WebSocket events
+    pub fn set_broadcast_sender(&self, sender: broadcast::Sender<WebSocketEvent>) -> Result<()> {
+        let mut guard = self
+            .broadcast_sender
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("Broadcast sender: {e}")))?;
+        *guard = Some(sender);
+        Ok(())
+    }
+
+    /// Broadcast an event to all connected WebSocket clients
+    pub fn broadcast(&self, event: WebSocketEvent) -> Result<()> {
+        let guard = self
+            .broadcast_sender
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("Broadcast sender: {e}")))?;
+
+        if let Some(sender) = &*guard {
+            // Ignore error if no receivers (it's fine)
+            let _ = sender.send(event);
+        }
+        Ok(())
     }
 }
 

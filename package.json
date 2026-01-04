@@ -76,7 +76,7 @@
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix --max-warnings 0",
       "prettier --write",
-      "bash -c 'npx tsc --noEmit --pretty || true'"
+      "bash -c 'npx tsc --noEmit --pretty'"
     ],
     "*.{json,md,yml,yaml}": [
       "prettier --write"

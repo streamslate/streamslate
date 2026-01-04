@@ -17,11 +17,11 @@ See README.md for feature highlights.
 ### Beta
 
 - [x] Annotation save/export
-- [ ] Stream Deck plug-in
+- [x] Stream Deck plug-in
 
 ### 1.0
 
-- [ ] Live collaboration
+- [x] Live collaboration (WebSocket Sync)
 - [ ] NDI/Syphon
 - [ ] Auto-update
 

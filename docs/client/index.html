@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StreamSlate Remote</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #1a1b1e;
+        color: #ffffff;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        align-items: center;
+      }
+      h1 {
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+      }
+      .card {
+        background: #25262b;
+        border-radius: 12px;
+        padding: 20px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .status {
+        font-size: 0.8rem;
+        color: #909296;
+        margin-bottom: 10px;
+      }
+      .status.connected {
+        color: #40c057;
+      }
+      .status.disconnected {
+        color: #fa5252;
+      }
+
+      .page-info {
+        font-size: 2rem;
+        font-weight: bold;
+        margin: 20px 0;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      button {
+        background: #228be6;
+        color: white;
+        border: none;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      button:active {
+        background: #1c7ed6;
+      }
+      button:disabled {
+        background: #343a40;
+        color: #868e96;
+        cursor: not-allowed;
+      }
+
+      .full-width {
+        grid-column: span 2;
+      }
+
+      #log {
+        font-family: monospace;
+        font-size: 0.8rem;
+        color: #5c5f66;
+        text-align: left;
+        overflow-y: auto;
+        flex: 1;
+        width: 100%;
+        max-width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>StreamSlate Remote</h1>
+
+    <div class="card">
+      <div id="status" class="status disconnected">Disconnected</div>
+      <div id="page-info" class="page-info">-- / --</div>
+
+      <div class="controls">
+        <button onclick="sendCommand('PREVIOUS_PAGE')">Previous</button>
+        <button onclick="sendCommand('NEXT_PAGE')">Next</button>
+        <button class="full-width" onclick="sendCommand('TOGGLE_PRESENTER')">
+          Toggle Presenter
+        </button>
+      </div>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+      const WS_URL = "ws://" + window.location.hostname + ":11451";
+      let ws;
+
+      function connect() {
+        log("Connecting to " + WS_URL + "...");
+        try {
+          ws = new WebSocket(WS_URL);
+        } catch (e) {
+          log("Error creating WebSocket: " + e.message);
+          return;
+        }
+
+        ws.onopen = () => {
+          document.getElementById("status").className = "status connected";
+          document.getElementById("status").textContent = "Connected";
+          log("Connected");
+          sendCommand("GET_STATE");
+        };
+
+        ws.onclose = () => {
+          document.getElementById("status").className = "status disconnected";
+          document.getElementById("status").textContent = "Disconnected";
+          log("Disconnected. Retrying in 3s...");
+          setTimeout(connect, 3000);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data);
+            handleMessage(msg);
+          } catch (e) {
+            log("Error parsing message: " + e);
+          }
+        };
+      }
+
+      function handleMessage(msg) {
+        // log('Received: ' + msg.type);
+
+        if (msg.type === "STATE" || msg.type === "PAGE_CHANGED") {
+          updatePageInfo(msg.page, msg.total_pages);
+        } else if (msg.type === "ANNOTATIONS_UPDATED") {
+          log("Annotations updated");
+        } else if (msg.type === "PONG") {
+          // Heartbeat
+        }
+      }
+
+      function updatePageInfo(current, total) {
+        document.getElementById("page-info").textContent =
+          `${current} / ${total}`;
+      }
+
+      function sendCommand(type, payload = {}) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type, ...payload }));
+        }
+      }
+
+      function log(text) {
+        const el = document.getElementById("log");
+        const line = document.createElement("div");
+        line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+        el.prepend(line);
+      }
+
+      // Start connection
+      connect();
+
+      // Keep alive
+      setInterval(() => sendCommand("PING"), 30000);
+    </script>
+  </body>
+</html>
