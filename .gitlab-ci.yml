@@ -24,9 +24,10 @@
 #
 
 stages:
+  - lint
   - test
   - build
-  - release
+  - deploy
 
 variables:
   CARGO_TERM_COLOR: always
@@ -43,8 +44,7 @@ default:
       - ~/.cargo/registry/
       - ~/.cargo/git/
 
-test:linux:
-  stage: test
+.linux: &linux
   image: rust:latest
   before_script:
     - apt-get update
@@ -53,16 +53,25 @@ test:linux:
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
     # Filter out -r lines and comments for dev requirements
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
-  script:
     - npm ci
+
+lint:linux:
+  stage: lint
+  <<: *linux
+  script:
     # TypeScript, Format, Lint
     - npx tsc --noEmit
     - npm run format:check
     - npm run lint
     - cd src-tauri && cargo fmt --all -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
+
+test:linux:
+  stage: test
+  <<: *linux
+  script:
     # Rust tests
-    - cargo test
+    - cd src-tauri && cargo test
     # Return to root for frontend tests
     - cd ..
     # Start xvfb for headless browser testing (Cypress requires a display)
@@ -106,7 +115,7 @@ build:macos:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 docker:build:
-  stage: release
+  stage: deploy
   image: docker:24.0.7
   services:
     - docker:24.0.7-dind
