@@ -98,61 +98,141 @@ export const PresenterView: React.FC = () => {
   }, [pdfPath, currentPage]);
 
   // Set up Tauri event listeners
+  // Set up event listeners (Tauri or WebSocket)
   useEffect(() => {
-    const unlistenFns: UnlistenFn[] = [];
+    let unlistenFns: UnlistenFn[] = [];
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout>;
 
-    const setupListeners = async () => {
-      // Listen for page changes from main window
-      const unlistenPageChanged = await listen<PageChangedPayload>(
-        "page-changed",
-        (event) => {
-          setCurrentPage(event.payload.page);
-          if (event.payload.totalPages) {
-            setTotalPages(event.payload.totalPages);
+    const setupTauriListeners = async () => {
+      try {
+        // Listen for page changes from main window
+        const unlistenPageChanged = await listen<PageChangedPayload>(
+          "page-changed",
+          (event) => {
+            setCurrentPage(event.payload.page);
+            if (event.payload.totalPages) {
+              setTotalPages(event.payload.totalPages);
+            }
+            if (event.payload.pdfPath) {
+              setPdfPath(event.payload.pdfPath);
+            }
           }
-          if (event.payload.pdfPath) {
-            setPdfPath(event.payload.pdfPath);
-          }
-        }
-      );
-      unlistenFns.push(unlistenPageChanged);
+        );
+        unlistenFns.push(unlistenPageChanged);
 
-      // Listen for PDF opened events
-      const unlistenPdfOpened = await listen<PdfOpenedPayload>(
-        "pdf-opened",
-        (event) => {
-          setPdfPath(event.payload.path);
-          setTotalPages(event.payload.pageCount);
+        // Listen for PDF opened events
+        const unlistenPdfOpened = await listen<PdfOpenedPayload>(
+          "pdf-opened",
+          (event) => {
+            setPdfPath(event.payload.path);
+            setTotalPages(event.payload.pageCount);
+            setCurrentPage(1);
+          }
+        );
+        unlistenFns.push(unlistenPdfOpened);
+
+        // Listen for PDF closed events
+        const unlistenPdfClosed = await listen("pdf-closed", () => {
+          setPdfPath(null);
+          setTotalPages(0);
           setCurrentPage(1);
-        }
-      );
-      unlistenFns.push(unlistenPdfOpened);
+          setRenderedImage(null);
+        });
+        unlistenFns.push(unlistenPdfClosed);
 
-      // Listen for PDF closed events
-      const unlistenPdfClosed = await listen("pdf-closed", () => {
-        setPdfPath(null);
-        setTotalPages(0);
-        setCurrentPage(1);
-        setRenderedImage(null);
-      });
-      unlistenFns.push(unlistenPdfClosed);
-
-      // Listen for zoom changes
-      const unlistenZoomChanged = await listen<{ zoom: number }>(
-        "zoom-changed",
-        () => {
-          // Re-render with new zoom
-          renderPage();
-        }
-      );
-      unlistenFns.push(unlistenZoomChanged);
+        // Listen for zoom changes
+        const unlistenZoomChanged = await listen<{ zoom: number }>(
+          "zoom-changed",
+          () => {
+            // Re-render with new zoom
+            renderPage();
+          }
+        );
+        unlistenFns.push(unlistenZoomChanged);
+      } catch (err) {
+        console.warn(
+          "Failed to setup Tauri listeners, falling back to WebSocket",
+          err
+        );
+        setupWebSocket();
+      }
     };
 
-    setupListeners();
+    const setupWebSocket = () => {
+      // Connect to local WebSocket server
+      ws = new WebSocket("ws://127.0.0.1:11451");
+
+      ws.onopen = () => {
+        console.log("Connected to Presenter WebSocket");
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+
+          switch (data.type) {
+            case "STATE":
+              setCurrentPage(data.page);
+              setTotalPages(data.total_pages);
+              if (data.pdf_path) setPdfPath(data.pdf_path);
+              break;
+
+            case "PAGE_CHANGED":
+              setCurrentPage(data.page);
+              setTotalPages(data.total_pages);
+              break;
+
+            case "PDF_OPENED":
+              setPdfPath(data.path);
+              setTotalPages(data.page_count);
+              setCurrentPage(1);
+              break;
+
+            case "PDF_CLOSED":
+              setPdfPath(null);
+              setTotalPages(0);
+              setCurrentPage(1);
+              setRenderedImage(null);
+              break;
+
+            case "ZOOM_CHANGED":
+              // Trigger re-render
+              renderPage();
+              break;
+          }
+        } catch (e) {
+          console.error("Failed to parse WebSocket message", e);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log("Presenter WebSocket closed, reconnecting in 3s...");
+        reconnectTimeout = setTimeout(setupWebSocket, 3000);
+      };
+
+      ws.onerror = (err) => {
+        console.error("Presenter WebSocket error", err);
+      };
+    };
+
+    // Detect environment
+    if (window.__TAURI__) {
+      setupTauriListeners();
+    } else {
+      setupWebSocket();
+    }
 
     // Cleanup listeners on unmount
     return () => {
       unlistenFns.forEach((unlisten) => unlisten());
+      if (ws) {
+        ws.onclose = null; // Prevent reconnect on cleanup
+        ws.close();
+      }
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
     };
   }, [renderPage]);
 

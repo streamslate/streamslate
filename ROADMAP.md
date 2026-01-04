@@ -12,7 +12,7 @@ See README.md for feature highlights.
 
 - [x] Dark viewer
 - [x] Highlighter
-- [ ] OBS browser source
+- [x] OBS browser source
 
 ### Beta
 

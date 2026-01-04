@@ -96,11 +96,11 @@ build:macos:
   tags:
     - macos
   script:
-    - npm ci
-    - ./scripts/import-certificate.sh
-    - source build.env
-    - echo "Signing with identity: $APPLE_SIGNING_IDENTITY"
-    - npm run tauri:build
+    - "npm ci"
+    - "./scripts/import-certificate.sh"
+    - "source build.env"
+    - 'echo "Signing with identity: $APPLE_SIGNING_IDENTITY"'
+    - "npm run tauri:build"
   after_script:
     # Cleanup keychain
     - security delete-keychain app-signing.keychain-db || true
