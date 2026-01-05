@@ -35,6 +35,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }
+screencapturekit = "1.5.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

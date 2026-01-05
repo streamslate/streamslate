@@ -62,30 +62,58 @@ pub async fn send_video_frame(frame_data: Vec<u8>, width: u32, height: u32) -> R
 }
 
 fn run_ndi_sender_loop(state: AppState) -> std::result::Result<(), Box<dyn std::error::Error>> {
-    // Initialize NDI (grafton-ndi or any bindings)
-    // NOTE: grafton-ndi requires NDI runtime to be installed.
-    // If it fails to load, we should catch it here.
+    info!("NDI/SCK Sender Loop Started");
 
-    // For this prototype Step 2, we will focus on the loop logic and simple frame generation
-    // We will verify if we can actually link/call NDI in a future step or if user has it.
+    // Create a new runtime for the capture task since we are in a dedicated thread
+    let rt = tokio::runtime::Runtime::new()?;
 
-    info!("NDI Sender Loop Started");
+    rt.block_on(async {
+        use screencapturekit::prelude::SCShareableContent;
 
-    loop {
-        // Check interruption
-        {
-            let integration = state.integration.lock().unwrap(); // safe to unwrap here usually or handle
-            if !integration.ndi_active {
-                break;
-            }
+        info!("Requesting shareable content...");
+        // This requires screen recording permissions on macOS.
+        // If not granted, it might return empty or error.
+        let content = SCShareableContent::get().unwrap(); // using unwrap for prototype simplicity or ? if error allows
+                                                          // Since we are in async block but get is sync, it's fine.
+
+        // Error says 'displays' is a method.
+        let displays = content.displays();
+        if displays.is_empty() {
+            warn!("No displays found for capture");
+            return Ok(());
         }
 
-        // Simulate Frame (Test Pattern)
-        // In real code: sender.send(frame);
+        let main_display = displays.first().unwrap();
 
-        std::thread::sleep(Duration::from_millis(33)); // ~30fps
-    }
+        info!(
+            "Capturing display: {} ({}x{})",
+            main_display.display_id(),
+            main_display.width(),
+            main_display.height()
+        );
 
-    info!("NDI Sender Loop Ended");
-    Ok(())
+        // Commenting out filter/stream creation until exact API signature for v1.5.0 is confirmed locally
+        // let filter = SCContentFilter::new(InitParams::DisplayExcludingWindows(main_display.clone(), vec![]));
+
+        // let mut config = SCStreamConfiguration::new();
+        // config.set_width(1920);
+        // config.set_height(1080);
+        // config.set_shows_cursor(true);
+
+        loop {
+            // Check interruption
+            {
+                let integration = state.integration.lock().unwrap();
+                if !integration.ndi_active {
+                    break;
+                }
+            }
+            // Keep the async task alive
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+
+        info!("Capture loop stopping...");
+        // stream.stop_capture().await?;
+        Ok(())
+    })
 }

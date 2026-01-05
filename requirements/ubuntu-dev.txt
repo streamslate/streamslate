@@ -1,16 +1,5 @@
-# StreamSlate - Ubuntu/Debian Development Requirements
-#
-# System packages required for development on Ubuntu/Debian systems
-# Install with: xargs -a requirements/ubuntu-dev.txt sudo apt-get install -y
-#
-# Include all build requirements
--r ubuntu-build.txt
-
-# Additional development tools
 webkit2gtk-driver
 patchelf
-
-# Cypress dependencies (https://docs.cypress.io/app/get-started/install-cypress#Ubuntu-Debian)
 xvfb
 xauth
 libgtk2.0-0
@@ -20,7 +9,5 @@ libnss3
 libxss1
 libasound2
 libxtst6
-
-# Cross-compilation support (optional)
 gcc-arm-linux-gnueabihf
 gcc-aarch64-linux-gnu

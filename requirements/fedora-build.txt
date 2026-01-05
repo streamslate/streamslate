@@ -1,9 +1,3 @@
-# StreamSlate - Fedora/RHEL Build Requirements
-#
-# System packages required to build Tauri applications on Fedora/RHEL systems
-# Install with: xargs -a requirements/fedora-build.txt sudo dnf install -y
-#
-# Core Tauri dependencies (official requirements)
 webkit2gtk4.1-devel
 openssl-devel
 curl
@@ -13,9 +7,5 @@ libappindicator-gtk3-devel
 librsvg2-devel
 libxdo-devel
 pkg-config
-
-# C development tools
 @c-development
-
-# Additional build tools
 git
