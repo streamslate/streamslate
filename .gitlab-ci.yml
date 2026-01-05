@@ -53,6 +53,7 @@ default:
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
     # Filter out -r lines and comments for dev requirements
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
+    - rustup component add rustfmt
     - npm ci
 
 lint:linux:
