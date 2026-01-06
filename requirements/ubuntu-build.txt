@@ -1,4 +1,5 @@
 libwebkit2gtk-4.1-dev
+libjavascriptcoregtk-4.1-dev
 build-essential
 curl
 wget
