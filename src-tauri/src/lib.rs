@@ -21,6 +21,13 @@ pub mod error;
 pub mod state;
 pub mod websocket;
 
+// Native screen capture (macOS ScreenCaptureKit)
+pub mod capture;
+
+// NDI output support (optional, requires NDI SDK)
+#[cfg(feature = "ndi")]
+pub mod ndi;
+
 use commands::*;
 use state::AppState;
 use std::sync::Arc;
@@ -58,10 +65,13 @@ pub fn run() {
             get_page_annotations,
             clear_annotations,
             has_annotations,
-            // NDI commands
+            // Capture & NDI commands
             start_ndi_sender,
             stop_ndi_sender,
-            send_video_frame
+            send_video_frame,
+            list_capture_targets,
+            is_ndi_available,
+            get_capture_status
         ])
         .setup(|app| {
             // Initialize structured logging with tracing

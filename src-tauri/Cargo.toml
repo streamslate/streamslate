@@ -35,9 +35,20 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }
+
+# Native screen capture (macOS)
 screencapturekit = "1.5.0"
+core-media-rs = "0.3"
+
+# NDI support (optional - requires NDI SDK installed)
+grafton-ndi = { version = "0.9", optional = true }
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
+
+# Enable NDI (Network Device Interface) output
+# Requires NDI SDK: https://ndi.video/download-ndi-sdk/
+# macOS: Install to /Library/NDI SDK for Apple
+ndi = ["dep:grafton-ndi"]

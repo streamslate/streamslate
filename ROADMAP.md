@@ -23,6 +23,9 @@ See README.md for feature highlights.
 
 - [x] Live collaboration (WebSocket Sync)
 - [ ] NDI/Syphon
+  - [x] Native capture (ScreenCaptureKit integration)
+  - [ ] NDI output (requires NDI SDK)
+  - [ ] Syphon output (macOS only)
 - [ ] Auto-update
 
 ### Future

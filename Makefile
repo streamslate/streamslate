@@ -14,10 +14,11 @@ dev:
 	npm run tauri:dev
 
 # Run linting checks (Frontend + Backend)
+# Note: Uses default features only (ndi feature requires proprietary SDK)
 lint:
 	npm run lint
 	npm run format:check
-	cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
+	cd src-tauri && cargo clippy --all-targets -- -D warnings
 
 # Fix linting issues automatically (Frontend + Backend)
 lint-fix:

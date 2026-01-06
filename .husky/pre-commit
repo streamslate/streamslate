@@ -23,7 +23,7 @@ if git diff --cached --name-only | grep -q '\.rs$'; then
   fi
   
   # Clippy check
-  if ! cargo clippy --all-targets --all-features -- -D warnings; then
+  if ! cargo clippy --all-targets -- -D warnings; then
     echo "❌ Rust clippy issues found. Please fix the warnings."
     exit 1
   fi
