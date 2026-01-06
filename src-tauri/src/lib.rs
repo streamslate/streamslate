@@ -22,6 +22,7 @@ pub mod state;
 pub mod websocket;
 
 // Native screen capture (macOS ScreenCaptureKit)
+#[cfg(target_os = "macos")]
 pub mod capture;
 
 // NDI output support (optional, requires NDI SDK)

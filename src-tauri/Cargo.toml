@@ -36,12 +36,13 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # Date/time handling
 chrono = { version = "0.4", features = ["serde"] }
 
-# Native screen capture (macOS)
-screencapturekit = "1.5.0"
-core-media-rs = "0.3"
-
 # NDI support (optional - requires NDI SDK installed)
 grafton-ndi = { version = "0.9", optional = true }
+
+# macOS-only dependencies
+[target.'cfg(target_os = "macos")'.dependencies]
+screencapturekit = "1.5.0"
+core-media-rs = "0.3"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem

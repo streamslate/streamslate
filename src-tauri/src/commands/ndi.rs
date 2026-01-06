@@ -10,13 +10,17 @@
  * - Managing NDI output (when compiled with "ndi" feature)
  */
 
-use crate::capture::{find_streamslate_window, list_capturable_windows, CaptureConfig};
 use crate::error::{Result, StreamSlateError};
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 use tauri::State;
 use tracing::{debug, info, warn};
+
+// Import capture module only on macOS
+#[cfg(target_os = "macos")]
+use crate::capture::{find_streamslate_window, list_capturable_windows, CaptureConfig};
+#[cfg(target_os = "macos")]
+use std::time::Duration;
 
 /// Information about a capturable window
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,6 +44,7 @@ pub struct CaptureStatus {
 
 /// List available windows for capture
 #[tauri::command]
+#[cfg(target_os = "macos")]
 pub async fn list_capture_targets() -> Result<Vec<CaptureTarget>> {
     let windows = list_capturable_windows();
 
@@ -51,6 +56,14 @@ pub async fn list_capture_targets() -> Result<Vec<CaptureTarget>> {
             title,
         })
         .collect())
+}
+
+/// List available windows for capture (non-macOS stub)
+#[tauri::command]
+#[cfg(not(target_os = "macos"))]
+pub async fn list_capture_targets() -> Result<Vec<CaptureTarget>> {
+    // Screen capture not supported on this platform
+    Ok(vec![])
 }
 
 /// Check if NDI feature is available
@@ -78,8 +91,9 @@ pub async fn get_capture_status(state: State<'_, AppState>) -> Result<CaptureSta
     })
 }
 
-/// Start native capture (and optionally NDI output)
+/// Start native capture (and optionally NDI output) - macOS implementation
 #[tauri::command]
+#[cfg(target_os = "macos")]
 pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
     // 1. Check/Set State
     {
@@ -104,6 +118,19 @@ pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
         }
     });
 
+    Ok(())
+}
+
+/// Start native capture - non-macOS stub
+#[tauri::command]
+#[cfg(not(target_os = "macos"))]
+pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
+    warn!("Native capture not supported on this platform");
+    let mut integration = state
+        .integration
+        .lock()
+        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+    integration.ndi_active = false;
     Ok(())
 }
 
@@ -147,7 +174,8 @@ pub async fn send_video_frame(frame_data: Vec<u8>, width: u32, height: u32) -> R
     Ok(())
 }
 
-/// Main capture loop using ScreenCaptureKit
+/// Main capture loop using ScreenCaptureKit (macOS only)
+#[cfg(target_os = "macos")]
 fn run_capture_loop(state: AppState) -> std::result::Result<(), Box<dyn std::error::Error>> {
     info!("Native capture loop started");
 
