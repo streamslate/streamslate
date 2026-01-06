@@ -47,22 +47,16 @@ default:
 .linux: &linux
   image: rust:latest
   before_script:
-    # First, ensure CA certificates are completely up-to-date
     - apt-get update
     - apt-get install -y ca-certificates curl
     - update-ca-certificates --fresh
-    # Set explicit certificate bundle for various tools
     - export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
     - export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
-    # Force rustup to use curl backend (handles certs differently than reqwest)
     - export RUSTUP_USE_CURL=1
     - apt-get install -y npm nodejs
-    # Install dependencies from files
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
-    # Filter out -r lines and comments for dev requirements
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
-    # Now try to add rustfmt (if this still fails, the runner has network issues)
-    - rustup component add rustfmt || echo "WARNING: rustfmt install failed, skipping Rust format checks"
+    - rustup component add rustfmt || echo "WARNING rustfmt install failed"
     - npm ci
 
 lint:linux:
