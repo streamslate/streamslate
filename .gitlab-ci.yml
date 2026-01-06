@@ -56,7 +56,7 @@ default:
     - apt-get install -y npm nodejs
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
-    - rustup component add rustfmt || echo "WARNING rustfmt install failed"
+    - rustup component add rustfmt clippy
     - npm ci
 
 lint:linux:
