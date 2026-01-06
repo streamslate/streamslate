@@ -48,6 +48,9 @@ default:
   image: rust:latest
   before_script:
     - apt-get update
+    # Ensure CA certificates are up-to-date for rustup downloads
+    - apt-get install -y ca-certificates
+    - update-ca-certificates
     - apt-get install -y npm nodejs
     # Install dependencies from files
     - xargs -a requirements/ubuntu-build.txt apt-get install -y
