@@ -21,7 +21,7 @@ import { defineConfig } from "cypress";
 export default defineConfig({
   e2e: {
     baseUrl: "http://localhost:1420",
-    supportFile: false, // Disable support file requirement
+    supportFile: "cypress/support/e2e.ts",
     setupNodeEvents(on, config) {
       // implement node event listeners here
 
