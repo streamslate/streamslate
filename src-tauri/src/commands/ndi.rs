@@ -84,8 +84,8 @@ pub async fn get_capture_status(state: State<'_, AppState>) -> Result<CaptureSta
         is_capturing: integration.ndi_active,
         ndi_available: cfg!(feature = "ndi"),
         ndi_running: integration.ndi_active && cfg!(feature = "ndi"),
-        frames_captured: 0, // TODO: Track in state
-        frames_sent: 0,     // TODO: Track in state
+        frames_captured: integration.frames_captured,
+        frames_sent: integration.frames_sent,
         target_fps: 30,
         current_fps: 0.0,
     })
@@ -145,6 +145,9 @@ pub async fn stop_ndi_sender(state: State<'_, AppState>) -> Result<()> {
         return Ok(());
     }
     integration.ndi_active = false;
+    // Reset frame counters when stopping
+    integration.frames_captured = 0;
+    integration.frames_sent = 0;
     info!("Signal sent to stop capture/NDI sender...");
     Ok(())
 }
@@ -246,6 +249,8 @@ fn run_capture_loop(state: AppState) -> std::result::Result<(), Box<dyn std::err
             // Placeholder for actual frame capture
             // In the full implementation, we'd be receiving frames
             // from an SCStream handler and forwarding to NDI
+            // For now, increment counter to show the loop is running
+            let _ = state.increment_frames_captured();
 
             tokio::time::sleep(Duration::from_millis(33)).await; // ~30fps interval
         }

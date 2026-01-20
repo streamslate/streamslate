@@ -75,6 +75,10 @@ pub struct IntegrationState {
     pub stream_deck_connected: bool,
     pub ndi_enabled: bool,
     pub ndi_active: bool,
+    /// Number of frames captured from screen
+    pub frames_captured: u64,
+    /// Number of frames sent to NDI/Syphon output
+    pub frames_sent: u64,
 }
 
 /// Main application state
@@ -268,6 +272,37 @@ impl AppState {
             // Ignore error if no receivers (it's fine)
             let _ = sender.send(event);
         }
+        Ok(())
+    }
+
+    /// Increment the frames captured counter
+    pub fn increment_frames_captured(&self) -> Result<()> {
+        let mut integration = self
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))?;
+        integration.frames_captured += 1;
+        Ok(())
+    }
+
+    /// Increment the frames sent counter
+    pub fn increment_frames_sent(&self) -> Result<()> {
+        let mut integration = self
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))?;
+        integration.frames_sent += 1;
+        Ok(())
+    }
+
+    /// Reset frame counters (called when stopping capture)
+    pub fn reset_frame_counters(&self) -> Result<()> {
+        let mut integration = self
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))?;
+        integration.frames_captured = 0;
+        integration.frames_sent = 0;
         Ok(())
     }
 }
