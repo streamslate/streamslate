@@ -26,7 +26,7 @@ See README.md for feature highlights.
   - [x] Native capture (ScreenCaptureKit integration)
   - [ ] NDI output (requires NDI SDK)
   - [ ] Syphon output (macOS only)
-- [ ] Auto-update
+- [ ] Auto-update (code complete, pending key setup)
 
 ### Future
 

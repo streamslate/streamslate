@@ -17,7 +17,7 @@ tauri-build = { version = "1.5.5", features = [] }
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.8.2", features = [ "protocol-asset", "window-hide", "window-unminimize", "fs-all", "shell-open", "path-all", "window-unmaximize", "window-show", "window-start-dragging", "window-set-skip-taskbar", "window-set-always-on-top", "window-close", "http-all", "dialog-all", "window-maximize", "window-minimize", "window-set-decorations"] }
+tauri = { version = "1.8.2", features = [ "updater", "protocol-asset", "window-hide", "window-unminimize", "fs-all", "shell-open", "path-all", "window-unmaximize", "window-show", "window-start-dragging", "window-set-skip-taskbar", "window-set-always-on-top", "window-close", "http-all", "dialog-all", "window-maximize", "window-minimize", "window-set-decorations"] }
 tokio = { version = "1.0", features = ["full"] }
 tokio-tungstenite = "0.20"
 futures-util = "0.3"

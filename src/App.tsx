@@ -29,6 +29,7 @@ import { useRemoteControl } from "./hooks/useRemoteControl";
 import { useTheme } from "./hooks/useTheme";
 import { useViewModes } from "./hooks/useViewModes";
 import { StatusBar } from "./components/layout/StatusBar";
+import { UpdateBanner } from "./components/layout/UpdateBanner";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -69,6 +70,7 @@ function App() {
         transparentBg ? "bg-transparent" : "bg-bg-primary"
       }`}
     >
+      <UpdateBanner />
       {borderlessMode && !presenterMode && (
         <BorderlessWindowControls transparentBg={transparentBg} />
       )}

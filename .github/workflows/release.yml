@@ -235,9 +235,12 @@ jobs:
           APPLE_API_KEY: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY || '' }}
           APPLE_API_KEY_BASE64: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY_BASE64 || '' }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Tauri updater signing key for auto-update signatures
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          includeUpdaterJson: false
+          includeUpdaterJson: true
 
   docker-release:
     needs: create-release
