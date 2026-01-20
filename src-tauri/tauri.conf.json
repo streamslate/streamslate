@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "StreamSlate",
-    "version": "0.0.2-beta.5"
+    "version": "0.0.2-beta.6"
   },
   "tauri": {
     "allowlist": {
