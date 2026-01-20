@@ -170,7 +170,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     if (!isLoaded || !document) {
       return (
         <div className="flex flex-col items-center justify-center h-full bg-bg-secondary">
-          <div className="bg-surface-primary p-12 max-w-lg text-center rounded-lg border border-border-primary animate-scale-in">
+          <div
+            data-testid="pdf-empty-state"
+            className="bg-surface-primary p-12 max-w-lg text-center rounded-lg border border-border-primary animate-scale-in"
+          >
             <div className="w-16 h-16 bg-bg-tertiary rounded-full flex items-center justify-center mx-auto mb-6">
               <svg
                 className="w-8 h-8 text-text-tertiary"
@@ -356,7 +359,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   return (
-    <div className={`pdf-viewer h-full flex flex-col ${className}`}>
+    <div
+      data-testid="pdf-viewer"
+      className={`pdf-viewer h-full flex flex-col ${className}`}
+    >
       {renderContent()}
     </div>
   );

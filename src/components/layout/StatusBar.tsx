@@ -33,6 +33,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
 }) => {
   return (
     <div
+      data-testid="status-bar"
       className={`${
         transparentBg
           ? "bg-surface-primary/90 backdrop-blur-sm"

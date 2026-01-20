@@ -223,6 +223,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
+      data-testid="sidebar"
       className={`${
         transparentBg
           ? "bg-surface-primary/90 backdrop-blur-md"
@@ -233,8 +234,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div className="h-full flex flex-col overflow-hidden">
         {/* Panel Tabs */}
-        <div className="flex border-b border-border-primary p-2 gap-2">
+        <div
+          className="flex border-b border-border-primary p-2 gap-2"
+          data-testid="sidebar-tabs"
+        >
           <button
+            data-testid="tab-files"
             onClick={() => onSetActivePanel("files")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
               activePanel === "files"
@@ -258,6 +263,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Files</span>
           </button>
           <button
+            data-testid="tab-annotations"
             onClick={() => onSetActivePanel("annotations")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 relative ${
               activePanel === "annotations"
@@ -286,6 +292,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </button>
           <button
+            data-testid="tab-settings"
             onClick={() => onSetActivePanel("settings")}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-all duration-150 ${
               activePanel === "settings"
@@ -319,7 +326,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Panel Content */}
         <div className="flex-1 p-6 overflow-y-auto animate-fade-in">
           {activePanel === "files" && (
-            <div className="space-y-4">
+            <div data-testid="panel-files" className="space-y-4">
               <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-4">
                   <svg
@@ -393,7 +400,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
           {activePanel === "annotations" && (
-            <div className="space-y-4">
+            <div data-testid="panel-annotations" className="space-y-4">
               <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-4">
                   <svg
@@ -581,7 +588,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
           {activePanel === "settings" && (
-            <div className="space-y-4">
+            <div data-testid="panel-settings" className="space-y-4">
               <div className="bg-surface-secondary p-6 rounded-lg border border-border-primary animate-slide-up">
                 <div className="flex items-center gap-3 mb-6">
                   <svg
@@ -608,9 +615,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </h3>
                 </div>
                 <div className="space-y-4">
-                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
+                  <label
+                    data-testid="setting-dark-mode"
+                    className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group"
+                  >
                     <input
                       type="checkbox"
+                      data-testid="dark-mode-toggle"
                       className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={darkMode}
                       onChange={(e) => onSetDarkMode(e.target.checked)}
@@ -629,9 +640,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       Auto-save
                     </span>
                   </label>
-                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
+                  <label
+                    data-testid="setting-transparent"
+                    className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group"
+                  >
                     <input
                       type="checkbox"
+                      data-testid="transparent-toggle"
                       className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={transparentBg}
                       onChange={(e) => onSetTransparentBg(e.target.checked)}
@@ -653,9 +668,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </p>
                     </div>
                   )}
-                  <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
+                  <label
+                    data-testid="setting-borderless"
+                    className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group"
+                  >
                     <input
                       type="checkbox"
+                      data-testid="borderless-toggle"
                       className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
                       checked={borderlessMode}
                       onChange={(e) => onSetBorderlessMode(e.target.checked)}
