@@ -106,25 +106,79 @@ export async function exportPDF(
           });
           break;
 
-        case AnnotationType.ARROW:
-          // StreamSlate implementation forces Top-Left to Bottom-Right bounding box
-          // So we draw a line from TL to BR
+        case AnnotationType.ARROW: {
+          // Calculate start and end points with coordinate flip
+          const arrowStart = {
+            x: annotation.x,
+            y: pageHeight - annotation.y,
+          };
+          const arrowEnd = {
+            x: annotation.x + annotation.width,
+            y: pageHeight - (annotation.y + annotation.height),
+          };
+
+          // Draw the main arrow line
           page.drawLine({
-            start: { x: annotation.x, y: pageHeight - annotation.y },
-            end: {
-              x: annotation.x + annotation.width,
-              y: pageHeight - (annotation.y + annotation.height),
-            },
+            start: arrowStart,
+            end: arrowEnd,
             color: color,
             thickness: 2,
             opacity: annotation.opacity,
           });
-          // Draw arrowhead at end
-          // Simplified arrowhead
-          // In a real implementation we'd calculate vector direction
-          // For now, assume TL -> BR direction
-          // TODO: Improve arrowhead math
+
+          // Calculate arrowhead using vector math
+          const dx = arrowEnd.x - arrowStart.x;
+          const dy = arrowEnd.y - arrowStart.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+
+          if (length > 0) {
+            // Normalize direction vector
+            const nx = dx / length;
+            const ny = dy / length;
+
+            // Arrowhead size (proportional to line length, max 15px)
+            const headLength = Math.min(15, length * 0.3);
+
+            // Calculate arrowhead points using rotation
+            // Rotate the direction vector ±30 degrees for the head lines
+            const angle = Math.PI / 6; // 30 degrees
+
+            // Left wing of arrowhead
+            const leftWingX =
+              arrowEnd.x -
+              headLength * (nx * Math.cos(angle) - ny * Math.sin(angle));
+            const leftWingY =
+              arrowEnd.y -
+              headLength * (nx * Math.sin(angle) + ny * Math.cos(angle));
+
+            // Right wing of arrowhead
+            const rightWingX =
+              arrowEnd.x -
+              headLength * (nx * Math.cos(-angle) - ny * Math.sin(-angle));
+            const rightWingY =
+              arrowEnd.y -
+              headLength * (nx * Math.sin(-angle) + ny * Math.cos(-angle));
+
+            // Draw left wing
+            page.drawLine({
+              start: arrowEnd,
+              end: { x: leftWingX, y: leftWingY },
+              color: color,
+              thickness: 2,
+              opacity: annotation.opacity,
+            });
+
+            // Draw right wing
+            page.drawLine({
+              start: arrowEnd,
+              end: { x: rightWingX, y: rightWingY },
+              color: color,
+              thickness: 2,
+              opacity: annotation.opacity,
+            });
+          }
           break;
+        }
 
         case AnnotationType.FREE_DRAW:
           try {
