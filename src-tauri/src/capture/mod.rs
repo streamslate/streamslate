@@ -6,6 +6,7 @@
  * This module provides high-performance window capture for streaming output.
  */
 
+use screencapturekit::cv::CVPixelBufferLockFlags;
 use screencapturekit::prelude::{
     CMSampleBuffer, PixelFormat, SCContentFilter, SCDisplay, SCShareableContent, SCStream,
     SCStreamConfiguration, SCStreamOutputTrait, SCStreamOutputType, SCWindow,
@@ -98,23 +99,82 @@ impl SCStreamOutputTrait for StreamHandler {
             debug!("Captured {} frames", count);
         }
 
-        // If we have a callback, create a simple frame notification
-        // Full pixel data extraction requires CVPixelBuffer lock/unlock which we'll add later
+        // If we have a callback, extract pixel data from the sample buffer
         if let Some(ref callback) = self.callback {
             // Get timestamp
             let timestamp = sample.presentation_timestamp();
             let timestamp_ns =
                 (timestamp.value as u64 * 1_000_000_000) / timestamp.timescale.max(1) as u64;
 
-            // For now, create an empty frame just to signal capture occurred
-            // TODO: Implement proper CVPixelBuffer data extraction
-            let frame = CapturedFrame {
-                data: vec![],
-                width: 0,
-                height: 0,
-                bytes_per_row: 0,
-                timestamp_ns,
+            // Extract CVPixelBuffer from the sample
+            let frame = if let Some(pixel_buffer) = sample.image_buffer() {
+                // Lock the pixel buffer for read access
+                match pixel_buffer.lock(CVPixelBufferLockFlags::READ_ONLY) {
+                    Ok(guard) => {
+                        // Get dimensions from the pixel buffer
+                        let width = pixel_buffer.width() as u32;
+                        let height = pixel_buffer.height() as u32;
+                        let bytes_per_row = pixel_buffer.bytes_per_row() as u32;
+
+                        // Get the base address and data size
+                        let base_address = guard.base_address();
+                        let data_size = pixel_buffer.data_size();
+
+                        if !base_address.is_null() && data_size > 0 {
+                            // Copy the pixel data
+                            let data = unsafe {
+                                std::slice::from_raw_parts(base_address, data_size).to_vec()
+                            };
+
+                            if count % 60 == 0 {
+                                debug!(
+                                    "Frame {}: {}x{}, {} bytes/row, {} bytes total",
+                                    count, width, height, bytes_per_row, data_size
+                                );
+                            }
+
+                            CapturedFrame {
+                                data,
+                                width,
+                                height,
+                                bytes_per_row,
+                                timestamp_ns,
+                            }
+                        } else {
+                            // No base address available or empty data
+                            debug!("Frame {}: No base address or empty data", count);
+                            CapturedFrame {
+                                data: vec![],
+                                width,
+                                height,
+                                bytes_per_row: 0,
+                                timestamp_ns,
+                            }
+                        }
+                        // Lock guard is automatically released here (RAII)
+                    }
+                    Err(e) => {
+                        debug!("Failed to lock pixel buffer: {}", e);
+                        CapturedFrame {
+                            data: vec![],
+                            width: 0,
+                            height: 0,
+                            bytes_per_row: 0,
+                            timestamp_ns,
+                        }
+                    }
+                }
+            } else {
+                // No image buffer in this sample (might be audio or empty frame)
+                CapturedFrame {
+                    data: vec![],
+                    width: 0,
+                    height: 0,
+                    bytes_per_row: 0,
+                    timestamp_ns,
+                }
             };
+
             callback(frame);
         }
     }
