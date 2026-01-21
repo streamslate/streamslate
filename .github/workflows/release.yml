@@ -180,8 +180,8 @@ jobs:
           sudo apt-get update
           # Install build requirements from file
           grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs sudo apt-get install -y
-          # Ensure all Tauri dependencies are installed
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev
+          # Ensure all Tauri v1.x dependencies are installed (4.0 not 4.1 which is for Tauri v2)
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev
 
       - name: Install Visual Studio Build Tools (Windows only)
         if: matrix.platform == 'windows-latest'

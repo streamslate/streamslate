@@ -42,8 +42,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Pre-cache Rust dependencies by copying manifest first (lock may be absent)
-COPY src-tauri/Cargo.toml ./src-tauri/
+# Pre-cache Rust dependencies by copying manifests first
+COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
+COPY src-tauri/icons ./src-tauri/icons
+COPY src-tauri/tauri.conf.json ./src-tauri/
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
     cargo fetch --manifest-path ./src-tauri/Cargo.toml

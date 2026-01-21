@@ -1,5 +1,7 @@
-libwebkit2gtk-4.1-dev
-libjavascriptcoregtk-4.1-dev
+# Ubuntu build dependencies for Tauri v1.x
+# Note: Tauri v1.x requires webkit2gtk-4.0, not 4.1 (which is for Tauri v2)
+libwebkit2gtk-4.0-dev
+libjavascriptcoregtk-4.0-dev
 build-essential
 curl
 wget
