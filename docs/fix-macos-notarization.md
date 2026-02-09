@@ -33,9 +33,9 @@ Changed from a comment to actual environment variable reference:
 APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
 ```
 
-## Recommended: Switch to API Key Authentication
+## Implemented: API Key Authentication
 
-Using API keys instead of Apple ID/Password is more reliable for CI/CD. Here's how to set it up:
+API key authentication is now implemented in both GitHub Actions and GitLab CI workflows. This replaced the unreliable Apple ID/Password method.
 
 ### Step 1: Create App Store Connect API Key
 
@@ -59,42 +59,14 @@ To encode the .p8 file:
 base64 -i AuthKey_XXXXXXXXXX.p8 -o api_key_base64.txt
 ```
 
-### Step 3: Update GitHub Workflow
+### Step 3: Workflow Configuration (Already Done)
 
-Replace the Apple ID/Password authentication with API key authentication:
+The GitHub Actions and GitLab CI workflows have been updated. Key changes:
 
-```yaml
-- name: Setup Apple API Key for Notarization (macOS only)
-  if: matrix.platform == 'macos-latest'
-  run: |
-    # Create directory for API key
-    mkdir -p ~/private_keys
-
-    # Decode and save the API key
-    echo "$APPLE_API_KEY_BASE64" | base64 --decode > ~/private_keys/AuthKey_$APPLE_API_KEY.p8
-
-    # Set the path environment variable
-    echo "APPLE_API_KEY_PATH=$HOME/private_keys/AuthKey_$APPLE_API_KEY.p8" >> $GITHUB_ENV
-  env:
-    APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-    APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
-
-- name: Build Tauri app
-  uses: tauri-apps/tauri-action@v0.5.5
-  timeout-minutes: 60
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-    APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-    APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
-    # API Key authentication (instead of APPLE_ID/APPLE_PASSWORD)
-    APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-    APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-    APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
-  with:
-    releaseId: ${{ needs.create-release.outputs.release_id }}
-    includeUpdaterJson: false
-```
+- API key is decoded from `APPLE_API_KEY_BASE64` and written to a `.p8` file
+- `APPLE_API_KEY_PATH` is passed to the Tauri build step (not the raw base64)
+- The `if` condition on the setup step no longer references step-level env vars
+- Build step has a 60-minute timeout to prevent indefinite hangs
 
 ## Temporary Workaround: Skip Notarization
 

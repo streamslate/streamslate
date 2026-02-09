@@ -12,60 +12,62 @@ Without proper code signing, macOS Gatekeeper blocks unsigned applications with 
 
 ## Solution
 
-The repository is now configured for Apple Developer code signing. You need to add the following secrets to your GitHub repository.
+The repository is configured for Apple Developer code signing with API key notarization. Add the following secrets to your CI environment (GitHub and/or GitLab).
 
-## Required GitHub Secrets
+## Required Secrets
 
-Navigate to your repository Settings → Secrets and Variables → Actions, and add these secrets:
+### Code Signing
 
-### 1. `APPLE_CERTIFICATE`
+| Secret                       | Description                       | How to generate                                                               |
+| ---------------------------- | --------------------------------- | ----------------------------------------------------------------------------- |
+| `APPLE_CERTIFICATE`          | Base64-encoded `.p12` certificate | `base64 -i certs/YourCert.p12 \| pbcopy`                                      |
+| `APPLE_CERTIFICATE_PASSWORD` | Password for the `.p12` file      | Set during certificate export                                                 |
+| `APPLE_TEAM_ID`              | Apple Developer Team ID           | [developer.apple.com](https://developer.apple.com/account) Membership section |
 
-- Your Apple Developer certificate in base64 format
-- Export your Developer ID Application certificate from Keychain Access as a .p12 file
-- Convert to base64: `base64 -i certificate.p12 | pbcopy`
+### Notarization (API Key Method)
 
-### 2. `APPLE_CERTIFICATE_PASSWORD`
+| Secret                 | Description                     | How to generate                                                                           |
+| ---------------------- | ------------------------------- | ----------------------------------------------------------------------------------------- |
+| `APPLE_API_ISSUER`     | App Store Connect API Issuer ID | [App Store Connect](https://appstoreconnect.apple.com/) > Users and Access > Integrations |
+| `APPLE_API_KEY`        | API Key ID                      | Shown in the keys table after creating a key                                              |
+| `APPLE_API_KEY_BASE64` | Base64-encoded `.p8` key file   | `base64 -i AuthKey_XXXXXXXXXX.p8 \| pbcopy`                                               |
 
-- The password for your .p12 certificate file
+### Updater Signing (Optional)
 
-### 3. `APPLE_SIGNING_IDENTITY`
-
-- Your certificate's signing identity (usually starts with "Developer ID Application:")
-- Find this in Keychain Access or use: `security find-identity -v -p codesigning`
-
-### 4. `APPLE_ID`
-
-- Your Apple ID email address used for the Developer Program
-
-### 5. `APPLE_PASSWORD`
-
-- An app-specific password for your Apple ID
-- Generate at: https://appleid.apple.com/account/manage (Sign-In and Security → App-Specific Passwords)
-
-### 6. `APPLE_TEAM_ID`
-
-- Your Apple Developer Team ID
-- Find at: https://developer.apple.com/account (Membership section)
+| Secret               | Description                                          |
+| -------------------- | ---------------------------------------------------- |
+| `TAURI_PRIVATE_KEY`  | Tauri updater private key for auto-update signatures |
+| `TAURI_KEY_PASSWORD` | Password for the updater key                         |
 
 ## Prerequisites
 
 1. **Apple Developer Program membership** ($99/year)
 2. **Developer ID Application certificate** from Apple Developer portal
-3. **App-specific password** for notarization
+3. **App Store Connect API key** for notarization
+
+## How It Works
+
+1. The CI workflow imports the `.p12` certificate into a temporary keychain
+2. The signing identity is auto-detected from the imported certificate
+3. Tauri signs the `.app` bundle using the detected identity
+4. The API key is decoded from base64 and written to a `.p8` file
+5. Tauri submits the signed app to Apple's notarization service using the API key
+6. The temporary keychain and API key file are cleaned up after the build
 
 ## Testing
 
 Once secrets are configured:
 
-1. Create a new release or re-run the existing workflow
-2. Download the generated .dmg file
-3. The app should now open without the "damaged" error
+1. Create a new release tag or trigger the workflow manually
+2. Download the generated `.dmg` file
+3. The app should open without the "damaged" error
+4. Verify signing: `codesign -dv --verbose=4 /path/to/StreamSlate.app`
 
 ## Alternative: Temporary Workaround
 
 If you don't have Apple Developer certificates yet, users can bypass the error by:
 
-1. Right-click the app → "Open"
+1. Right-click the app > "Open"
 2. Click "Open" in the security dialog
 3. Or run: `xattr -cr /path/to/StreamSlate.app` to remove quarantine attributes
 

@@ -83,6 +83,7 @@ jobs:
     needs: create-release
     permissions:
       contents: write
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -141,10 +142,12 @@ jobs:
             exit 1
           fi
 
-          # Download and import Apple Intermediate Certificate
-          echo "Downloading Apple Intermediate Certificate..."
+          # Download and import Apple Intermediate Certificates
+          echo "Downloading Apple Intermediate Certificates..."
           wget -O AppleWWDRCAG3.cer "https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer"
+          wget -O DeveloperIDG2CA.cer "https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer"
           security import AppleWWDRCAG3.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
+          security import DeveloperIDG2CA.cer -k $KEYCHAIN_PATH -T /usr/bin/codesign
 
           # Set partition list for codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
@@ -173,21 +176,25 @@ jobs:
           echo "Certificate setup completed successfully"
 
           # Clean up certificate file
-          rm -f certificate.p12 AppleWWDRCAG3.cer
+          rm -f certificate.p12 AppleWWDRCAG3.cer DeveloperIDG2CA.cer
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
       - name: Setup Apple API Key for Notarization (macOS only)
-        if: matrix.platform == 'macos-latest' && env.APPLE_API_KEY_BASE64 != ''
+        if: matrix.platform == 'macos-latest'
         run: |
-          # Decode the API key from base64 and write to file
-          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${{ secrets.APPLE_API_KEY }}.p8"
-          echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
-          echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
-          echo "Wrote Apple API key to: $API_KEY_PATH"
+          if [ -n "$APPLE_API_KEY_BASE64" ]; then
+            API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+            echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
+            echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
+            echo "Wrote Apple API key to: $API_KEY_PATH"
+          else
+            echo "Warning: APPLE_API_KEY_BASE64 not set, notarization will be skipped"
+          fi
         env:
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
 
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -240,19 +247,16 @@ jobs:
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0.5.5
+        timeout-minutes: 60
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
-          # API Key authentication (instead of APPLE_ID/APPLE_PASSWORD)
-          APPLE_API_ISSUER: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_ISSUER || '' }}
-          APPLE_API_KEY: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY || '' }}
-          APPLE_API_KEY_BASE64: ${{ matrix.platform == 'macos-latest' && secrets.APPLE_API_KEY_BASE64 || '' }}
-          RUST_LOG: debug
-          RUST_BACKTRACE: 1
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          # Tauri updater signing key for auto-update signatures
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:

@@ -1,21 +1,20 @@
 # Plan to Fix Build Issues
 
-## Issue 1: macOS Signing Failure
+## Issue 1: macOS Signing Failure - RESOLVED
 
-### Root Cause
+### Root Causes (Fixed)
 
-The macOS signing is failing because:
+1. GitHub Actions `if` condition referenced step-level env var (always skipped API key setup)
+2. `APPLE_API_KEY_BASE64` passed directly instead of `APPLE_API_KEY_PATH` (Tauri v1 needs a file path)
+3. GitLab CI `source build.env` didn't export vars to child processes
+4. Stale keychains accumulated from failed CI runs
 
-1. The certificate is imported into a custom keychain but Tauri can't find the signing identity
-2. The `APPLE_SIGNING_IDENTITY` environment variable needs proper extraction and verification
+### Resolution
 
-### Solution
-
-Update the release workflow to:
-
-1. Extract the signing identity from the imported certificate
-2. Pass it to Tauri via the correct mechanism
-3. Add debugging to verify the identity is correctly detected
+- Fixed `if` condition to check inside shell script instead of GitHub Actions expression
+- Decode API key to `.p8` file and pass `APPLE_API_KEY_PATH` to Tauri
+- Use `set -a && source build.env && set +a` in GitLab CI
+- Save/restore original keychain search list in import-certificate.sh
 
 ### Changes Needed in `.github/workflows/release.yml`:
 
@@ -130,7 +129,9 @@ Ensure these are set:
 
 - `APPLE_CERTIFICATE` - Base64 encoded .p12 certificate
 - `APPLE_CERTIFICATE_PASSWORD` - Password for the certificate
-- `APPLE_SIGNING_IDENTITY` - Can be auto-detected now
-- `APPLE_ID` - Apple Developer account email
-- `APPLE_PASSWORD` - App-specific password
 - `APPLE_TEAM_ID` - Team ID from Apple Developer account
+- `APPLE_API_ISSUER` - App Store Connect API Issuer ID
+- `APPLE_API_KEY` - App Store Connect API Key ID
+- `APPLE_API_KEY_BASE64` - Base64-encoded .p8 API key file
+
+Note: `APPLE_SIGNING_IDENTITY` is auto-detected from the imported certificate. `APPLE_ID`/`APPLE_PASSWORD` are no longer needed (replaced by API key auth).
