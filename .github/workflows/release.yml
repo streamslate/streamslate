@@ -196,6 +196,25 @@ jobs:
           APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY }}
 
+      - name: Verify notarization credentials (macOS only)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          echo "Checking API key file..."
+          ls -la "$APPLE_API_KEY_PATH"
+          echo "API Key ID length: ${#APPLE_API_KEY}"
+          echo "API Issuer length: ${#APPLE_API_ISSUER}"
+          echo "notarytool version:"
+          xcrun notarytool --version 2>&1 || true
+          echo "Testing credentials with notarytool history..."
+          xcrun notarytool history \
+            --key "$APPLE_API_KEY_PATH" \
+            --key-id "$APPLE_API_KEY" \
+            --issuer "$APPLE_API_ISSUER" 2>&1 | head -20 || echo "notarytool history failed with exit code $?"
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+
       - name: Install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
