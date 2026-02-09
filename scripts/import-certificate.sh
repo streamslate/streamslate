@@ -71,9 +71,10 @@ fi
 echo "Found signing identity: $SIGNING_IDENTITY"
 
 # Export for next steps/jobs (use build.env so GitLab CI can source it)
-echo "APPLE_SIGNING_IDENTITY=$SIGNING_IDENTITY" > build.env
-echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> build.env
-echo "ORIGINAL_KEYCHAINS=$ORIGINAL_KEYCHAINS" >> build.env
+# Values must be quoted — signing identity contains parentheses e.g. "Developer ID Application: Name (TEAMID)"
+echo "APPLE_SIGNING_IDENTITY='$SIGNING_IDENTITY'" > build.env
+echo "KEYCHAIN_PATH='$KEYCHAIN_PATH'" >> build.env
+echo "ORIGINAL_KEYCHAINS='$ORIGINAL_KEYCHAINS'" >> build.env
 
 # Clean up temporary files
 rm -f certificate.p12 AppleWWDRCAG3.cer DeveloperIDG2CA.cer
