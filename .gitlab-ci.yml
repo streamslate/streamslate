@@ -120,39 +120,16 @@ build:macos:
   script:
     - npm ci
     - ./scripts/import-certificate.sh
-    # Export build.env vars so child processes (tauri build) can see them
     - set -a && source build.env && set +a
-    - echo "Signing with identity: $APPLE_SIGNING_IDENTITY"
-    # Setup API key for notarization (if configured)
-    - |
-      if [ -n "$APPLE_API_KEY_BASE64" ]; then
-        API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"
-        echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"
-        export APPLE_API_KEY_PATH="$API_KEY_PATH"
-        echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env
-        echo "Notarization API key written to: $API_KEY_PATH"
-      else
-        echo "Warning: APPLE_API_KEY_BASE64 not set, notarization will be skipped"
-      fi
+    - echo "Signing with identity $APPLE_SIGNING_IDENTITY"
+    - if [ -n "$APPLE_API_KEY_BASE64" ]; then API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"; echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"; export APPLE_API_KEY_PATH="$API_KEY_PATH"; echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env; echo "Notarization API key ready"; else echo "Warning APPLE_API_KEY_BASE64 not set, notarization will be skipped"; fi
     - npm run tauri:build
   after_script:
-    # Restore original keychain search list and clean up
-    - |
-      if [ -f build.env ]; then
-        source build.env
-        if [ -n "$KEYCHAIN_PATH" ]; then
-          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
-        fi
-        if [ -n "$ORIGINAL_KEYCHAINS" ]; then
-          security list-keychains -d user -s $ORIGINAL_KEYCHAINS
-        fi
-        if [ -n "$APPLE_API_KEY_PATH" ]; then
-          rm -f "$APPLE_API_KEY_PATH"
-        fi
-        rm -f build.env
-      else
-        security delete-keychain app-signing.keychain-db 2>/dev/null || true
-      fi
+    - if [ -f build.env ]; then source build.env; fi
+    - if [ -n "$KEYCHAIN_PATH" ]; then security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true; fi
+    - if [ -n "$ORIGINAL_KEYCHAINS" ]; then security list-keychains -d user -s $ORIGINAL_KEYCHAINS; fi
+    - if [ -n "$APPLE_API_KEY_PATH" ]; then rm -f "$APPLE_API_KEY_PATH"; fi
+    - rm -f build.env
   artifacts:
     paths:
       - src-tauri/target/release/bundle/dmg/*.dmg
