@@ -55,7 +55,7 @@ default:
     - export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     - export RUSTUP_USE_CURL=1
     - apt-get install -y npm nodejs
-    - xargs -a requirements/ubuntu-build.txt apt-get install -y
+    - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
     - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
@@ -117,6 +117,7 @@ build:macos:
   stage: build
   tags:
     - macos
+  needs: []
   script:
     - npm ci
     - ./scripts/import-certificate.sh
