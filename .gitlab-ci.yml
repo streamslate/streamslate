@@ -150,19 +150,31 @@ build:macos:
 
 docker:build:
   stage: deploy
-  image: docker:24.0.7
-  services:
-    - docker:24.0.7-dind
+  # BuildKit client image (cached in Harbor) - no DinD needed
+  image: registry.harbor.lan/dockerhub-cache/moby/buildkit:v0.12.5
   variables:
-    DOCKER_DRIVER: overlay2
+    # Disable DinD wait in runner pre-build script
+    DOCKER_HOST: ""
+    # Central BuildKit server has Harbor CA trust + push credentials
+    BUILDKIT_HOST: tcp://buildkitd-central.ci-build.svc.cluster.local:1234
+    HARBOR_IMAGE: registry.harbor.lan/streamslate/streamslate
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - >-
+      buildctl build
+      --frontend dockerfile.v0
+      --local context=.
+      --local dockerfile=.
+      --output type=image,name=${HARBOR_IMAGE}:${CI_COMMIT_SHORT_SHA},push=true
+      --export-cache type=registry,ref=${HARBOR_IMAGE}:buildcache,mode=max
+      --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
     - |
       if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
-        docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
-        docker push $CI_REGISTRY_IMAGE:latest
+        buildctl build \
+          --frontend dockerfile.v0 \
+          --local context=. \
+          --local dockerfile=. \
+          --output type=image,name=${HARBOR_IMAGE}:latest,push=true \
+          --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
       fi
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
