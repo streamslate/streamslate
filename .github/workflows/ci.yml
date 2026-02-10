@@ -136,6 +136,13 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Normalize Windows MSI version
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        run: |
+          node scripts/normalize-windows-version.js
+          node scripts/sync-versions.js
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0.5.5
         env:
