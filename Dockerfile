@@ -27,6 +27,8 @@ COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.
 RUN npm run build
 
 # Rust builder stage
+# Pinned to 1.82 (Debian 12 bookworm) — provides webkit2gtk-4.0 packages that Tauri v1 requires.
+# Do NOT change to rust:latest without also updating package names to 4.1 + adding symlinks.
 FROM rust:1.82-slim AS rust-builder
 
 # Install dependencies for Tauri

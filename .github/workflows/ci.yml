@@ -56,6 +56,12 @@ jobs:
           grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs sudo apt-get install -y
           # Then install dev requirements (excluding the -r line)
           grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs sudo apt-get install -y
+          # Also install 4.0 packages on Ubuntu 22.04 where they're available
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev || true
+          # Create pkg-config symlinks for 4.1→4.0 compatibility (Tauri v1 expects 4.0 names)
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
+          sudo ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
 
       - name: Install Visual Studio Build Tools (Windows only)
         if: matrix.platform == 'windows-latest'
@@ -100,7 +106,7 @@ jobs:
         run: cd src-tauri && cargo test
 
       - name: Run Rust clippy (post-dist)
-        run: cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings
+        run: cd src-tauri && cargo clippy --all-targets -- -D warnings
 
       - name: Start dev server and run frontend tests
         shell: bash

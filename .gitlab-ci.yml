@@ -75,9 +75,9 @@ lint:linux:
     - npm run format:check
     - npm run lint
     # Rust format check (skip gracefully if rustfmt wasn't installed)
-    - cd src-tauri && (cargo fmt --all -- --check || echo "Skipping cargo fmt check")
+    - cd src-tauri && cargo fmt --all -- --check || echo "Skipping cargo fmt check"
     # Clippy (default features only - ndi feature requires proprietary SDK)
-    - cargo clippy --all-targets -- -D warnings
+    - cd src-tauri && cargo clippy --all-targets -- -D warnings
 
 test:linux:
   stage: test
