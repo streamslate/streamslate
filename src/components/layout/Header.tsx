@@ -60,6 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onToggleSidebar}
             className="btn btn-ghost"
             title="Toggle Sidebar"
+            data-testid="toggle-sidebar"
           >
             <svg
               className="w-5 h-5"

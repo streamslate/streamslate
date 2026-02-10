@@ -42,6 +42,6 @@ describe("Sidebar Functionality", () => {
     cy.contains("Settings").click();
 
     // Settings panel content should be visible
-    cy.contains("Dark Mode").should("be.visible");
+    cy.contains("Dark Theme").should("be.visible");
   });
 });

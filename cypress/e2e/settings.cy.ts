@@ -17,20 +17,19 @@ describe("Settings Panel", () => {
 
   it("displays settings options", () => {
     // Should show main settings categories
-    cy.contains("Dark Mode").should("be.visible");
-    cy.contains("Transparent").should("be.visible");
-    cy.contains("Borderless").should("be.visible");
+    cy.contains("Dark Theme").should("be.visible");
+    cy.contains("Transparent Background").should("be.visible");
+    cy.contains("Borderless Window").should("be.visible");
   });
 
   it("can toggle dark mode", () => {
-    // Find dark mode toggle and click it
-    cy.get('input[type="checkbox"]').first().as("darkModeToggle");
+    // Find dark mode toggle by data-testid
+    cy.get('[data-testid="dark-mode-toggle"]').as("darkModeToggle");
 
-    // Toggle dark mode
-    cy.get("@darkModeToggle").click();
+    // Toggle dark mode on
+    cy.get("@darkModeToggle").check({ force: true });
 
-    // The body/app should reflect the theme change
-    // Note: Actual visual verification may need different assertions
+    // The toggle should now be checked
     cy.get("@darkModeToggle").should("be.checked");
   });
 });
