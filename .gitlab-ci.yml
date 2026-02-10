@@ -34,6 +34,10 @@ variables:
   CARGO_TERM_COLOR: always
   # Use cached dependencies
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  # Increase npm timeout and retries for flaky K8s runner network
+  npm_config_fetch_retries: "5"
+  npm_config_fetch_retry_mintimeout: "20000"
+  npm_config_fetch_timeout: "120000"
   RUST_BACKTRACE: 1
 
 default:
@@ -69,6 +73,9 @@ default:
 lint:linux:
   stage: lint
   <<: *linux
+  retry:
+    max: 2
+    when: script_failure
   script:
     # TypeScript, Format, Lint
     - npx tsc --noEmit
