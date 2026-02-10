@@ -48,11 +48,16 @@ WORKDIR /app
 COPY src-tauri/Cargo.toml src-tauri/Cargo.lock ./src-tauri/
 COPY src-tauri/icons ./src-tauri/icons
 COPY src-tauri/tauri.conf.json ./src-tauri/
+
+# Create dummy source files so Cargo can parse the manifest and fetch deps.
+# Cargo requires src/main.rs (or [[bin]] section) even for `cargo fetch`.
+RUN mkdir -p src-tauri/src && echo "fn main() {}" > src-tauri/src/main.rs
+
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
     cargo fetch --manifest-path ./src-tauri/Cargo.toml
 
-# Copy Rust sources (after fetch so code changes don't invalidate dep cache)
+# Copy real Rust sources (replaces dummy main.rs; code changes don't invalidate dep cache)
 COPY src-tauri/src ./src-tauri/src
 COPY src-tauri/build.rs ./src-tauri/build.rs
 
