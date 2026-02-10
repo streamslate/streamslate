@@ -19,6 +19,7 @@ COPY package*.json ./
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy only the frontend sources to avoid cache busts
+COPY index.html ./
 COPY src ./src
 COPY public ./public
 COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.config.js ./
@@ -65,10 +66,13 @@ COPY src-tauri/build.rs ./src-tauri/build.rs
 COPY --from=frontend-builder /app/dist ./dist
 
 # Build Rust binary with cached registry/target
+# The binary must be copied out of the cache mount in the same RUN step,
+# because cache mounts are detached after RUN completes.
 WORKDIR /app/src-tauri
 RUN --mount=type=cache,target=/usr/local/cargo/registry \
     --mount=type=cache,target=/app/src-tauri/target \
-    cargo build --release
+    cargo build --release && \
+    cp target/release/streamslate /app/streamslate
 
 # Final runtime stage
 FROM ubuntu:22.04
@@ -85,8 +89,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Create non-root user
 RUN useradd -m -s /bin/bash streamslate
 
-# Copy the built binary
-COPY --from=rust-builder /app/src-tauri/target/release/streamslate /usr/local/bin/streamslate
+# Copy the built binary (from /app/ where it was placed after cache-mounted build)
+COPY --from=rust-builder /app/streamslate /usr/local/bin/streamslate
 
 # Set permissions
 RUN chmod +x /usr/local/bin/streamslate
