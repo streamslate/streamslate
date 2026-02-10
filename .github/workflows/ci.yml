@@ -198,4 +198,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          # CI only validates the Docker build; multi-arch is done in the release workflow.
+          # QEMU-emulated arm64 Rust compilation adds 30-60 min with no validation benefit.
+          platforms: linux/amd64
