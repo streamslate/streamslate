@@ -22,12 +22,12 @@ describe("Sidebar Functionality", () => {
     // Find and click the sidebar toggle button
     cy.get("[data-testid='toggle-sidebar']").click();
 
-    // Sidebar should be hidden
-    cy.get("[data-testid='sidebar']").should("not.be.visible");
+    // Sidebar collapses to w-0 with overflow-hidden (CSS transition)
+    cy.get("[data-testid='sidebar']").should("have.class", "w-0");
 
     // Toggle again to show
     cy.get("[data-testid='toggle-sidebar']").click();
-    cy.get("[data-testid='sidebar']").should("be.visible");
+    cy.get("[data-testid='sidebar']").should("have.class", "w-72");
   });
 
   it("has navigation tabs", () => {
