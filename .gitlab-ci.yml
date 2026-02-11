@@ -149,6 +149,8 @@ build:macos:
 
 docker:build:
   stage: deploy
+  # Run as soon as tests pass — don't wait for macOS build stage
+  needs: ["test:linux"]
   # BuildKit client image (cached in Harbor) - no DinD needed.
   # Override entrypoint: the default is 'buildkitd' (the daemon), but we
   # only need the 'buildctl' CLI to talk to the remote BuildKit server.
