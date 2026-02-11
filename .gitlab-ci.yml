@@ -41,7 +41,10 @@ variables:
 
 default:
   cache:
-    key: ${CI_COMMIT_REF_SLUG}
+    key:
+      files:
+        - package-lock.json
+        - src-tauri/Cargo.lock
     paths:
       - .npm/
       - src-tauri/target/
@@ -164,23 +167,18 @@ docker:build:
     BUILDKIT_HOST: tcp://buildkitd-central.ci-build.svc.cluster.local:1234
     HARBOR_IMAGE: registry.harbor.lan/streamslate/streamslate
   script:
-    - >-
-      buildctl build
-      --frontend dockerfile.v0
-      --local context=.
-      --local dockerfile=.
-      --output type=image,name=${HARBOR_IMAGE}:${CI_COMMIT_SHORT_SHA},push=true
-      --export-cache type=registry,ref=${HARBOR_IMAGE}:buildcache,mode=max
-      --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
     - |
+      NAMES="${HARBOR_IMAGE}:${CI_COMMIT_SHORT_SHA}"
       if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
-        buildctl build \
-          --frontend dockerfile.v0 \
-          --local context=. \
-          --local dockerfile=. \
-          --output type=image,name=${HARBOR_IMAGE}:latest,push=true \
-          --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
+        NAMES="${NAMES},${HARBOR_IMAGE}:latest"
       fi
+      buildctl build \
+        --frontend dockerfile.v0 \
+        --local context=. \
+        --local dockerfile=. \
+        --output "type=image,\"name=${NAMES}\",push=true" \
+        --export-cache type=registry,ref=${HARBOR_IMAGE}:buildcache,mode=max \
+        --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "develop"
