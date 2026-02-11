@@ -14,14 +14,13 @@
 #   APPLE_TEAM_ID              - Apple Developer Team ID
 #
 # For Container Registry (docker:build job):
-#   Uses built-in GitLab CI variables:
-#   - CI_REGISTRY, CI_REGISTRY_USER, CI_REGISTRY_PASSWORD, CI_REGISTRY_IMAGE
-#   (Automatically available when Container Registry is enabled)
+#   Uses central BuildKit server + Harbor registry (registry.harbor.lan)
+#   No additional CI variables needed - BuildKit server has push credentials
 #
 # Runner Requirements:
 #   - Linux runner for test:linux job (any GitLab runner)
 #   - macOS runner with tag 'macos' for build:macos job
-#   - Docker-in-Docker for docker:build job
+#   - K3s runner with Harbor image pull access for docker:build job
 #
 
 stages:
@@ -150,8 +149,12 @@ build:macos:
 
 docker:build:
   stage: deploy
-  # BuildKit client image (cached in Harbor) - no DinD needed
-  image: registry.harbor.lan/dockerhub-cache/moby/buildkit:v0.12.5
+  # BuildKit client image (cached in Harbor) - no DinD needed.
+  # Override entrypoint: the default is 'buildkitd' (the daemon), but we
+  # only need the 'buildctl' CLI to talk to the remote BuildKit server.
+  image:
+    name: registry.harbor.lan/dockerhub-cache/moby/buildkit:v0.12.5
+    entrypoint: [""]
   variables:
     # Disable DinD wait in runner pre-build script
     DOCKER_HOST: ""
