@@ -55,9 +55,9 @@ export const BorderlessWindowControls: React.FC<
     <div
       className={`flex items-center justify-between ${
         transparentBg
-          ? "bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm"
-          : "bg-white dark:bg-gray-800"
-      } px-3 py-2 border-b border-gray-200 dark:border-gray-700 animate-fade-in`}
+          ? "bg-surface-primary/90 backdrop-blur-sm"
+          : "bg-surface-primary"
+      } px-3 py-2 border-b border-border-primary animate-fade-in`}
     >
       <div className="flex items-center space-x-2">
         <div

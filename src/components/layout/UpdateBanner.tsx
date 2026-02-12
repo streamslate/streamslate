@@ -82,26 +82,40 @@ export function UpdateBanner() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-3 shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-50 border-b border-border-primary bg-surface-primary/95 px-4 py-3 text-text-primary shadow-lg backdrop-blur-md">
       <div className="flex items-center justify-between max-w-screen-xl mx-auto">
         <div className="flex items-center gap-3">
-          <span className="text-lg">🎉</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/15 text-primary">
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </span>
           <div>
             <span className="font-medium">
               StreamSlate {updateInfo.version} is available!
             </span>
             {updateInfo.body && (
-              <p className="text-sm text-white/80 mt-0.5 line-clamp-1">
+              <p className="mt-0.5 line-clamp-1 text-sm text-text-secondary">
                 {updateInfo.body}
               </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {error && <span className="text-sm text-red-200">{error}</span>}
+          {error && <span className="text-sm text-red-500">{error}</span>}
           <button
             onClick={handleDismiss}
-            className="px-3 py-1.5 text-sm text-white/80 hover:text-white transition-colors"
+            className="rounded-md px-3 py-1.5 text-sm text-text-secondary transition-colors hover:bg-bg-tertiary hover:text-text-primary"
             disabled={isInstalling}
           >
             Later
@@ -109,7 +123,7 @@ export function UpdateBanner() {
           <button
             onClick={handleInstall}
             disabled={isInstalling}
-            className="px-4 py-1.5 bg-white text-indigo-600 font-medium rounded-md hover:bg-indigo-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="rounded-md bg-primary px-4 py-1.5 font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isInstalling ? "Installing..." : "Install Update"}
           </button>

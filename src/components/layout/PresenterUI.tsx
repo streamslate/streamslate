@@ -26,7 +26,7 @@ export const PresenterUI: React.FC<PresenterUIProps> = ({ onExit }) => {
   return (
     <button
       onClick={onExit}
-      className="absolute bottom-6 right-6 px-5 py-3 bg-gray-100/90 dark:bg-gray-700/90 hover:bg-gray-200/90 dark:hover:bg-gray-600/90 backdrop-blur-sm text-gray-900 dark:text-gray-100 rounded-xl shadow-lg flex items-center space-x-3 transition-all opacity-30 hover:opacity-100"
+      className="absolute bottom-6 right-6 z-20 flex items-center space-x-3 rounded-xl border border-border-primary bg-surface-primary/90 px-5 py-3 text-text-primary shadow-lg backdrop-blur-sm opacity-30 transition-all hover:opacity-100 hover:bg-surface-secondary/90"
       title="Exit Presenter Mode (ESC)"
     >
       <svg

@@ -548,7 +548,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           className={`absolute inset-0 flex items-center justify-center ${
             transparentBg
               ? "bg-bg-tertiary/50"
-              : "bg-[rgb(var(--color-bg-tertiary)))"
+              : "bg-[rgb(var(--color-bg-tertiary))]"
           } bg-opacity-75 z-10 rounded-lg pointer-events-none`}
         >
           <div className="flex flex-col items-center text-text-primary">

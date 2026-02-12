@@ -61,7 +61,7 @@ Tool Steps
 OBS Studio Install OBS WebSocket 5.x → Add Browser Source with the Presenter URL (auto-generated in StreamSlate → Integrations panel)
 Stream Deck Install the official StreamSlate plug-in → Map actions like Next Page, Toggle Highlighter, Clean Mode
 vMix / NDI Enable NDI Output in Settings → Presenter and add it as an NDI source
-Shortcuts / Automations Every function is exposed over a local REST WebSocket API (ws://localhost:11451) – see docs/api.md
+Shortcuts / Automations Every function is exposed over a local WebSocket API (`ws://127.0.0.1:11451`) – see [docs/api.md](docs/api.md)
 
 ⸻
 

@@ -10,3 +10,7 @@ This directory contains public-facing documentation for StreamSlate.
 - Installation guides
 
 Documentation is written in MDX format for enhanced interactivity.
+
+## Key Docs
+
+- [Local API](api.md)

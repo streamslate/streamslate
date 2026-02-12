@@ -1,5 +1,9 @@
 # Project Roadmap
 
+## Tracking
+- [Roadmap tracking issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/1)
+
+
 > Last Updated: February 2026
 
 ## Current Status

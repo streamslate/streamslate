@@ -22,7 +22,15 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { NDIQuality, IntegrationSource } from "../types/integration.types";
+import {
+  NDIQuality,
+  IntegrationMessageType,
+  IntegrationSource,
+} from "../types/integration.types";
+import {
+  getWebSocketClient,
+  resetWebSocketClient,
+} from "../lib/websocket/client";
 import type {
   WebSocketState,
   OBSIntegration,
@@ -129,6 +137,34 @@ const initialConfig: IntegrationConfig = {
   },
 };
 
+let websocketClient: ReturnType<typeof getWebSocketClient> | null = null;
+let websocketStateHandler: ((state: WebSocketState) => void) | null = null;
+const websocketMessageTypes = [
+  "CONNECTED",
+  "STATE",
+  "PAGE_CHANGED",
+  "PDF_OPENED",
+  "PDF_CLOSED",
+  "PRESENTER_CHANGED",
+  "PONG",
+  "ERROR",
+] as const;
+
+const createIntegrationEvent = (
+  type: IntegrationMessageType,
+  source: IntegrationSource,
+  data: unknown
+): IntegrationEvent => ({
+  id:
+    globalThis.crypto?.randomUUID?.() ||
+    `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  type,
+  source,
+  timestamp: new Date(),
+  data,
+  handled: false,
+});
+
 export const useIntegrationStore = create<IntegrationStore>()(
   devtools(
     (set, get) => ({
@@ -208,29 +244,166 @@ export const useIntegrationStore = create<IntegrationStore>()(
 
       // Connection management
       connectWebSocket: async () => {
+        const port = get().config.websocket.port || initialWebSocketState.port;
+
         try {
+          if (!websocketClient) {
+            websocketClient = getWebSocketClient(port);
+          } else if (websocketClient.getState().port !== port) {
+            resetWebSocketClient();
+            websocketClient = getWebSocketClient(port);
+          }
+
+          if (websocketStateHandler) {
+            websocketClient.offStateChange(websocketStateHandler);
+          }
+
+          websocketStateHandler = (nextState) => {
+            set((state) => ({
+              websocket: {
+                ...state.websocket,
+                ...nextState,
+                port,
+              },
+            }));
+          };
+          websocketClient.onStateChange(websocketStateHandler);
+
           set((state) => ({
             websocket: {
               ...state.websocket,
+              port,
               connected: false,
               lastError: null,
             },
           }));
 
-          // WebSocket connection logic would be implemented here
-          // For now, just simulate connection
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          for (const messageType of websocketMessageTypes) {
+            websocketClient.offMessage(messageType);
+          }
 
-          set((state) => ({
-            websocket: {
-              ...state.websocket,
-              connected: true,
-              connectionTime: new Date(),
-            },
-          }));
+          websocketClient.onMessage("CONNECTED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.CONNECTION_STATUS,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("STATE", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.CONNECTION_STATUS,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("PAGE_CHANGED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.PAGE_CHANGED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("PDF_OPENED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.PDF_OPENED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("PDF_CLOSED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.PDF_CLOSED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("PRESENTER_CHANGED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.PRESENTER_MODE_TOGGLED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("PONG", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.PONG,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("ERROR", (payload) => {
+            const message =
+              typeof payload === "object" &&
+              payload !== null &&
+              "message" in payload &&
+              typeof (payload as { message?: unknown }).message === "string"
+                ? (payload as { message: string }).message
+                : "WebSocket server error";
+
+            set((state) => ({
+              websocket: {
+                ...state.websocket,
+                connected: false,
+                lastError: message,
+              },
+            }));
+
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.ERROR,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          if (websocketClient.isConnected()) {
+            set((state) => ({
+              websocket: {
+                ...state.websocket,
+                connected: true,
+                lastError: null,
+                connectionTime: state.websocket.connectionTime ?? new Date(),
+              },
+            }));
+            return;
+          }
+
+          await websocketClient.connect();
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : "Unknown error";
+
+          const integrationError: IntegrationError = {
+            code: "WEBSOCKET_CONNECTION_FAILED",
+            message: errorMessage,
+            source: IntegrationSource.STREAMSLATE,
+            timestamp: new Date(),
+            details: error,
+          };
+          get().addError(integrationError);
+
           set((state) => ({
             websocket: {
               ...state.websocket,
@@ -242,46 +415,37 @@ export const useIntegrationStore = create<IntegrationStore>()(
       },
 
       disconnectWebSocket: () => {
+        if (websocketClient) {
+          if (websocketStateHandler) {
+            websocketClient.offStateChange(websocketStateHandler);
+            websocketStateHandler = null;
+          }
+          resetWebSocketClient();
+          websocketClient = null;
+        }
+
         set((state) => ({
           websocket: {
             ...state.websocket,
             connected: false,
+            lastError: null,
             connectionTime: null,
           },
         }));
       },
 
       connectOBS: async () => {
-        try {
-          set((state) => ({
-            obs: { ...state.obs, connected: false },
-          }));
+        set((state) => ({
+          obs: { ...state.obs, connected: false, version: null },
+        }));
 
-          // OBS connection logic would be implemented here
-          // For now, just simulate connection
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-
-          set((state) => ({
-            obs: {
-              ...state.obs,
-              connected: true,
-              version: "30.0.0", // Simulated version
-            },
-          }));
-        } catch (error) {
-          // Handle OBS connection error
-          const integrationError: IntegrationError = {
-            code: "OBS_CONNECTION_FAILED",
-            message:
-              error instanceof Error
-                ? error.message
-                : "Failed to connect to OBS",
-            source: IntegrationSource.OBS,
-            timestamp: new Date(),
-            details: error,
-          };
-          get().addError(integrationError);
-        }
+        const integrationError: IntegrationError = {
+          code: "OBS_NOT_IMPLEMENTED",
+          message: "OBS integration is not implemented in this build",
+          source: IntegrationSource.OBS,
+          timestamp: new Date(),
+        };
+        get().addError(integrationError);
       },
 
       disconnectOBS: () => {
@@ -300,7 +464,16 @@ export const useIntegrationStore = create<IntegrationStore>()(
       },
 
       // Utility
-      reset: () =>
+      reset: () => {
+        if (websocketClient) {
+          if (websocketStateHandler) {
+            websocketClient.offStateChange(websocketStateHandler);
+            websocketStateHandler = null;
+          }
+          resetWebSocketClient();
+          websocketClient = null;
+        }
+
         set({
           websocket: initialWebSocketState,
           obs: initialOBSState,
@@ -309,7 +482,8 @@ export const useIntegrationStore = create<IntegrationStore>()(
           config: initialConfig,
           errors: [],
           events: [],
-        }),
+        });
+      },
 
       isAnyIntegrationConnected: () => {
         const state = get();

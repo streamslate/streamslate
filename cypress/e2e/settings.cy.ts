@@ -32,4 +32,18 @@ describe("Settings Panel", () => {
     // The toggle should now be checked
     cy.get("@darkModeToggle").should("be.checked");
   });
+
+  it("can toggle transparent and borderless modes", () => {
+    cy.get('[data-testid="transparent-toggle"]').check({ force: true });
+    cy.get("div.h-screen").should("have.class", "bg-transparent");
+
+    cy.get('[data-testid="borderless-toggle"]').check({ force: true });
+    cy.get("header").should("not.be.visible");
+    cy.get('[data-testid="status-bar"]').should("not.be.visible");
+    cy.get('button[title="Exit Borderless"]').should("be.visible");
+
+    cy.get('[data-testid="borderless-toggle"]').uncheck({ force: true });
+    cy.get("header").should("be.visible");
+    cy.get('[data-testid="status-bar"]').should("be.visible");
+  });
 });

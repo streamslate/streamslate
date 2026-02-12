@@ -58,7 +58,11 @@ export class StreamSlateWebSocketClient {
 
         this.ws.onmessage = (event) => {
           try {
-            const message: IntegrationMessage = JSON.parse(event.data);
+            const message = JSON.parse(event.data) as {
+              type?: unknown;
+              data?: unknown;
+              [key: string]: unknown;
+            };
             this.handleMessage(message);
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
@@ -155,7 +159,7 @@ export class StreamSlateWebSocketClient {
    */
   getState(): WebSocketState {
     return {
-      connected: this.ws?.readyState === WebSocket.OPEN,
+      connected: this.ws?.readyState === WebSocket.OPEN || false,
       port: this.port,
       lastError: null,
       connectionTime:
@@ -167,13 +171,23 @@ export class StreamSlateWebSocketClient {
    * Check if connected
    */
   isConnected(): boolean {
-    return this.ws?.readyState === WebSocket.OPEN;
+    return this.ws?.readyState === WebSocket.OPEN || false;
   }
 
-  private handleMessage(message: IntegrationMessage): void {
-    const handler = this.messageHandlers.get(message.type);
+  private handleMessage(message: {
+    type?: unknown;
+    data?: unknown;
+    [key: string]: unknown;
+  }): void {
+    const messageType = typeof message.type === "string" ? message.type : "";
+    if (!messageType) {
+      console.log("WebSocket message missing type:", message);
+      return;
+    }
+
+    const handler = this.messageHandlers.get(messageType);
     if (handler) {
-      handler(message.data);
+      handler(message.data ?? message);
     } else {
       console.log("Unhandled WebSocket message:", message);
     }

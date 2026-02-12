@@ -30,10 +30,10 @@ export const BorderlessUI: React.FC<BorderlessUIProps> = ({
   onExitBorderlessMode,
 }) => {
   return (
-    <div className="absolute top-4 right-4 flex items-center space-x-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg opacity-20 hover:opacity-100 transition-all duration-200">
+    <div className="absolute top-4 right-4 z-20 flex items-center gap-3 rounded-xl border border-border-primary bg-surface-primary/90 px-4 py-2 text-text-primary shadow-lg backdrop-blur-sm opacity-25 transition-all duration-200 hover:opacity-100">
       <button
         onClick={onToggleSidebar}
-        className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
+        className="rounded-lg p-1.5 text-text-secondary transition-all hover:bg-bg-tertiary hover:text-text-primary"
         title="Toggle Sidebar"
       >
         <svg
@@ -50,10 +50,10 @@ export const BorderlessUI: React.FC<BorderlessUIProps> = ({
           />
         </svg>
       </button>
-      <div className="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+      <div className="h-5 w-px bg-border-secondary"></div>
       <button
         onClick={onEnterPresenterMode}
-        className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
+        className="rounded-lg p-1.5 text-text-secondary transition-all hover:bg-bg-tertiary hover:text-text-primary"
         title="Presenter Mode"
       >
         <svg
@@ -70,10 +70,10 @@ export const BorderlessUI: React.FC<BorderlessUIProps> = ({
           />
         </svg>
       </button>
-      <div className="w-px h-5 bg-gray-300 dark:bg-gray-600"></div>
+      <div className="h-5 w-px bg-border-secondary"></div>
       <button
         onClick={onExitBorderlessMode}
-        className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
+        className="rounded-lg p-1.5 text-text-secondary transition-all hover:bg-bg-tertiary hover:text-text-primary"
         title="Exit Borderless"
       >
         <svg
