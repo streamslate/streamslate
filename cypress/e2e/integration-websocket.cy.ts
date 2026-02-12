@@ -62,6 +62,10 @@ function installMockWebSocket(
       this.readyState = MockWebSocket.CLOSED;
       this.onclose?.({ code, reason, wasClean: true } as CloseEvent);
     }
+
+    emitMessage(payload: Record<string, unknown>) {
+      this.onmessage?.({ data: JSON.stringify(payload) } as MessageEvent);
+    }
   }
 
   globalWindow.WebSocket = MockWebSocket;
@@ -112,5 +116,41 @@ describe("Integration WebSocket State", () => {
     });
 
     cy.get('[data-testid="status-bar"]').contains("WebSocket Disconnected");
+  });
+
+  it("applies presenter state from websocket messages", () => {
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        installMockWebSocket(win, "open");
+      },
+    });
+
+    cy.contains("button", "Presenter").should("be.visible");
+    cy.contains("Exit Presenter Mode").should("not.exist");
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({ type: "PRESENTER_CHANGED", active: true })
+      );
+    });
+
+    cy.contains("Exit Presenter Mode").should("be.visible");
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({ type: "PRESENTER_CHANGED", active: false })
+      );
+    });
+
+    cy.contains("Exit Presenter Mode").should("not.exist");
+    cy.contains("button", "Presenter").should("be.visible");
   });
 });

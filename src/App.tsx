@@ -30,6 +30,8 @@ import { useTheme } from "./hooks/useTheme";
 import { useViewModes } from "./hooks/useViewModes";
 import { StatusBar } from "./components/layout/StatusBar";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
+import { IntegrationMessageType } from "./types/integration.types";
+import { usePDFStore } from "./stores/pdf.store";
 
 type SidebarPanel = "files" | "annotations" | "settings";
 
@@ -50,6 +52,45 @@ const getStoredPanel = (): SidebarPanel => {
     return value;
   }
   return "files";
+};
+
+const toRecord = (value: unknown): Record<string, unknown> | null => {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const readNumber = (
+  payload: Record<string, unknown> | null,
+  keys: string[]
+): number | null => {
+  if (!payload) {
+    return null;
+  }
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      return value;
+    }
+  }
+  return null;
+};
+
+const readBoolean = (
+  payload: Record<string, unknown> | null,
+  keys: string[]
+): boolean | null => {
+  if (!payload) {
+    return null;
+  }
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "boolean") {
+      return value;
+    }
+  }
+  return null;
 };
 
 function App() {
@@ -73,7 +114,12 @@ function App() {
 
   // Get WebSocket state from integration store
   const websocketState = useIntegrationStore((state) => state.websocket);
+  const integrationEvents = useIntegrationStore((state) => state.events);
+  const markEventHandled = useIntegrationStore(
+    (state) => state.markEventHandled
+  );
   const { connectWebSocket, disconnectWebSocket } = useIntegrationStore();
+  const { setCurrentPage, setZoom } = usePDFStore();
 
   // Auto-connect WebSocket on mount
   useEffect(() => {
@@ -90,6 +136,56 @@ function App() {
   useEffect(() => {
     localStorage.setItem(ACTIVE_PANEL_KEY, activePanel);
   }, [activePanel]);
+
+  useEffect(() => {
+    for (const event of integrationEvents) {
+      if (event.handled) {
+        continue;
+      }
+
+      const payload = toRecord(event.data);
+
+      if (event.type === IntegrationMessageType.PAGE_CHANGED) {
+        const page = readNumber(payload, ["page"]);
+        if (page !== null && page >= 1) {
+          setCurrentPage(Math.floor(page));
+        }
+      }
+
+      if (event.type === IntegrationMessageType.CONNECTION_STATUS) {
+        const page = readNumber(payload, ["page"]);
+        if (page !== null && page >= 1) {
+          setCurrentPage(Math.floor(page));
+        }
+
+        const zoom = readNumber(payload, ["zoom"]);
+        if (zoom !== null && zoom > 0) {
+          setZoom(zoom);
+        }
+      }
+
+      if (
+        event.type === IntegrationMessageType.PRESENTER_MODE_TOGGLED ||
+        event.type === IntegrationMessageType.CONNECTION_STATUS
+      ) {
+        const presenterActive = readBoolean(payload, [
+          "active",
+          "presenter_active",
+        ]);
+        if (presenterActive !== null) {
+          setPresenterMode(presenterActive);
+        }
+      }
+
+      markEventHandled(event.id);
+    }
+  }, [
+    integrationEvents,
+    markEventHandled,
+    setCurrentPage,
+    setPresenterMode,
+    setZoom,
+  ]);
 
   return (
     <div
