@@ -70,6 +70,7 @@ interface PDFStore {
 
   // Annotation actions
   addAnnotation: (annotation: Annotation) => void;
+  setPageAnnotations: (pageNumber: number, annotations: Annotation[]) => void;
   updateAnnotation: (id: string, updates: Partial<Annotation>) => void;
   removeAnnotation: (id: string) => void;
   getPageAnnotations: (pageNumber: number) => Annotation[];
@@ -243,6 +244,13 @@ export const usePDFStore = create<PDFStore>()(
             newAnnotations.get(annotation.pageNumber) || [];
           pageAnnotations.push(annotation);
           newAnnotations.set(annotation.pageNumber, pageAnnotations);
+          return { annotations: newAnnotations };
+        }),
+
+      setPageAnnotations: (pageNumber, nextAnnotations) =>
+        set((state) => {
+          const newAnnotations = new Map(state.annotations);
+          newAnnotations.set(pageNumber, [...nextAnnotations]);
           return { annotations: newAnnotations };
         }),
 

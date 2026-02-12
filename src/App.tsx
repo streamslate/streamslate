@@ -32,6 +32,10 @@ import { StatusBar } from "./components/layout/StatusBar";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 import { IntegrationMessageType } from "./types/integration.types";
 import { usePDFStore } from "./stores/pdf.store";
+import {
+  dtoToAnnotation,
+  parseAnnotationDTO,
+} from "./lib/annotations/converters";
 
 type SidebarPanel = "files" | "annotations" | "settings";
 
@@ -135,7 +139,12 @@ function App() {
     (state) => state.markEventHandled
   );
   const { connectWebSocket, disconnectWebSocket } = useIntegrationStore();
-  const { setCurrentPage, setZoom } = usePDFStore();
+  const pdfDocument = usePDFStore((state) => state.document);
+  const setDocument = usePDFStore((state) => state.setDocument);
+  const setCurrentPage = usePDFStore((state) => state.setCurrentPage);
+  const setZoom = usePDFStore((state) => state.setZoom);
+  const setPageAnnotations = usePDFStore((state) => state.setPageAnnotations);
+  const clearAnnotations = usePDFStore((state) => state.clearAnnotations);
 
   // Auto-connect WebSocket on mount
   useEffect(() => {
@@ -168,7 +177,10 @@ function App() {
         }
       }
 
-      if (event.type === IntegrationMessageType.CONNECTION_STATUS) {
+      if (
+        event.type === IntegrationMessageType.ZOOM_CHANGED ||
+        event.type === IntegrationMessageType.CONNECTION_STATUS
+      ) {
         const page = readNumber(payload, ["page"]);
         if (page !== null && page >= 1) {
           setCurrentPage(Math.floor(page));
@@ -193,12 +205,92 @@ function App() {
         }
       }
 
+      if (event.type === IntegrationMessageType.CONNECTION_STATUS) {
+        const isLoaded = readBoolean(payload, ["pdf_loaded"]);
+        const path = readString(payload, ["pdf_path"]);
+        const totalPages = readNumber(payload, ["total_pages", "totalPages"]);
+
+        if (isLoaded && path && totalPages !== null && totalPages > 0) {
+          const nextPageCount = Math.floor(totalPages);
+          const shouldSet =
+            pdfDocument === null ||
+            pdfDocument.path !== path ||
+            pdfDocument.pageCount !== nextPageCount;
+
+          if (shouldSet) {
+            setDocument({
+              id: globalThis.crypto?.randomUUID?.() ?? `pdf-${Date.now()}`,
+              path,
+              title: readString(payload, ["pdf_title"]) ?? undefined,
+              pageCount: nextPageCount,
+              fileSize: 0,
+              isLoaded: true,
+            });
+          }
+        }
+      }
+
+      if (event.type === IntegrationMessageType.PDF_OPENED) {
+        const path = readString(payload, ["path", "pdf_path"]);
+        const pageCount = readNumber(payload, ["page_count", "pageCount"]);
+        if (path && pageCount !== null && pageCount > 0) {
+          setDocument({
+            id: globalThis.crypto?.randomUUID?.() ?? `pdf-${Date.now()}`,
+            path,
+            title: readString(payload, ["title"]) ?? undefined,
+            pageCount: Math.floor(pageCount),
+            fileSize: 0,
+            isLoaded: true,
+          });
+          setCurrentPage(1);
+        }
+      }
+
+      if (event.type === IntegrationMessageType.PDF_CLOSED) {
+        setDocument(null);
+        clearAnnotations();
+        setCurrentPage(1);
+      }
+
+      if (event.type === IntegrationMessageType.ANNOTATIONS_UPDATED) {
+        const updates = payload?.annotations;
+        const record = updates ? toRecord(updates) : payload;
+        if (record) {
+          for (const [pageKey, items] of Object.entries(record)) {
+            const page = Number.parseInt(pageKey, 10);
+            if (!Number.isFinite(page) || page < 1) {
+              continue;
+            }
+
+            if (!Array.isArray(items)) {
+              continue;
+            }
+
+            const next = items
+              .map(parseAnnotationDTO)
+              .filter((dto): dto is NonNullable<typeof dto> => dto !== null)
+              .map(dtoToAnnotation)
+              .map((annotation) => ({ ...annotation, pageNumber: page }));
+
+            setPageAnnotations(page, next);
+          }
+        }
+      }
+
+      if (event.type === IntegrationMessageType.ANNOTATIONS_CLEARED) {
+        clearAnnotations();
+      }
+
       markEventHandled(event.id);
     }
   }, [
     integrationEvents,
     markEventHandled,
+    pdfDocument,
+    clearAnnotations,
     setCurrentPage,
+    setDocument,
+    setPageAnnotations,
     setPresenterMode,
     setZoom,
   ]);
@@ -225,6 +317,29 @@ function App() {
             ? "Presenter mode enabled remotely"
             : "Presenter mode disabled remotely";
         }
+      }
+
+      if (event.type === IntegrationMessageType.ZOOM_CHANGED) {
+        const zoom = readNumber(payload, ["zoom"]);
+        if (zoom !== null && zoom > 0) {
+          return `Remote zoom ${Math.round(zoom * 100)}%`;
+        }
+      }
+
+      if (event.type === IntegrationMessageType.ANNOTATIONS_UPDATED) {
+        return "Remote annotations updated";
+      }
+
+      if (event.type === IntegrationMessageType.ANNOTATIONS_CLEARED) {
+        return "Remote annotations cleared";
+      }
+
+      if (event.type === IntegrationMessageType.PDF_OPENED) {
+        return "Remote PDF opened";
+      }
+
+      if (event.type === IntegrationMessageType.PDF_CLOSED) {
+        return "Remote PDF closed";
       }
 
       if (event.type === IntegrationMessageType.ERROR) {

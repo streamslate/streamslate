@@ -40,8 +40,11 @@ export enum IntegrationMessageType {
   PDF_OPENED = "pdf_opened",
   PDF_CLOSED = "pdf_closed",
   PAGE_CHANGED = "page_changed",
+  ZOOM_CHANGED = "zoom_changed",
   ANNOTATION_ADDED = "annotation_added",
   ANNOTATION_REMOVED = "annotation_removed",
+  ANNOTATIONS_UPDATED = "annotations_updated",
+  ANNOTATIONS_CLEARED = "annotations_cleared",
 
   // Presenter Events
   PRESENTER_MODE_TOGGLED = "presenter_mode_toggled",

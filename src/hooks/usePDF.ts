@@ -26,6 +26,10 @@ import { writeBinaryFile } from "@tauri-apps/api/fs";
 import { PDFCommands, AnnotationCommands } from "../lib/tauri/commands";
 import { exportPDF } from "../lib/pdf/exporter";
 import type { AnnotationDTO } from "../lib/tauri/commands";
+import {
+  annotationToDTO,
+  dtoToAnnotation,
+} from "../lib/annotations/converters";
 import { usePDFStore } from "../stores/pdf.store";
 import { LoadingStage } from "../types/pdf.types";
 import type { PDFDocument, PDFError, Annotation } from "../types/pdf.types";
@@ -35,44 +39,6 @@ import {
   emitPdfClosed,
   emitZoomChanged,
 } from "../lib/tauri/events";
-
-// Convert frontend Annotation to backend DTO
-function annotationToDTO(annotation: Annotation): AnnotationDTO {
-  return {
-    id: annotation.id,
-    type: annotation.type,
-    pageNumber: annotation.pageNumber,
-    x: annotation.x,
-    y: annotation.y,
-    width: annotation.width,
-    height: annotation.height,
-    content: annotation.content,
-    color: annotation.color,
-    opacity: annotation.opacity,
-    created: annotation.created.toISOString(),
-    modified: annotation.modified.toISOString(),
-    visible: annotation.visible,
-  };
-}
-
-// Convert backend DTO to frontend Annotation
-function dtoToAnnotation(dto: AnnotationDTO): Annotation {
-  return {
-    id: dto.id,
-    type: dto.type as Annotation["type"],
-    pageNumber: dto.pageNumber,
-    x: dto.x,
-    y: dto.y,
-    width: dto.width,
-    height: dto.height,
-    content: dto.content,
-    color: dto.color,
-    opacity: dto.opacity,
-    created: new Date(dto.created),
-    modified: new Date(dto.modified),
-    visible: dto.visible,
-  };
-}
 
 export const usePDF = () => {
   const {

@@ -224,7 +224,7 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
         <div className="flex items-center justify-between px-4 py-3 border-t border-border-primary bg-bg-tertiary/50 rounded-b-xl">
           <button
             onClick={onDelete}
-            className="px-3 py-2 text-sm font-medium text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-error transition-colors hover:bg-error/10"
           >
             Delete
           </button>

@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { type AnnotationDTO } from "../lib/tauri/commands";
-import { type Annotation } from "../types/pdf.types";
+import { dtoToAnnotation } from "../lib/annotations/converters";
 import { usePDFStore } from "../stores/pdf.store";
 
 interface PageChangedPayload {
@@ -66,26 +66,9 @@ export const useRemoteControl = (
         annotation: AnnotationDTO;
       }>("annotation-added", (event) => {
         console.log("Remote annotation added:", event.payload);
-        const dto = event.payload.annotation;
-
-        // Convert DTO to Domain Object
-        const annotation: Annotation = {
-          id: dto.id,
-          type: dto.type as Annotation["type"],
-          pageNumber: dto.pageNumber,
-          x: dto.x,
-          y: dto.y,
-          width: dto.width,
-          height: dto.height,
-          content: dto.content,
-          color: dto.color,
-          opacity: dto.opacity,
-          created: new Date(dto.created),
-          modified: new Date(dto.modified),
-          visible: dto.visible,
-        };
-
-        usePDFStore.getState().addAnnotation(annotation);
+        usePDFStore
+          .getState()
+          .addAnnotation(dtoToAnnotation(event.payload.annotation));
       });
       unlisten.push(unlistenAnnotation);
 

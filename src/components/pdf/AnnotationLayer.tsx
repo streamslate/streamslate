@@ -728,7 +728,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           ) && (
             <button
               onClick={() => handleTextEdit(selectedAnnotation)}
-              className="p-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs"
+              className="rounded bg-primary px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-primary-hover"
               title="Edit text"
             >
               ✎
@@ -736,7 +736,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           )}
           <button
             onClick={() => handleDeleteAnnotation(selectedAnnotation)}
-            className="p-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+            className="rounded bg-error px-2 py-1 text-xs font-semibold text-white transition-colors hover:bg-error/90"
             title="Delete annotation"
           >
             ✕

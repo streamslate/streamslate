@@ -143,9 +143,12 @@ const websocketMessageTypes = [
   "CONNECTED",
   "STATE",
   "PAGE_CHANGED",
+  "ZOOM_CHANGED",
   "PDF_OPENED",
   "PDF_CLOSED",
   "PRESENTER_CHANGED",
+  "ANNOTATIONS_UPDATED",
+  "ANNOTATIONS_CLEARED",
   "PONG",
   "ERROR",
 ] as const;
@@ -312,6 +315,16 @@ export const useIntegrationStore = create<IntegrationStore>()(
             );
           });
 
+          websocketClient.onMessage("ZOOM_CHANGED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.ZOOM_CHANGED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
           websocketClient.onMessage("PDF_OPENED", (payload) => {
             get().addEvent(
               createIntegrationEvent(
@@ -336,6 +349,26 @@ export const useIntegrationStore = create<IntegrationStore>()(
             get().addEvent(
               createIntegrationEvent(
                 IntegrationMessageType.PRESENTER_MODE_TOGGLED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("ANNOTATIONS_UPDATED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.ANNOTATIONS_UPDATED,
+                IntegrationSource.STREAMSLATE,
+                payload
+              )
+            );
+          });
+
+          websocketClient.onMessage("ANNOTATIONS_CLEARED", (payload) => {
+            get().addEvent(
+              createIntegrationEvent(
+                IntegrationMessageType.ANNOTATIONS_CLEARED,
                 IntegrationSource.STREAMSLATE,
                 payload
               )

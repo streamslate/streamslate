@@ -535,7 +535,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-auto bg-gray-100 dark:bg-gray-900"
+      className={`relative w-full h-full overflow-auto ${
+        transparentBg ? "bg-transparent" : "bg-bg-secondary"
+      }`}
       style={{
         // Force hardware acceleration and compositing for Tauri WebView
         transform: "translateZ(0)",
@@ -546,9 +548,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
       {isRendering && (
         <div
           className={`absolute inset-0 flex items-center justify-center ${
-            transparentBg
-              ? "bg-bg-tertiary/50"
-              : "bg-[rgb(var(--color-bg-tertiary))]"
+            transparentBg ? "bg-bg-tertiary/50" : "bg-bg-tertiary"
           } bg-opacity-75 z-10 rounded-lg pointer-events-none`}
         >
           <div className="flex flex-col items-center text-text-primary">
@@ -591,7 +591,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           }}
         />
       ) : (
-        <div className="flex items-center justify-center w-full h-64 bg-gray-200 text-gray-500">
+        <div className="flex items-center justify-center w-full h-64 bg-bg-tertiary text-text-tertiary border border-border-secondary rounded-lg">
           No image data available
         </div>
       )}
