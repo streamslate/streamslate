@@ -113,7 +113,7 @@ fi
 
 if git rev-parse -q --verify "refs/tags/${expected_tag}" >/dev/null; then
   tag_pkg_version="$(git show "${expected_tag}:package.json" 2>/dev/null | node -e 'const fs=require("fs"); try{const j=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write(j.version||"");}catch{process.stdout.write("")}')"
-  tag_cargo_version="$(git show "${expected_tag}:src-tauri/Cargo.toml" 2>/dev/null | node -e 'const fs=require("fs"); const s=fs.readFileSync(0,"utf8"); const m=s.match(/^version\\s*=\\s*\"([^\"]+)\"/m); process.stdout.write(m?m[1]:"");')"
+  tag_cargo_version="$(git show "${expected_tag}:src-tauri/Cargo.toml" 2>/dev/null | node -e 'const fs=require("fs"); const s=fs.readFileSync(0,"utf8"); const m=s.match(/^version\s*=\s*"([^"]+)"/m); process.stdout.write(m?m[1]:"");')"
   tag_tauri_version="$(git show "${expected_tag}:src-tauri/tauri.conf.json" 2>/dev/null | node -e 'const fs=require("fs"); try{const j=JSON.parse(fs.readFileSync(0,"utf8")); process.stdout.write((j?.package?.version||j?.version||""));}catch{process.stdout.write("")}')"
 
   if [[ "$tag_pkg_version" == "$pkg_version" && "$tag_cargo_version" == "$pkg_version" && "$tag_tauri_version" == "$pkg_version" ]]; then
