@@ -172,13 +172,53 @@ docker:build:
       if [ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]; then
         NAMES="${NAMES},${HARBOR_IMAGE}:latest"
       fi
-      buildctl build \
-        --frontend dockerfile.v0 \
-        --local context=. \
-        --local dockerfile=. \
-        --output "type=image,\"name=${NAMES}\",push=true" \
-        --export-cache type=registry,ref=${HARBOR_IMAGE}:buildcache,mode=max \
-        --import-cache type=registry,ref=${HARBOR_IMAGE}:buildcache
+      #
+      # NOTE: Harbor cache export has intermittently failed with a 404 when
+      # writing the buildcache manifest. Since this cache is an optimization,
+      # retry the build without registry cache flags if the failure matches
+      # that specific condition.
+      #
+      # This keeps image publishing reliable while preserving caching when it
+      # works.
+      set -eu
+      CACHE_REF="${HARBOR_IMAGE}:buildcache"
+
+      run_build() {
+        buildctl build \
+          --frontend dockerfile.v0 \
+          --local context=. \
+          --local dockerfile=. \
+          --output "type=image,\"name=${NAMES}\",push=true" \
+          "$@"
+      }
+
+      run_build_with_log() {
+        rm -f buildctl.pipe buildctl.log
+        mkfifo buildctl.pipe
+        tee buildctl.log < buildctl.pipe &
+        TEE_PID=$!
+
+        set +e
+        run_build "$@" > buildctl.pipe 2>&1
+        RC=$?
+        set -e
+
+        wait "$TEE_PID" || true
+        rm -f buildctl.pipe
+        return "$RC"
+      }
+
+      if ! run_build_with_log \
+          --export-cache "type=registry,ref=${CACHE_REF},mode=max" \
+          --import-cache "type=registry,ref=${CACHE_REF}"; then
+        if grep -Eq "error writing manifest blob|/manifests/buildcache|buildcache" buildctl.log; then
+          echo "Registry cache export failed; retrying build without registry cache flags..."
+          run_build_with_log
+        else
+          echo "buildctl failed (not a known registry-cache export failure); failing job."
+          exit 1
+        fi
+      fi
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "develop"
