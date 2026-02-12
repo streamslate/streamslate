@@ -31,8 +31,14 @@ beforeEach(() => {
       tauriWindow.__TAURI_MOCK_IPC__ = {
         calls: [] as Array<{ cmd: string; args: Record<string, unknown> }>,
         handlers: [] as Array<{
-          match: (payload: { cmd: string; args: Record<string, unknown> }) => boolean;
-          handle: (payload: { cmd: string; args: Record<string, unknown> }) => unknown;
+          match: (payload: {
+            cmd: string;
+            args: Record<string, unknown>;
+          }) => boolean;
+          handle: (payload: {
+            cmd: string;
+            args: Record<string, unknown>;
+          }) => unknown;
         }>,
       };
     }
@@ -68,10 +74,18 @@ beforeEach(() => {
         };
 
         try {
-          const custom = tauriWindow.__TAURI_MOCK_IPC__.handlers.find((h: {
-            match: (payload: { cmd: string; args: Record<string, unknown> }) => boolean;
-            handle: (payload: { cmd: string; args: Record<string, unknown> }) => unknown;
-          }) => h.match({ cmd, args }));
+          const custom = tauriWindow.__TAURI_MOCK_IPC__.handlers.find(
+            (h: {
+              match: (payload: {
+                cmd: string;
+                args: Record<string, unknown>;
+              }) => boolean;
+              handle: (payload: {
+                cmd: string;
+                args: Record<string, unknown>;
+              }) => unknown;
+            }) => h.match({ cmd, args })
+          );
           if (custom) {
             resolve(custom.handle({ cmd, args }));
             return;
