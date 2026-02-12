@@ -18,10 +18,25 @@
 
 import { useState, useEffect } from "react";
 
+const TRANSPARENT_BG_KEY = "viewMode.transparentBg";
+const BORDERLESS_MODE_KEY = "viewMode.borderlessMode";
+
+const getStoredFlag = (key: string, defaultValue = false): boolean => {
+  const value = localStorage.getItem(key);
+  if (value === null) {
+    return defaultValue;
+  }
+  return value === "true";
+};
+
 export const useViewModes = () => {
   const [presenterMode, setPresenterMode] = useState(false);
-  const [transparentBg, setTransparentBg] = useState(false);
-  const [borderlessMode, setBorderlessMode] = useState(false);
+  const [transparentBg, setTransparentBg] = useState(() =>
+    getStoredFlag(TRANSPARENT_BG_KEY)
+  );
+  const [borderlessMode, setBorderlessMode] = useState(() =>
+    getStoredFlag(BORDERLESS_MODE_KEY)
+  );
 
   // Handle ESC key to exit presenter mode
   useEffect(() => {
@@ -34,6 +49,14 @@ export const useViewModes = () => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [presenterMode]);
+
+  useEffect(() => {
+    localStorage.setItem(TRANSPARENT_BG_KEY, String(transparentBg));
+  }, [transparentBg]);
+
+  useEffect(() => {
+    localStorage.setItem(BORDERLESS_MODE_KEY, String(borderlessMode));
+  }, [borderlessMode]);
 
   return {
     presenterMode,

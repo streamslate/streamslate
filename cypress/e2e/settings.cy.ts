@@ -46,4 +46,19 @@ describe("Settings Panel", () => {
     cy.get("header").should("be.visible");
     cy.get('[data-testid="status-bar"]').should("be.visible");
   });
+
+  it("persists transparent and borderless modes across reloads", () => {
+    cy.get('[data-testid="transparent-toggle"]').check({ force: true });
+    cy.get('[data-testid="borderless-toggle"]').check({ force: true });
+
+    cy.reload();
+
+    cy.get("div.h-screen").should("have.class", "bg-transparent");
+    cy.get("header").should("not.be.visible");
+    cy.get('[data-testid="status-bar"]').should("not.be.visible");
+
+    cy.contains("Settings").click();
+    cy.get('[data-testid="transparent-toggle"]').should("be.checked");
+    cy.get('[data-testid="borderless-toggle"]').should("be.checked");
+  });
 });
