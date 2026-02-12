@@ -31,11 +31,30 @@ import { useViewModes } from "./hooks/useViewModes";
 import { StatusBar } from "./components/layout/StatusBar";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
 
+type SidebarPanel = "files" | "annotations" | "settings";
+
+const SIDEBAR_OPEN_KEY = "layout.sidebarOpen";
+const ACTIVE_PANEL_KEY = "layout.activePanel";
+
+const getStoredSidebarOpen = (): boolean => {
+  const value = localStorage.getItem(SIDEBAR_OPEN_KEY);
+  if (value === null) {
+    return true;
+  }
+  return value === "true";
+};
+
+const getStoredPanel = (): SidebarPanel => {
+  const value = localStorage.getItem(ACTIVE_PANEL_KEY);
+  if (value === "files" || value === "annotations" || value === "settings") {
+    return value;
+  }
+  return "files";
+};
+
 function App() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activePanel, setActivePanel] = useState<
-    "files" | "annotations" | "settings"
-  >("files");
+  const [sidebarOpen, setSidebarOpen] = useState(getStoredSidebarOpen);
+  const [activePanel, setActivePanel] = useState<SidebarPanel>(getStoredPanel);
   const { darkMode, setDarkMode, toggleDarkMode } = useTheme();
   const {
     presenterMode,
@@ -63,6 +82,14 @@ function App() {
       disconnectWebSocket();
     };
   }, [connectWebSocket, disconnectWebSocket]);
+
+  useEffect(() => {
+    localStorage.setItem(SIDEBAR_OPEN_KEY, String(sidebarOpen));
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    localStorage.setItem(ACTIVE_PANEL_KEY, activePanel);
+  }, [activePanel]);
 
   return (
     <div

@@ -10,7 +10,12 @@
 
 describe("Sidebar Functionality", () => {
   beforeEach(() => {
-    cy.visit("/");
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        win.localStorage.removeItem("layout.sidebarOpen");
+        win.localStorage.removeItem("layout.activePanel");
+      },
+    });
   });
 
   it("sidebar is visible by default", () => {
@@ -43,5 +48,30 @@ describe("Sidebar Functionality", () => {
 
     // Settings panel content should be visible
     cy.contains("Dark Theme").should("be.visible");
+  });
+
+  it("persists sidebar and active panel across reload", () => {
+    cy.get("[data-testid='tab-settings']").click();
+    cy.get("[data-testid='panel-settings']").should("be.visible");
+
+    cy.window()
+      .its("localStorage")
+      .invoke("getItem", "layout.activePanel")
+      .should("eq", "settings");
+
+    cy.get("[data-testid='toggle-sidebar']").click();
+    cy.get("[data-testid='sidebar']").should("have.class", "w-0");
+
+    cy.window()
+      .its("localStorage")
+      .invoke("getItem", "layout.sidebarOpen")
+      .should("eq", "false");
+
+    cy.reload();
+    cy.get("[data-testid='sidebar']").should("have.class", "w-0");
+
+    cy.get("[data-testid='toggle-sidebar']").click();
+    cy.get("[data-testid='sidebar']").should("have.class", "w-72");
+    cy.get("[data-testid='panel-settings']").should("be.visible");
   });
 });
