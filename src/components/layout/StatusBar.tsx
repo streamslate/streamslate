@@ -23,6 +23,7 @@ interface StatusBarProps {
   presenterMode: boolean;
   borderlessMode: boolean;
   websocketState: { connected: boolean };
+  statusMessage: string;
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
@@ -30,6 +31,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   presenterMode,
   borderlessMode,
   websocketState,
+  statusMessage,
 }) => {
   return (
     <div
@@ -57,7 +59,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
               : "WebSocket Disconnected"}
           </span>
         </span>
-        <span>Ready</span>
+        <span>{statusMessage}</span>
       </div>
       <div className="flex items-center space-x-6">
         {presenterMode && (

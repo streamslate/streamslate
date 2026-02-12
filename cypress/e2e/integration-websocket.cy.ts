@@ -153,4 +153,26 @@ describe("Integration WebSocket State", () => {
     cy.contains("Exit Presenter Mode").should("not.exist");
     cy.contains("button", "Presenter").should("be.visible");
   });
+
+  it("shows latest remote page event in the status bar", () => {
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        installMockWebSocket(win, "open");
+      },
+    });
+
+    cy.get('[data-testid="status-bar"]').contains("WebSocket Connected");
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({ type: "PAGE_CHANGED", page: 3, total_pages: 12 })
+      );
+    });
+
+    cy.get('[data-testid="status-bar"]').contains("Remote page 3");
+  });
 });

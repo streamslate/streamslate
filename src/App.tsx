@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PDFViewer } from "./components/pdf/PDFViewer";
 import { Header } from "./components/layout/Header";
 import { Sidebar } from "./components/layout/Sidebar";
@@ -87,6 +87,22 @@ const readBoolean = (
   for (const key of keys) {
     const value = payload[key];
     if (typeof value === "boolean") {
+      return value;
+    }
+  }
+  return null;
+};
+
+const readString = (
+  payload: Record<string, unknown> | null,
+  keys: string[]
+): string | null => {
+  if (!payload) {
+    return null;
+  }
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.length > 0) {
       return value;
     }
   }
@@ -187,6 +203,38 @@ function App() {
     setZoom,
   ]);
 
+  const statusMessage = useMemo(() => {
+    for (let index = integrationEvents.length - 1; index >= 0; index -= 1) {
+      const event = integrationEvents[index];
+      const payload = toRecord(event.data);
+
+      if (event.type === IntegrationMessageType.PAGE_CHANGED) {
+        const page = readNumber(payload, ["page"]);
+        if (page !== null && page >= 1) {
+          return `Remote page ${Math.floor(page)}`;
+        }
+      }
+
+      if (event.type === IntegrationMessageType.PRESENTER_MODE_TOGGLED) {
+        const presenterActive = readBoolean(payload, [
+          "active",
+          "presenter_active",
+        ]);
+        if (presenterActive !== null) {
+          return presenterActive
+            ? "Presenter mode enabled remotely"
+            : "Presenter mode disabled remotely";
+        }
+      }
+
+      if (event.type === IntegrationMessageType.ERROR) {
+        const message = readString(payload, ["message"]);
+        return message ? `Remote error: ${message}` : "Remote error";
+      }
+    }
+    return "Ready";
+  }, [integrationEvents]);
+
   return (
     <div
       className={`h-screen w-screen overflow-hidden flex flex-col ${
@@ -238,6 +286,7 @@ function App() {
             presenterMode={presenterMode}
             borderlessMode={borderlessMode}
             websocketState={websocketState}
+            statusMessage={statusMessage}
           />
 
           {presenterMode && (
