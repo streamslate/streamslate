@@ -1,4 +1,4 @@
-# StreamSlate itch.io Profile Pack (v1.0.0)
+# StreamSlate itch.io Profile Pack (v1.0.1)
 
 ## Project Title
 
@@ -51,17 +51,15 @@ It is designed for live use first: low-friction annotation tools, a transparent 
 - Platforms: `Windows`, `macOS`, `Linux`
 - Pricing: `Free` (or free with optional support)
 
-## v1.0.0 Release Notes (itch Changelog)
+## v1.0.1 Release Notes (itch Changelog)
 
-StreamSlate v1.0.0 is now production-ready.
+StreamSlate v1.0.1 is a focused stability hotfix.
 
 New in this release:
 
-- Live collaboration and cursor sync
-- Native screen capture integration (macOS)
-- Cross-platform release builds (macOS/Windows/Linux)
-- CI/CD release automation and signed updater path
-- Expanded annotation/export reliability and test coverage
+- Fixed a macOS startup issue where the app could silently fail to open
+- Hardened app startup runtime handling for background services
+- Refreshed signed/notarized distribution builds
 
 ## Channel Mapping
 

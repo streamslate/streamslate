@@ -93,8 +93,10 @@ pub fn run() {
             // Get app handle for emitting events from WebSocket handlers
             let app_handle = app.handle();
 
-            // Start WebSocket server on port 11451
-            tokio::spawn(async move {
+            // Start WebSocket server on port 11451 using Tauri's runtime.
+            // Using raw tokio::spawn here can panic during startup if no Tokio
+            // reactor is active yet in the setup context.
+            tauri::async_runtime::spawn(async move {
                 // Clone state for the server, keep one for setting sender
                 let server_state = state_arc.clone();
                 match websocket::start_server(websocket::DEFAULT_PORT, server_state, app_handle)
