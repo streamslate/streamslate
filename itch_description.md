@@ -1,6 +1,6 @@
 # StreamSlate — Mark it. Show it.
 
-The professional PDF annotation tool built for streamers. v1.0 — Production Ready.
+The professional PDF annotation tool built for streamers. v1.0.1 — Stable Release.
 
 ## What is StreamSlate?
 
@@ -41,4 +41,9 @@ StreamSlate is a lightning-fast, dark-first PDF annotator designed for live stre
 - GitHub: https://github.com/streamslate/streamslate
 - Discord: https://discord.gg/streamslate
 
-Download StreamSlate v1.0.0 — free and open source!
+## v1.0.1 Hotfix
+
+- Fixed a macOS startup issue that could prevent the app from opening.
+- Improved startup runtime initialization for background collaboration services.
+
+Download StreamSlate v1.0.1 — free and open source!
