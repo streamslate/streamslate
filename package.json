@@ -1,7 +1,7 @@
 {
   "name": "streamslate",
   "private": true,
-  "version": "0.0.2-beta.10",
+  "version": "1.0.0",
   "description": "A desktop PDF-annotation app for live streamers and YouTubers",
   "type": "module",
   "scripts": {
@@ -38,7 +38,9 @@
     "ship:push": "git push --follow-tags origin main",
     "ship:gh-release": "gh release create $(git describe --tags --abbrev=0) --generate-notes --draft",
     "ship:gh-release:publish": "gh release edit $(git describe --tags --abbrev=0) --draft=false",
-    "ship:complete": "npm run ship:push && npm run ship:gh-release"
+    "ship:complete": "npm run ship:push && npm run ship:gh-release",
+    "release:preflight": "bash scripts/release-preflight.sh",
+    "release:preflight:strict": "bash scripts/release-preflight.sh --strict"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.6.0",

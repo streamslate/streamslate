@@ -312,3 +312,64 @@ jobs:
         run: |
           echo "::notice::Published release ${{ needs.create-release.outputs.release_tag }}"
           echo "::notice::Release should now be visible at: https://github.com/${{ github.repository }}/releases/tag/${{ needs.create-release.outputs.release_tag }}"
+
+  upload-itchio:
+    needs: [create-release, build-tauri, publish-release]
+    if: always() && needs.build-tauri.result == 'success' && needs.publish-release.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Download release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.create-release.outputs.release_tag }}
+        run: |
+          mkdir -p artifacts
+          gh release download "$TAG" --repo "${{ github.repository }}" --dir artifacts --pattern "*.dmg" --pattern "*.exe" --pattern "*.AppImage" || true
+          ls -la artifacts/
+
+      - name: Install Butler
+        run: |
+          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
+          unzip butler.zip
+          chmod +x butler
+          ./butler -V
+
+      - name: Upload macOS build to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          DMG=$(ls artifacts/*.dmg 2>/dev/null | head -1)
+          if [ -n "$DMG" ]; then
+            ./butler push "$DMG" caedus90/streamslate:macos --userversion "${{ needs.create-release.outputs.release_tag }}"
+          else
+            echo "::warning::No .dmg found, skipping macOS upload"
+          fi
+
+      - name: Upload Windows build to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          EXE=$(ls artifacts/*setup*.exe 2>/dev/null | head -1)
+          if [ -n "$EXE" ]; then
+            ./butler push "$EXE" caedus90/streamslate:windows --userversion "${{ needs.create-release.outputs.release_tag }}"
+          else
+            echo "::warning::No .exe found, skipping Windows upload"
+          fi
+
+      - name: Upload Linux build to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: |
+          APPIMAGE=$(ls artifacts/*.AppImage 2>/dev/null | head -1)
+          if [ -n "$APPIMAGE" ]; then
+            ./butler push "$APPIMAGE" caedus90/streamslate:linux --userversion "${{ needs.create-release.outputs.release_tag }}"
+          else
+            echo "::warning::No .AppImage found, skipping Linux upload"
+          fi
+
+      - name: Verify itch.io uploads
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+        run: ./butler status caedus90/streamslate

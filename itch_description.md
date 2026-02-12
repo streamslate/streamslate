@@ -1,19 +1,44 @@
-# StreamSlate - The Professional PDF Annotation Tool for Streamers
+# StreamSlate — Mark it. Show it.
 
-Elevate your live streams and tutorials with StreamSlate, the dedicated PDF annotation tool designed for OBS and presentation workflows. Stop fumbling with generic PDF readers and embrace a tool built for content creators.
+The professional PDF annotation tool built for streamers. v1.0 — Production Ready.
+
+## What is StreamSlate?
+
+StreamSlate is a lightning-fast, dark-first PDF annotator designed for live streamers, educators, and content creators. It plugs straight into OBS, Stream Deck, vMix, or any WebSocket-friendly workflow.
 
 ## Key Features
 
-- **Presenter Mode:** A transparent, overlay-ready window perfect for OBS/Streamlabs capture. Draw on your slides without showing UI clutter.
-- **Live Annotation:** Smooth, responsive inking for highlighting key points in real-time.
-- **Dark Mode Native:** Sleek interface that looks great on stream (and saves your eyes).
-- **Distraction-Free:** Clean UI that keeps the focus on your content, not the tool.
+- **Dark-First UI** — True page inversion with neon highlights, not just a color swap
+- **Presenter Mode** — Borderless, transparent overlay window for seamless OBS capture
+- **Live Annotation** — Smooth inking: highlight, free draw, shapes, arrows, text boxes
+- **OBS Integration** — Add `http://localhost:11451/presenter` as a Browser Source
+- **Stream Deck Plugin** — One-tap annotation controls during live streams
+- **Live Collaboration** — Real-time WebSocket sync for co-annotation sessions
+- **Native Screen Capture** — ScreenCaptureKit integration for low-latency capture (macOS)
+- **Annotation Export** — Save annotations back to PDF or as JSON layers
+- **Auto-Update** — Seamless updates via Tauri with code signing
 
-## Perfect for
+## Perfect For
 
 - Educational Streamers & Tutors
-- Game Guides & Walkthroughs via PDF
-- Technical Presentations
-- Live Code Reviews (export code to PDF)
+- Game Guide & Walkthrough Creators
+- Technical Presentations & Code Reviews
+- Virtual Event Presenters
+- Anyone who streams with PDFs
 
-Download v0.0.2-beta.5 today and professionalize your on-stream documents!
+## Technical Details
+
+- **Install Size:** < 10 MB
+- **RAM Usage:** < 80 MB (even with 100-page PDFs)
+- **Performance:** Consistent 60 FPS
+- **Platforms:** macOS (Apple Silicon + Intel), Windows (x64), Linux (x64)
+- **License:** Open Source (GPL-3.0)
+- **Built with:** Tauri + React + PDF.js
+
+## Links
+
+- Website: https://streamslate.app
+- GitHub: https://github.com/streamslate/streamslate
+- Discord: https://discord.gg/streamslate
+
+Download StreamSlate v1.0.0 — free and open source!

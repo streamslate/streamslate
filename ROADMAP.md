@@ -1,36 +1,47 @@
 # Project Roadmap
 
-> Last Updated: January 2026
+> Last Updated: February 2026
 
 ## Current Status
 
-See README.md for feature highlights.
+**v1.0.0 — Public Release** (February 2026)
+
+StreamSlate is production-ready. Core annotation, streaming integration, and live collaboration features are complete. See README.md for feature highlights.
 
 ## Phases
 
-### MVP (Current Focus)
+### MVP ✅
 
 - [x] Dark viewer
 - [x] Highlighter
 - [x] OBS browser source
 
-### Beta
+### Beta ✅
 
 - [x] Annotation save/export
 - [x] Stream Deck plug-in
 
-### 1.0
+### 1.0 ✅ (Public Release)
 
 - [x] Live collaboration (WebSocket Sync)
-- [ ] NDI/Syphon
-  - [x] Native capture (ScreenCaptureKit integration)
-  - [ ] NDI output (requires NDI SDK)
-  - [ ] Syphon output (macOS only)
-- [ ] Auto-update (code complete, pending key setup)
+- [x] Native screen capture (ScreenCaptureKit)
+- [x] Cross-platform builds (macOS, Windows, Linux)
+- [x] CI/CD with code signing and notarization
+- [x] E2E test coverage (Cypress)
+
+### Post-1.0
+
+- [ ] NDI output (requires NDI SDK) — target v1.1
+- [ ] Syphon output (macOS only) — target v1.1
+- [ ] Auto-update key setup — target v1.0.1
+- [ ] Annotation presets library
+- [ ] Template system for common use cases
 
 ### Future
 
 - [ ] Mobile companion (iPad side-car)
+- [ ] Cloud sync for settings
+- [ ] Multi-monitor capture
 
 ## References
 

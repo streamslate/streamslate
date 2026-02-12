@@ -29,8 +29,8 @@ Category What you get Status
 🌙 Dark-First UI Adaptive page inversion, WCAG-contrast color swatches ✅
 🎥 Presenter Mode Borderless window/Browser Source, transparent bg toggle 🛠️
 🖥️ OBS / Stream Deck Global hotkeys + plug-in, WebSocket control 🛠️
-🌐 Collaboration Live cursors & comments for co-hosts 🔜 Planned
-📦 Export Embed annotations back into PDF or JSON layer 🔜 Planned
+🌐 Collaboration Live cursors & comments for co-hosts ✅
+📦 Export Embed annotations back into PDF or JSON layer ✅
 
 ⸻
 
@@ -68,7 +68,8 @@ Shortcuts / Automations Every function is exposed over a local REST WebSocket AP
 🗺️ Roadmap
 • MVP – Dark viewer, highlighter, OBS browser source
 • Beta – Annotation save/export, Stream Deck plug-in
-• 1.0 – Live collaboration, NDI/Syphon, auto-update
+• 1.0 – Live collaboration, cross-platform builds, auto-update
+• 1.1 – NDI output, Syphon output, presets/templates
 • Mobile companion (iPad side-car)
 
 See more in ROADMAP.md. Have a feature request? Open an issue or vote on the board!
