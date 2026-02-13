@@ -26,6 +26,7 @@ import React, {
   useMemo,
   useState,
   useEffect,
+  useLayoutEffect,
 } from "react";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
@@ -320,6 +321,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const nudgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isNudgingRef = useRef(false);
   const [drawingState, setDrawingState] = useState<DrawingState>({
@@ -359,6 +361,34 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
   const canUndoAction = Boolean(onUndo) && (canUndo ?? true);
   const canRedoAction = Boolean(onRedo) && (canRedo ?? true);
+
+  const [toolbarSize, setToolbarSize] = useState({ width: 120, height: 36 });
+
+  useLayoutEffect(() => {
+    if (!selectedAnnotationId) {
+      return;
+    }
+
+    const el = toolbarRef.current;
+    if (!el) {
+      return;
+    }
+
+    const rect = el.getBoundingClientRect();
+    if (!Number.isFinite(rect.width) || !Number.isFinite(rect.height)) {
+      return;
+    }
+
+    // Avoid churn on sub-pixel changes.
+    const nextWidth = Math.max(1, Math.round(rect.width));
+    const nextHeight = Math.max(1, Math.round(rect.height));
+    setToolbarSize((prev) => {
+      if (prev.width === nextWidth && prev.height === nextHeight) {
+        return prev;
+      }
+      return { width: nextWidth, height: nextHeight };
+    });
+  }, [selectedAnnotation?.type, selectedAnnotationId, showStylePanel]);
 
   const updateSelectedAnnotation = useCallback(
     (updates: Partial<Annotation>) => {
@@ -1346,25 +1376,46 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       return null;
     }
 
-    // Anchor top-right and clamp into viewport.
     const padding = 8;
-    const approxWidth = 88;
-    const approxHeight = 32;
 
-    const rawLeft = selectionBox.x + selectionBox.width + padding;
-    const rawTop = selectionBox.y - approxHeight - padding;
+    const canPlaceRight =
+      selectionBox.x + selectionBox.width + padding + toolbarSize.width <=
+      viewport.width;
+    const canPlaceLeft = selectionBox.x - padding - toolbarSize.width >= 0;
+    const canPlaceAbove = selectionBox.y - padding - toolbarSize.height >= 0;
+    const canPlaceBelow =
+      selectionBox.y + selectionBox.height + padding + toolbarSize.height <=
+      viewport.height;
+
+    const rawLeft = canPlaceRight
+      ? selectionBox.x + selectionBox.width + padding
+      : canPlaceLeft
+        ? selectionBox.x - toolbarSize.width - padding
+        : selectionBox.x + selectionBox.width + padding;
+
+    const rawTop = canPlaceAbove
+      ? selectionBox.y - toolbarSize.height - padding
+      : canPlaceBelow
+        ? selectionBox.y + selectionBox.height + padding
+        : selectionBox.y - toolbarSize.height - padding;
 
     const left = Math.max(
       padding,
-      Math.min(rawLeft, viewport.width - approxWidth - padding)
+      Math.min(rawLeft, viewport.width - toolbarSize.width - padding)
     );
     const top = Math.max(
       padding,
-      Math.min(rawTop, viewport.height - approxHeight - padding)
+      Math.min(rawTop, viewport.height - toolbarSize.height - padding)
     );
 
     return { left, top };
-  }, [selectionBox, viewport.height, viewport.width]);
+  }, [
+    selectionBox,
+    toolbarSize.height,
+    toolbarSize.width,
+    viewport.height,
+    viewport.width,
+  ]);
 
   const renderSelectionHandles = () => {
     if (!selectedAnnotation || !selectionBox) {
@@ -1536,6 +1587,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       {selectedAnnotation && toolbarPosition && (
         <div
           data-testid="annotation-toolbar"
+          ref={toolbarRef}
           className="absolute z-10 rounded-lg border border-border-primary bg-surface-primary/95 backdrop-blur-md shadow-lg px-1.5 py-1"
           style={{ left: toolbarPosition.left, top: toolbarPosition.top }}
           onMouseDown={(e) => e.stopPropagation()}
