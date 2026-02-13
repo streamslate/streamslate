@@ -65,6 +65,8 @@ interface AnnotationLayerProps {
   onAnnotationDelete: (id: string) => void;
   onUndo?: () => void;
   onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   className?: string;
 }
 
@@ -312,6 +314,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   onAnnotationDelete,
   onUndo,
   onRedo,
+  canUndo,
+  canRedo,
   className = "",
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -352,6 +356,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   useEffect(() => {
     setShowStylePanel(false);
   }, [selectedAnnotationId]);
+
+  const canUndoAction = Boolean(onUndo) && (canUndo ?? true);
+  const canRedoAction = Boolean(onRedo) && (canRedo ?? true);
 
   const updateSelectedAnnotation = useCallback(
     (updates: Partial<Annotation>) => {
@@ -1534,6 +1541,29 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => {
+                endHistoryGroup();
+                onUndo?.();
+              }}
+              disabled={!canUndoAction}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              title="Undo (Ctrl/Cmd+Z)"
+            >
+              Undo
+            </button>
+            <button
+              onClick={() => {
+                endHistoryGroup();
+                onRedo?.();
+              }}
+              disabled={!canRedoAction}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+              title="Redo (Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y)"
+            >
+              Redo
+            </button>
+            <div className="w-px h-4 bg-[rgb(var(--color-border-primary))] mx-0.5" />
             <button
               onClick={() => setShowStylePanel((prev) => !prev)}
               className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors"

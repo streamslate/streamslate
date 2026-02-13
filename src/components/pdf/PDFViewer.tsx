@@ -71,6 +71,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     removeAnnotation: removeAnnotation,
     undo,
     redo,
+    canUndo,
+    canRedo,
   } = usePDF();
 
   // Annotation tool state
@@ -313,6 +315,8 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                   onAnnotationDelete={removeAnnotation}
                   onUndo={undo}
                   onRedo={redo}
+                  canUndo={canUndo}
+                  canRedo={canRedo}
                   className="absolute inset-0"
                 />
               )}
