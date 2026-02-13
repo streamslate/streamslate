@@ -31,6 +31,33 @@ import type {
   PDFError,
 } from "../types/pdf.types";
 
+const DEFAULT_MAX_UNDO_HISTORY = 50;
+
+type AnnotationSnapshot = {
+  annotations: Map<number, Annotation[]>;
+  selectedAnnotationId: string | null;
+};
+
+function cloneAnnotation(annotation: Annotation): Annotation {
+  return {
+    ...annotation,
+    points: annotation.points?.map((p) => ({ ...p })),
+  };
+}
+
+function cloneAnnotationsMap(
+  annotations: Map<number, Annotation[]>
+): Map<number, Annotation[]> {
+  const next = new Map<number, Annotation[]>();
+  for (const [pageNumber, items] of annotations.entries()) {
+    next.set(
+      pageNumber,
+      items.map((annotation) => cloneAnnotation(annotation))
+    );
+  }
+  return next;
+}
+
 interface PDFStore {
   // State
   document: PDFDocument | null;
@@ -39,6 +66,10 @@ interface PDFStore {
   error: PDFError | null;
   annotations: Map<number, Annotation[]>; // pageNumber -> annotations
   selectedAnnotationId: string | null;
+  undoStack: AnnotationSnapshot[];
+  redoStack: AnnotationSnapshot[];
+  historyGroupActive: boolean;
+  historyGroupSnapshotTaken: boolean;
 
   // Actions
   setDocument: (document: PDFDocument | null) => void;
@@ -78,6 +109,14 @@ interface PDFStore {
   clearAnnotations: () => void;
   selectAnnotation: (id: string | null) => void;
 
+  // Undo/redo actions
+  beginHistoryGroup: () => void;
+  endHistoryGroup: () => void;
+  recordHistorySnapshot: () => void;
+  undo: () => void;
+  redo: () => void;
+  clearHistory: () => void;
+
   // Utility actions
   reset: () => void;
   canGoToNextPage: () => boolean;
@@ -112,9 +151,20 @@ export const usePDFStore = create<PDFStore>()(
       error: null,
       annotations: new Map(),
       selectedAnnotationId: null,
+      undoStack: [],
+      redoStack: [],
+      historyGroupActive: false,
+      historyGroupSnapshotTaken: false,
 
       // Document actions
-      setDocument: (document) => set({ document }),
+      setDocument: (document) =>
+        set({
+          document,
+          undoStack: [],
+          redoStack: [],
+          historyGroupActive: false,
+          historyGroupSnapshotTaken: false,
+        }),
 
       // Viewer state actions
       setCurrentPage: (page) =>
@@ -312,6 +362,106 @@ export const usePDFStore = create<PDFStore>()(
 
       selectAnnotation: (id) => set({ selectedAnnotationId: id }),
 
+      beginHistoryGroup: () =>
+        set({ historyGroupActive: true, historyGroupSnapshotTaken: false }),
+
+      endHistoryGroup: () =>
+        set({ historyGroupActive: false, historyGroupSnapshotTaken: false }),
+
+      recordHistorySnapshot: () =>
+        set((state) => {
+          if (state.historyGroupActive && state.historyGroupSnapshotTaken) {
+            return {};
+          }
+
+          const snapshot: AnnotationSnapshot = {
+            annotations: cloneAnnotationsMap(state.annotations),
+            selectedAnnotationId: state.selectedAnnotationId,
+          };
+
+          const nextUndo = [...state.undoStack, snapshot].slice(
+            -DEFAULT_MAX_UNDO_HISTORY
+          );
+
+          return {
+            undoStack: nextUndo,
+            redoStack: [],
+            historyGroupSnapshotTaken: state.historyGroupActive ? true : false,
+          };
+        }),
+
+      undo: () =>
+        set((state) => {
+          if (state.undoStack.length === 0) {
+            return {};
+          }
+
+          const snapshot = state.undoStack[state.undoStack.length - 1];
+          const current: AnnotationSnapshot = {
+            annotations: cloneAnnotationsMap(state.annotations),
+            selectedAnnotationId: state.selectedAnnotationId,
+          };
+
+          const nextSelected =
+            snapshot.selectedAnnotationId &&
+            Array.from(snapshot.annotations.values())
+              .flat()
+              .some((a) => a.id === snapshot.selectedAnnotationId)
+              ? snapshot.selectedAnnotationId
+              : null;
+
+          return {
+            annotations: snapshot.annotations,
+            selectedAnnotationId: nextSelected,
+            undoStack: state.undoStack.slice(0, -1),
+            redoStack: [...state.redoStack, current].slice(
+              -DEFAULT_MAX_UNDO_HISTORY
+            ),
+            historyGroupActive: false,
+            historyGroupSnapshotTaken: false,
+          };
+        }),
+
+      redo: () =>
+        set((state) => {
+          if (state.redoStack.length === 0) {
+            return {};
+          }
+
+          const snapshot = state.redoStack[state.redoStack.length - 1];
+          const current: AnnotationSnapshot = {
+            annotations: cloneAnnotationsMap(state.annotations),
+            selectedAnnotationId: state.selectedAnnotationId,
+          };
+
+          const nextSelected =
+            snapshot.selectedAnnotationId &&
+            Array.from(snapshot.annotations.values())
+              .flat()
+              .some((a) => a.id === snapshot.selectedAnnotationId)
+              ? snapshot.selectedAnnotationId
+              : null;
+
+          return {
+            annotations: snapshot.annotations,
+            selectedAnnotationId: nextSelected,
+            redoStack: state.redoStack.slice(0, -1),
+            undoStack: [...state.undoStack, current].slice(
+              -DEFAULT_MAX_UNDO_HISTORY
+            ),
+            historyGroupActive: false,
+            historyGroupSnapshotTaken: false,
+          };
+        }),
+
+      clearHistory: () =>
+        set({
+          undoStack: [],
+          redoStack: [],
+          historyGroupActive: false,
+          historyGroupSnapshotTaken: false,
+        }),
+
       // Utility actions
       reset: () =>
         set({
@@ -321,6 +471,10 @@ export const usePDFStore = create<PDFStore>()(
           error: null,
           annotations: new Map(),
           selectedAnnotationId: null,
+          undoStack: [],
+          redoStack: [],
+          historyGroupActive: false,
+          historyGroupSnapshotTaken: false,
         }),
 
       canGoToNextPage: () => {

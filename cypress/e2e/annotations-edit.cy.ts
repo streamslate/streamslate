@@ -283,6 +283,31 @@ describe("Annotations UX (Canvas)", () => {
                     );
                   });
               });
+
+            // Undo should revert the resize, and redo should re-apply it.
+            cy.get('[data-annotation-id="ann-rect"]')
+              .invoke("attr", "width")
+              .then((widthAfterResize) => {
+                cy.focused().type("{ctrl}z");
+                cy.get('[data-annotation-id="ann-rect"]')
+                  .invoke("attr", "width")
+                  .then((widthAfterUndo) => {
+                    cy.wrap(Number(widthAfterUndo)).should(
+                      "be.lessThan",
+                      Number(widthAfterResize)
+                    );
+
+                    cy.focused().type("{ctrl}y");
+                    cy.get('[data-annotation-id="ann-rect"]')
+                      .invoke("attr", "width")
+                      .then((widthAfterRedo) => {
+                        cy.wrap(Number(widthAfterRedo)).should(
+                          "be.greaterThan",
+                          Number(widthAfterUndo)
+                        );
+                      });
+                  });
+              });
           });
       });
   });

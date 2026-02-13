@@ -51,6 +51,13 @@ export const usePDF = () => {
     setLoading,
     setError,
     reset,
+    recordHistorySnapshot,
+    beginHistoryGroup,
+    endHistoryGroup,
+    undo,
+    redo,
+    undoStack,
+    redoStack,
     canGoToNextPage,
     canGoToPreviousPage,
     goToNextPage: storeGoToNextPage,
@@ -232,10 +239,11 @@ export const usePDF = () => {
    */
   const addAnnotationWithSave = useCallback(
     (annotation: Annotation) => {
+      recordHistorySnapshot();
       addAnnotation(annotation);
       debouncedSave();
     },
-    [addAnnotation, debouncedSave]
+    [addAnnotation, debouncedSave, recordHistorySnapshot]
   );
 
   /**
@@ -243,10 +251,11 @@ export const usePDF = () => {
    */
   const updateAnnotationWithSave = useCallback(
     (id: string, updates: Partial<Annotation>) => {
+      recordHistorySnapshot();
       updateAnnotation(id, updates);
       debouncedSave();
     },
-    [updateAnnotation, debouncedSave]
+    [updateAnnotation, debouncedSave, recordHistorySnapshot]
   );
 
   /**
@@ -254,23 +263,35 @@ export const usePDF = () => {
    */
   const removeAnnotationWithSave = useCallback(
     (id: string) => {
+      recordHistorySnapshot();
       removeAnnotation(id);
       debouncedSave();
     },
-    [removeAnnotation, debouncedSave]
+    [removeAnnotation, debouncedSave, recordHistorySnapshot]
   );
+
+  const undoWithSave = useCallback(() => {
+    undo();
+    debouncedSave();
+  }, [debouncedSave, undo]);
+
+  const redoWithSave = useCallback(() => {
+    redo();
+    debouncedSave();
+  }, [debouncedSave, redo]);
 
   /**
    * Clear all annotations with save
    */
   const clearAnnotations = useCallback(async () => {
+    recordHistorySnapshot();
     storeClearAnnotations();
     try {
       await AnnotationCommands.clearAnnotations();
     } catch {
       // Failed to clear annotations file - not critical
     }
-  }, [storeClearAnnotations]);
+  }, [recordHistorySnapshot, storeClearAnnotations]);
 
   /**
    * Navigate to a specific page
@@ -433,6 +454,13 @@ export const usePDF = () => {
     removeAnnotation: removeAnnotationWithSave,
     clearAnnotations,
     saveAnnotations,
+    // Undo/redo
+    beginHistoryGroup,
+    endHistoryGroup,
+    undo: undoWithSave,
+    redo: redoWithSave,
+    canUndo: undoStack.length > 0,
+    canRedo: redoStack.length > 0,
     exportDocument: async () => {
       if (!document) return;
 

@@ -63,6 +63,8 @@ interface AnnotationLayerProps {
   onAnnotationCreate: (annotation: Partial<Annotation>) => void;
   onAnnotationUpdate: (id: string, updates: Partial<Annotation>) => void;
   onAnnotationDelete: (id: string) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
   className?: string;
 }
 
@@ -308,10 +310,14 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
   onAnnotationCreate,
   onAnnotationUpdate,
   onAnnotationDelete,
+  onUndo,
+  onRedo,
   className = "",
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const nudgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isNudgingRef = useRef(false);
   const [drawingState, setDrawingState] = useState<DrawingState>({
     isDrawing: false,
     startX: 0,
@@ -324,6 +330,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     (state) => state.selectedAnnotationId
   );
   const selectAnnotation = usePDFStore((state) => state.selectAnnotation);
+  const beginHistoryGroup = usePDFStore((state) => state.beginHistoryGroup);
+  const endHistoryGroup = usePDFStore((state) => state.endHistoryGroup);
   const [editingTextAnnotation, setEditingTextAnnotation] =
     useState<Annotation | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -697,6 +705,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         onAnnotationUpdate(resizeState.id, { modified: new Date() });
       }
       setResizeState(null);
+      endHistoryGroup();
       return;
     }
 
@@ -705,6 +714,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         onAnnotationUpdate(dragState.id, { modified: new Date() });
       }
       setDragState(null);
+      endHistoryGroup();
       return;
     }
 
@@ -796,6 +806,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     pageNumber,
     resizeState,
     toolConfig,
+    endHistoryGroup,
   ]);
 
   const handleAnnotationMouseDown = useCallback(
@@ -806,6 +817,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
       // Alt + drag: duplicate annotation and drag the copy.
       if (event.altKey && event.button === 0) {
+        beginHistoryGroup();
         const copied: Annotation = {
           ...annotation,
           id: crypto.randomUUID(),
@@ -833,6 +845,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         return;
       }
 
+      beginHistoryGroup();
       const start = screenToPdfCoords(event.clientX, event.clientY);
       setDragState({
         id: annotation.id,
@@ -841,7 +854,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         hasMoved: false,
       });
     },
-    [onAnnotationCreate, screenToPdfCoords, selectAnnotation]
+    [beginHistoryGroup, onAnnotationCreate, screenToPdfCoords, selectAnnotation]
   );
 
   const handleDeleteSelected = useCallback(() => {
@@ -1191,10 +1204,32 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         setDragState(null);
         setResizeState(null);
         selectAnnotation(null);
+        endHistoryGroup();
         return;
       }
 
       if (isTyping) {
+        return;
+      }
+
+      const key = event.key.toLowerCase();
+      const isCommand = event.metaKey || event.ctrlKey;
+
+      if (isCommand && key === "z") {
+        event.preventDefault();
+        endHistoryGroup();
+        if (event.shiftKey) {
+          onRedo?.();
+        } else {
+          onUndo?.();
+        }
+        return;
+      }
+
+      if (isCommand && key === "y") {
+        event.preventDefault();
+        endHistoryGroup();
+        onRedo?.();
         return;
       }
 
@@ -1206,6 +1241,14 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           event.key === "ArrowRight")
       ) {
         event.preventDefault();
+
+        if (!isNudgingRef.current) {
+          beginHistoryGroup();
+          isNudgingRef.current = true;
+        }
+        if (nudgeTimeoutRef.current) {
+          clearTimeout(nudgeTimeoutRef.current);
+        }
 
         const stepPx = event.shiftKey ? 10 : 1;
         const step = stepPx / viewport.scale;
@@ -1227,6 +1270,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           ...next,
           modified: new Date(),
         });
+
+        nudgeTimeoutRef.current = setTimeout(() => {
+          isNudgingRef.current = false;
+          endHistoryGroup();
+        }, 350);
         return;
       }
 
@@ -1236,9 +1284,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       }
     },
     [
+      beginHistoryGroup,
       drawingState.isDrawing,
+      endHistoryGroup,
       handleDeleteSelected,
       onAnnotationUpdate,
+      onRedo,
+      onUndo,
       selectedAnnotation,
       selectAnnotation,
       setDrawingState,
@@ -1257,6 +1309,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       wrapperRef.current?.focus();
       selectAnnotation(selectedAnnotation.id);
 
+      beginHistoryGroup();
       const start = screenToPdfCoords(event.clientX, event.clientY);
       setResizeState({
         id: selectedAnnotation.id,
@@ -1266,7 +1319,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         hasMoved: false,
       });
     },
-    [screenToPdfCoords, selectAnnotation, selectedAnnotation]
+    [beginHistoryGroup, screenToPdfCoords, selectAnnotation, selectedAnnotation]
   );
 
   const selectionBox = useMemo(() => {
@@ -1553,6 +1606,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                   max="1.0"
                   step="0.05"
                   value={selectedAnnotation.opacity}
+                  onMouseDown={beginHistoryGroup}
+                  onMouseUp={endHistoryGroup}
                   onChange={(e) =>
                     updateSelectedAnnotation({
                       opacity: parseFloat(e.target.value),
@@ -1577,6 +1632,8 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                       max="12"
                       step="1"
                       value={selectedAnnotation.strokeWidth ?? 2}
+                      onMouseDown={beginHistoryGroup}
+                      onMouseUp={endHistoryGroup}
                       onChange={(e) =>
                         updateSelectedAnnotation({
                           strokeWidth: parseInt(e.target.value, 10),
