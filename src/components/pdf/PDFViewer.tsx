@@ -31,7 +31,6 @@ import {
   type PDFDocument,
 } from "../../types/pdf.types";
 import { pdfRenderer } from "../../lib/pdf/renderer";
-import { usePDFStore } from "../../stores/pdf.store";
 import AnnotationLayer from "./AnnotationLayer";
 import { AnnotationTools } from "../annotation/AnnotationTools";
 import { PageNavigation } from "./PageNavigation";
@@ -56,6 +55,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     isLoaded,
     isLoading,
     currentPageInfo,
+    annotations,
     openPDF,
     closePDF,
     goToNextPage,
@@ -66,15 +66,10 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
     zoomTo,
     rotate,
     setFitMode,
+    addAnnotation: addAnnotation,
+    updateAnnotation: updateAnnotation,
+    removeAnnotation: removeAnnotation,
   } = usePDF();
-
-  // Get annotation methods directly from store
-  const {
-    addAnnotation,
-    updateAnnotation,
-    removeAnnotation,
-    getPageAnnotations,
-  } = usePDFStore();
 
   // Annotation tool state
   const [activeTool, setActiveTool] = useState<AnnotationType | undefined>(
@@ -98,7 +93,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Get annotations for current page
-  const currentPageAnnotations = getPageAnnotations(viewerState.currentPage);
+  const currentPageAnnotations = annotations.get(viewerState.currentPage) ?? [];
 
   const renderContent = () => {
     if (error) {

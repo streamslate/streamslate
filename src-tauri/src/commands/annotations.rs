@@ -44,6 +44,12 @@ pub struct Annotation {
     pub content: String,
     pub color: String,
     pub opacity: f64,
+    /// Optional stroke width for shapes
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stroke_width: Option<f64>,
+    /// Optional font size for text annotations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_size: Option<f64>,
     pub created: String,
     pub modified: String,
     pub visible: bool,
@@ -307,6 +313,8 @@ mod tests {
             content: "".to_string(),
             color: "#ffff00".to_string(),
             opacity: 0.5,
+            stroke_width: None,
+            font_size: None,
             created: "2025-01-01T00:00:00Z".to_string(),
             modified: "2025-01-01T00:00:00Z".to_string(),
             visible: true,

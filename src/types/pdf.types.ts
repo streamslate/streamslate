@@ -52,6 +52,9 @@ export interface Annotation {
   content: string;
   color: string;
   opacity: number;
+  strokeWidth?: number;
+  fontSize?: number;
+  points?: { x: number; y: number }[];
   created: Date;
   modified: Date;
   visible: boolean;

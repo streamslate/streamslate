@@ -6,8 +6,65 @@
 import type { AnnotationDTO } from "../tauri/commands";
 import type { Annotation } from "../../types/pdf.types";
 
+type Point = { x: number; y: number };
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const parsePoints = (value: unknown): Point[] | null => {
+  if (!Array.isArray(value)) {
+    return null;
+  }
+
+  const points: Point[] = [];
+  for (const entry of value) {
+    const payload = asRecord(entry);
+    if (!payload) {
+      continue;
+    }
+
+    const x = payload.x;
+    const y = payload.y;
+    if (typeof x !== "number" || !Number.isFinite(x)) {
+      continue;
+    }
+    if (typeof y !== "number" || !Number.isFinite(y)) {
+      continue;
+    }
+
+    points.push({ x, y });
+  }
+
+  return points.length > 0 ? points : null;
+};
+
+const tryParsePointsFromContent = (
+  content: string | null | undefined
+): Point[] | null => {
+  if (!content) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(content);
+    return parsePoints(parsed);
+  } catch {
+    return null;
+  }
+};
+
 // Convert frontend Annotation to backend DTO
 export function annotationToDTO(annotation: Annotation): AnnotationDTO {
+  const points =
+    annotation.points ??
+    (annotation.type === "free_draw"
+      ? tryParsePointsFromContent(annotation.content)
+      : null);
+
   return {
     id: annotation.id,
     type: annotation.type,
@@ -19,14 +76,21 @@ export function annotationToDTO(annotation: Annotation): AnnotationDTO {
     content: annotation.content,
     color: annotation.color,
     opacity: annotation.opacity,
+    strokeWidth: annotation.strokeWidth,
+    fontSize: annotation.fontSize,
     created: annotation.created.toISOString(),
     modified: annotation.modified.toISOString(),
     visible: annotation.visible,
+    points: points ?? undefined,
   };
 }
 
 // Convert backend DTO to frontend Annotation
 export function dtoToAnnotation(dto: AnnotationDTO): Annotation {
+  const points =
+    dto.points ??
+    (dto.type === "free_draw" ? tryParsePointsFromContent(dto.content) : null);
+
   return {
     id: dto.id,
     type: dto.type as Annotation["type"],
@@ -38,18 +102,14 @@ export function dtoToAnnotation(dto: AnnotationDTO): Annotation {
     content: dto.content,
     color: dto.color,
     opacity: dto.opacity,
+    strokeWidth: dto.strokeWidth,
+    fontSize: dto.fontSize,
+    points: points ?? undefined,
     created: new Date(dto.created),
     modified: new Date(dto.modified),
     visible: dto.visible,
   };
 }
-
-const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
 
 const readString = (
   payload: Record<string, unknown>,
@@ -108,10 +168,16 @@ export function parseAnnotationDTO(value: unknown): AnnotationDTO | null {
   const content = readString(payload, ["content"]) ?? "";
   const color = readString(payload, ["color"]) ?? "#ffff00";
   const opacity = readNumber(payload, ["opacity"]) ?? 1;
+  const strokeWidth =
+    readNumber(payload, ["strokeWidth", "stroke_width"]) ?? undefined;
+  const fontSize = readNumber(payload, ["fontSize", "font_size"]) ?? undefined;
   const created = readString(payload, ["created"]) ?? new Date().toISOString();
   const modified =
     readString(payload, ["modified"]) ?? new Date().toISOString();
   const visible = readBoolean(payload, ["visible"]) ?? true;
+  const points =
+    parsePoints(payload.points) ??
+    (type === "free_draw" ? tryParsePointsFromContent(content) : null);
 
   if (
     !id ||
@@ -136,8 +202,11 @@ export function parseAnnotationDTO(value: unknown): AnnotationDTO | null {
     content,
     color,
     opacity,
+    strokeWidth,
+    fontSize,
     created,
     modified,
     visible,
+    points: points ?? undefined,
   };
 }

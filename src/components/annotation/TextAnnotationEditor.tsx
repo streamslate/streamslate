@@ -52,7 +52,7 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
 }) => {
   const [content, setContent] = useState(annotation.content || "");
   const [color, setColor] = useState(annotation.color || "#000000");
-  const [fontSize, setFontSize] = useState(16);
+  const [fontSize, setFontSize] = useState(annotation.fontSize ?? 16);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Focus textarea on mount
@@ -68,9 +68,10 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
     onSave({
       content,
       color,
+      fontSize,
       modified: new Date(),
     });
-  }, [content, color, onSave]);
+  }, [content, color, fontSize, onSave]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -139,7 +140,7 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
               onChange={(e) => setContent(e.target.value)}
               placeholder="Enter your text here..."
               className="w-full h-32 px-3 py-2 bg-bg-tertiary border border-border-primary rounded-lg text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary resize-none"
-              style={{ color }}
+              style={{ color, fontSize }}
             />
             <p className="mt-1 text-xs text-text-tertiary">
               Press Cmd/Ctrl + Enter to save

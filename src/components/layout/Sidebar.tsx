@@ -21,6 +21,7 @@ import { usePDF } from "../../hooks/usePDF";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
 import { NDIControls } from "../debug/NDIControls";
+import { usePDFStore } from "../../stores/pdf.store";
 
 type Panel = "files" | "annotations" | "settings";
 
@@ -169,6 +170,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSetBorderlessMode,
   borderlessMode,
 }) => {
+  const selectedAnnotationId = usePDFStore(
+    (state) => state.selectedAnnotationId
+  );
+  const selectAnnotation = usePDFStore((state) => state.selectAnnotation);
+
   // Access annotation state and actions from PDF hook
   const {
     annotations,
@@ -204,7 +210,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Handle clicking on an annotation to navigate to its page
   const handleAnnotationClick = (annotation: Annotation) => {
-    goToPage(annotation.pageNumber);
+    void goToPage(annotation.pageNumber);
+    selectAnnotation(annotation.id);
   };
 
   // Handle toggling annotation visibility
@@ -471,6 +478,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               key={annotation.id}
                               onClick={() => handleAnnotationClick(annotation)}
                               className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-all group ${
+                                annotation.id === selectedAnnotationId
+                                  ? "ring-2 ring-primary/40"
+                                  : ""
+                              } ${
                                 annotation.visible
                                   ? "bg-bg-tertiary hover:bg-surface-tertiary border border-border-primary"
                                   : "bg-bg-tertiary/50 hover:bg-surface-tertiary/50 border border-border-primary/50 opacity-60"

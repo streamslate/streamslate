@@ -38,6 +38,7 @@ interface PDFStore {
   loadingState: LoadingState;
   error: PDFError | null;
   annotations: Map<number, Annotation[]>; // pageNumber -> annotations
+  selectedAnnotationId: string | null;
 
   // Actions
   setDocument: (document: PDFDocument | null) => void;
@@ -75,6 +76,7 @@ interface PDFStore {
   removeAnnotation: (id: string) => void;
   getPageAnnotations: (pageNumber: number) => Annotation[];
   clearAnnotations: () => void;
+  selectAnnotation: (id: string | null) => void;
 
   // Utility actions
   reset: () => void;
@@ -109,6 +111,7 @@ export const usePDFStore = create<PDFStore>()(
       loadingState: initialLoadingState,
       error: null,
       annotations: new Map(),
+      selectedAnnotationId: null,
 
       // Document actions
       setDocument: (document) => set({ document }),
@@ -117,6 +120,7 @@ export const usePDFStore = create<PDFStore>()(
       setCurrentPage: (page) =>
         set((state) => ({
           viewerState: { ...state.viewerState, currentPage: page },
+          selectedAnnotationId: null,
         })),
 
       setZoom: (zoom) =>
@@ -292,14 +296,21 @@ export const usePDFStore = create<PDFStore>()(
               break;
             }
           }
-          return { annotations: newAnnotations };
+          const selectedAnnotationId =
+            state.selectedAnnotationId === id
+              ? null
+              : state.selectedAnnotationId;
+          return { annotations: newAnnotations, selectedAnnotationId };
         }),
 
       getPageAnnotations: (pageNumber) => {
         return get().annotations.get(pageNumber) || [];
       },
 
-      clearAnnotations: () => set({ annotations: new Map() }),
+      clearAnnotations: () =>
+        set({ annotations: new Map(), selectedAnnotationId: null }),
+
+      selectAnnotation: (id) => set({ selectedAnnotationId: id }),
 
       // Utility actions
       reset: () =>
@@ -309,6 +320,7 @@ export const usePDFStore = create<PDFStore>()(
           loadingState: initialLoadingState,
           error: null,
           annotations: new Map(),
+          selectedAnnotationId: null,
         }),
 
       canGoToNextPage: () => {

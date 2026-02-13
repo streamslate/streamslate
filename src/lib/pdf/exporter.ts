@@ -63,6 +63,7 @@ export async function exportPDF(
       if (!annotation.visible) continue;
 
       const color = hexToRgb(annotation.color);
+      const strokeWidth = annotation.strokeWidth ?? 2;
       // PDF-ib uses bottom-left origin, StreamSlate uses top-left
       // y = pageHeight - y - height (for shapes)
 
@@ -87,7 +88,7 @@ export async function exportPDF(
             width: annotation.width,
             height: annotation.height,
             borderColor: color,
-            borderWidth: 2, // Hardcoded stroke width for now, should come from annotation config
+            borderWidth: strokeWidth,
             opacity: 0, // Fill opacity
             borderOpacity: annotation.opacity,
           });
@@ -100,7 +101,7 @@ export async function exportPDF(
             xScale: annotation.width / 2,
             yScale: annotation.height / 2,
             borderColor: color,
-            borderWidth: 2,
+            borderWidth: strokeWidth,
             opacity: 0,
             borderOpacity: annotation.opacity,
           });
@@ -122,7 +123,7 @@ export async function exportPDF(
             start: arrowStart,
             end: arrowEnd,
             color: color,
-            thickness: 2,
+            thickness: strokeWidth,
             opacity: annotation.opacity,
           });
 
@@ -164,7 +165,7 @@ export async function exportPDF(
               start: arrowEnd,
               end: { x: leftWingX, y: leftWingY },
               color: color,
-              thickness: 2,
+              thickness: strokeWidth,
               opacity: annotation.opacity,
             });
 
@@ -173,7 +174,7 @@ export async function exportPDF(
               start: arrowEnd,
               end: { x: rightWingX, y: rightWingY },
               color: color,
-              thickness: 2,
+              thickness: strokeWidth,
               opacity: annotation.opacity,
             });
           }
@@ -182,7 +183,8 @@ export async function exportPDF(
 
         case AnnotationType.FREE_DRAW:
           try {
-            const points: Point[] = JSON.parse(annotation.content || "[]");
+            const points: Point[] =
+              annotation.points ?? JSON.parse(annotation.content || "[]");
             if (points.length < 2) continue;
 
             // Draw SVG path
@@ -213,7 +215,7 @@ export async function exportPDF(
               x: 0,
               y: 0,
               borderColor: color,
-              borderWidth: 2,
+              borderWidth: strokeWidth,
               borderOpacity: annotation.opacity,
             });
           } catch (e) {
@@ -221,16 +223,21 @@ export async function exportPDF(
           }
           break;
 
-        case AnnotationType.TEXT:
+        case AnnotationType.TEXT: {
+          // Keep text readable: default to 14px if unset.
+          // Note: coordinates are in PDF units, not CSS pixels.
+          // This matches current editor behavior.
+          const fontSize = annotation.fontSize ?? 14;
           page.drawText(annotation.content, {
             x: annotation.x,
-            y: pageHeight - annotation.y - 14, // Adjust for font size/baseline (~14px)
-            size: 14,
+            y: pageHeight - annotation.y - fontSize, // Baseline adjustment
+            size: fontSize,
             font: font,
             color: color,
             opacity: 1, // Text always opaque for readability?
           });
           break;
+        }
       }
     }
   }
