@@ -20,11 +20,31 @@
  * Annotation layer overlay for PDF viewer
  */
 
-import React, { useRef, useCallback, useMemo, useState } from "react";
+import React, {
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+} from "react";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
 import { TextAnnotationEditor } from "../annotation/TextAnnotationEditor";
 import { usePDFStore } from "../../stores/pdf.store";
+
+const PRESET_COLORS = [
+  "#ffff00",
+  "#ff0000",
+  "#00ff00",
+  "#0000ff",
+  "#ff8c00",
+  "#800080",
+  "#ff69b4",
+  "#000000",
+  "#ffffff",
+];
+
+const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28];
 
 interface AnnotationLayerProps {
   pageNumber: number;
@@ -276,6 +296,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     useState<Annotation | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [resizeState, setResizeState] = useState<ResizeState | null>(null);
+  const [showStylePanel, setShowStylePanel] = useState(false);
 
   const selectedAnnotation = useMemo(() => {
     if (!selectedAnnotationId) {
@@ -287,6 +308,43 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       ) ?? null
     );
   }, [annotations, selectedAnnotationId]);
+
+  useEffect(() => {
+    setShowStylePanel(false);
+  }, [selectedAnnotationId]);
+
+  const updateSelectedAnnotation = useCallback(
+    (updates: Partial<Annotation>) => {
+      if (!selectedAnnotation) {
+        return;
+      }
+
+      const dedupedUpdates: Partial<Annotation> = {};
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === undefined) {
+          continue;
+        }
+
+        const typedKey = key as keyof Annotation;
+        const currentValue = selectedAnnotation[typedKey];
+        if (currentValue === value) {
+          continue;
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (dedupedUpdates as any)[typedKey] = value;
+      }
+
+      if (Object.keys(dedupedUpdates).length === 0) {
+        return;
+      }
+
+      onAnnotationUpdate(selectedAnnotation.id, {
+        ...dedupedUpdates,
+        modified: new Date(),
+      });
+    },
+    [onAnnotationUpdate, selectedAnnotation]
+  );
 
   // Get cursor style based on active tool
   const getCursorStyle = () => {
@@ -805,7 +863,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                 refY="3.5"
                 orient="auto"
               >
-                <polygon points="0 0, 10 3.5, 0 7" fill={annotation.color} />
+                <polygon
+                  points="0 0, 10 3.5, 0 7"
+                  fill={annotation.color}
+                  opacity={annotation.opacity}
+                />
               </marker>
             </defs>
           </g>
@@ -848,6 +910,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               x={x}
               y={y}
               fill={annotation.color}
+              opacity={annotation.opacity}
               fontSize={fontSize}
               fontFamily="system-ui, sans-serif"
               cursor="pointer"
@@ -1292,25 +1355,143 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       {selectedAnnotation && toolbarPosition && (
         <div
           data-testid="annotation-toolbar"
-          className="absolute z-10 flex items-center gap-1 rounded-lg border border-border-primary bg-surface-primary/95 backdrop-blur-md shadow-lg px-1.5 py-1"
+          className="absolute z-10 rounded-lg border border-border-primary bg-surface-primary/95 backdrop-blur-md shadow-lg px-1.5 py-1"
           style={{ left: toolbarPosition.left, top: toolbarPosition.top }}
+          onMouseDown={(e) => e.stopPropagation()}
         >
-          {selectedAnnotation.type === AnnotationType.TEXT && (
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => handleTextEdit(selectedAnnotation.id)}
+              onClick={() => setShowStylePanel((prev) => !prev)}
               className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors"
-              title="Edit text"
+              title="Style"
             >
-              Edit
+              Style
             </button>
+            {selectedAnnotation.type === AnnotationType.TEXT && (
+              <button
+                onClick={() => handleTextEdit(selectedAnnotation.id)}
+                className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors"
+                title="Edit text"
+              >
+                Edit
+              </button>
+            )}
+            <button
+              onClick={handleDeleteSelected}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
+              title="Delete annotation"
+            >
+              Delete
+            </button>
+          </div>
+
+          {showStylePanel && (
+            <div className="mt-1 border-t border-border-primary pt-2 px-1 pb-1 w-[240px] space-y-2">
+              <div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
+                    Color
+                  </label>
+                  <input
+                    type="color"
+                    value={selectedAnnotation.color}
+                    onChange={(e) =>
+                      updateSelectedAnnotation({ color: e.target.value })
+                    }
+                    className="w-7 h-7 rounded-md border border-border-primary bg-transparent cursor-pointer"
+                    title="Custom color"
+                  />
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {PRESET_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => updateSelectedAnnotation({ color })}
+                      className={`w-6 h-6 rounded-md border transition-all ${
+                        selectedAnnotation.color === color
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-border-primary hover:border-border-secondary"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center justify-between text-[10px] font-semibold text-text-tertiary mb-1 uppercase tracking-wider">
+                  <span>Opacity</span>
+                  <span className="text-text-secondary normal-case font-normal">
+                    {Math.round(selectedAnnotation.opacity * 100)}%
+                  </span>
+                </label>
+                <input
+                  type="range"
+                  min="0.1"
+                  max="1.0"
+                  step="0.05"
+                  value={selectedAnnotation.opacity}
+                  onChange={(e) =>
+                    updateSelectedAnnotation({
+                      opacity: parseFloat(e.target.value),
+                    })
+                  }
+                  className="w-full h-2 bg-bg-tertiary rounded-full appearance-none cursor-pointer slider hover:bg-surface-tertiary transition-colors"
+                />
+              </div>
+
+              {selectedAnnotation.type !== AnnotationType.HIGHLIGHT &&
+                selectedAnnotation.type !== AnnotationType.TEXT && (
+                  <div>
+                    <label className="flex items-center justify-between text-[10px] font-semibold text-text-tertiary mb-1 uppercase tracking-wider">
+                      <span>Stroke</span>
+                      <span className="text-text-secondary normal-case font-normal">
+                        {selectedAnnotation.strokeWidth ?? 2}px
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="12"
+                      step="1"
+                      value={selectedAnnotation.strokeWidth ?? 2}
+                      onChange={(e) =>
+                        updateSelectedAnnotation({
+                          strokeWidth: parseInt(e.target.value, 10),
+                        })
+                      }
+                      className="w-full h-2 bg-bg-tertiary rounded-full appearance-none cursor-pointer slider hover:bg-surface-tertiary transition-colors"
+                    />
+                  </div>
+                )}
+
+              {selectedAnnotation.type === AnnotationType.TEXT && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-text-tertiary mb-1 uppercase tracking-wider">
+                    Font Size
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {FONT_SIZES.map((size) => (
+                      <button
+                        key={size}
+                        onClick={() =>
+                          updateSelectedAnnotation({ fontSize: size })
+                        }
+                        className={`px-2 py-1 rounded-md text-xs font-semibold transition-colors ${
+                          (selectedAnnotation.fontSize ?? 14) === size
+                            ? "bg-primary text-white"
+                            : "bg-bg-tertiary text-text-secondary hover:bg-surface-secondary hover:text-text-primary"
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           )}
-          <button
-            onClick={handleDeleteSelected}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-error hover:bg-error/10 transition-colors"
-            title="Delete annotation"
-          >
-            Delete
-          </button>
         </div>
       )}
 
