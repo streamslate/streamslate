@@ -252,6 +252,38 @@ type ResizeHandle =
   | "start"
   | "end";
 
+function moveAnnotationBy(
+  annotation: Annotation,
+  dx: number,
+  dy: number
+): Partial<Annotation> {
+  const next: Partial<Annotation> = {
+    x: annotation.x + dx,
+    y: annotation.y + dy,
+  };
+
+  if (annotation.type === AnnotationType.FREE_DRAW) {
+    const points = getPointsFromAnnotation(annotation) ?? [];
+    if (points.length > 0) {
+      const movedPoints = points.map((p) => ({
+        x: p.x + dx,
+        y: p.y + dy,
+      }));
+      const bbox = bboxFromPoints(movedPoints);
+      Object.assign(next, {
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+        points: movedPoints,
+        content: JSON.stringify(movedPoints),
+      });
+    }
+  }
+
+  return next;
+}
+
 interface DragState {
   id: string;
   start: Point; // pdf coords
@@ -544,6 +576,60 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           }
         }
 
+        // Shift: lock aspect ratio for rectangle/circle/highlight.
+        if (
+          event.shiftKey &&
+          (origin.type === AnnotationType.RECTANGLE ||
+            origin.type === AnnotationType.CIRCLE ||
+            origin.type === AnnotationType.HIGHLIGHT) &&
+          (resizeState.handle === "nw" ||
+            resizeState.handle === "ne" ||
+            resizeState.handle === "se" ||
+            resizeState.handle === "sw")
+        ) {
+          const ratio =
+            origin.type === AnnotationType.CIRCLE
+              ? 1
+              : origin.height !== 0
+                ? origin.width / origin.height
+                : 1;
+
+          const currentW = Math.max(minSize, nextRight - nextLeft);
+          const currentH = Math.max(minSize, nextBottom - nextTop);
+          let adjustedW = currentW;
+          let adjustedH = currentH;
+
+          if (ratio > 0) {
+            if (currentW / currentH > ratio) {
+              adjustedW = currentH * ratio;
+            } else {
+              adjustedH = currentW / ratio;
+            }
+          }
+
+          adjustedW = Math.max(minSize, adjustedW);
+          adjustedH = Math.max(minSize, adjustedH);
+
+          switch (resizeState.handle) {
+            case "se":
+              nextRight = nextLeft + adjustedW;
+              nextBottom = nextTop + adjustedH;
+              break;
+            case "sw":
+              nextLeft = nextRight - adjustedW;
+              nextBottom = nextTop + adjustedH;
+              break;
+            case "ne":
+              nextRight = nextLeft + adjustedW;
+              nextTop = nextBottom - adjustedH;
+              break;
+            case "nw":
+              nextLeft = nextRight - adjustedW;
+              nextTop = nextBottom - adjustedH;
+              break;
+          }
+        }
+
         onAnnotationUpdate(origin.id, {
           x: nextLeft,
           y: nextTop,
@@ -562,29 +648,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         const dy = y - dragState.start.y;
 
         const origin = dragState.origin;
-        const next: Partial<Annotation> = {
-          x: origin.x + dx,
-          y: origin.y + dy,
-        };
-
-        if (origin.type === AnnotationType.FREE_DRAW) {
-          const points = getPointsFromAnnotation(origin) ?? [];
-          if (points.length > 0) {
-            const movedPoints = points.map((p) => ({
-              x: p.x + dx,
-              y: p.y + dy,
-            }));
-            const bbox = bboxFromPoints(movedPoints);
-            Object.assign(next, {
-              x: bbox.x,
-              y: bbox.y,
-              width: bbox.width,
-              height: bbox.height,
-              points: movedPoints,
-              content: JSON.stringify(movedPoints),
-            });
-          }
-        }
+        const next = moveAnnotationBy(origin, dx, dy);
 
         onAnnotationUpdate(origin.id, next);
         if (!dragState.hasMoved && (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1)) {
@@ -740,6 +804,28 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       event.stopPropagation();
       wrapperRef.current?.focus();
 
+      // Alt + drag: duplicate annotation and drag the copy.
+      if (event.altKey && event.button === 0) {
+        const copied: Annotation = {
+          ...annotation,
+          id: crypto.randomUUID(),
+          created: new Date(),
+          modified: new Date(),
+        };
+
+        onAnnotationCreate(copied);
+        selectAnnotation(copied.id);
+
+        const start = screenToPdfCoords(event.clientX, event.clientY);
+        setDragState({
+          id: copied.id,
+          start,
+          origin: copied,
+          hasMoved: false,
+        });
+        return;
+      }
+
       selectAnnotation(annotation.id);
 
       // Only start drag on primary button.
@@ -755,7 +841,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         hasMoved: false,
       });
     },
-    [screenToPdfCoords, selectAnnotation]
+    [onAnnotationCreate, screenToPdfCoords, selectAnnotation]
   );
 
   const handleDeleteSelected = useCallback(() => {
@@ -1112,6 +1198,38 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         return;
       }
 
+      if (
+        selectedAnnotation &&
+        (event.key === "ArrowUp" ||
+          event.key === "ArrowDown" ||
+          event.key === "ArrowLeft" ||
+          event.key === "ArrowRight")
+      ) {
+        event.preventDefault();
+
+        const stepPx = event.shiftKey ? 10 : 1;
+        const step = stepPx / viewport.scale;
+        const dx =
+          event.key === "ArrowLeft"
+            ? -step
+            : event.key === "ArrowRight"
+              ? step
+              : 0;
+        const dy =
+          event.key === "ArrowUp"
+            ? -step
+            : event.key === "ArrowDown"
+              ? step
+              : 0;
+
+        const next = moveAnnotationBy(selectedAnnotation, dx, dy);
+        onAnnotationUpdate(selectedAnnotation.id, {
+          ...next,
+          modified: new Date(),
+        });
+        return;
+      }
+
       if (event.key === "Delete" || event.key === "Backspace") {
         event.preventDefault();
         handleDeleteSelected();
@@ -1120,8 +1238,11 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     [
       drawingState.isDrawing,
       handleDeleteSelected,
+      onAnnotationUpdate,
+      selectedAnnotation,
       selectAnnotation,
       setDrawingState,
+      viewport.scale,
     ]
   );
 

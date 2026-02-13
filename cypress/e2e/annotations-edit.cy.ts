@@ -182,6 +182,39 @@ describe("Annotations UX (Canvas)", () => {
     cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
     cy.get('[data-testid="annotation-handle-se"]').should("exist");
 
+    // Keyboard nudge: ArrowRight should move the selection by ~1px (screen space).
+    cy.get('[data-annotation-id="ann-rect"]')
+      .invoke("attr", "x")
+      .then((beforeX) => {
+        cy.focused().type("{rightarrow}");
+        cy.get('[data-annotation-id="ann-rect"]')
+          .invoke("attr", "x")
+          .then((afterX) => {
+            cy.wrap(Number(afterX)).should("be.gt", Number(beforeX));
+          });
+      });
+
+    // Alt + drag should duplicate the annotation and drag the copy.
+    cy.get('[data-annotation-type="rectangle"]').should("have.length", 1);
+    cy.get('[data-annotation-id="ann-rect"]').then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+      const clientX = rect.left + rect.width / 2;
+      const clientY = rect.top + rect.height / 2;
+      cy.wrap($el).trigger("mousedown", {
+        clientX,
+        clientY,
+        button: 0,
+        altKey: true,
+        force: true,
+      });
+      cy.get('[data-testid="annotation-layer"]').trigger("mousemove", {
+        clientX: clientX + 20,
+        clientY: clientY + 5,
+      });
+      cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+    });
+    cy.get('[data-annotation-type="rectangle"]').should("have.length", 2);
+
     // Move: drag the rectangle by ~30px.
     cy.get('[data-annotation-id="ann-rect"]')
       .invoke("attr", "x")
@@ -210,31 +243,46 @@ describe("Annotations UX (Canvas)", () => {
           });
       });
 
-    // Resize: drag the SE handle.
+    // Resize (Shift locks aspect ratio): drag the SE handle.
     cy.get('[data-annotation-id="ann-rect"]')
       .invoke("attr", "width")
       .then((beforeW) => {
-        cy.get('[data-testid="annotation-handle-se"]').then(($handle) => {
-          const rect = $handle[0].getBoundingClientRect();
-          const hx = rect.left + rect.width / 2;
-          const hy = rect.top + rect.height / 2;
-          cy.wrap($handle).trigger("mousedown", {
-            clientX: hx,
-            clientY: hy,
-            button: 0,
-            force: true,
-          });
-          cy.get('[data-testid="annotation-layer"]').trigger("mousemove", {
-            clientX: hx + 25,
-            clientY: hy + 15,
-          });
-          cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
-        });
-
         cy.get('[data-annotation-id="ann-rect"]')
-          .invoke("attr", "width")
-          .then((afterW) => {
-            cy.wrap(Number(afterW)).should("be.gt", Number(beforeW));
+          .invoke("attr", "height")
+          .then((beforeH) => {
+            cy.get('[data-testid="annotation-handle-se"]').then(($handle) => {
+              const rect = $handle[0].getBoundingClientRect();
+              const hx = rect.left + rect.width / 2;
+              const hy = rect.top + rect.height / 2;
+              cy.wrap($handle).trigger("mousedown", {
+                clientX: hx,
+                clientY: hy,
+                button: 0,
+                force: true,
+              });
+              cy.get('[data-testid="annotation-layer"]').trigger("mousemove", {
+                clientX: hx + 40,
+                clientY: hy + 10,
+                shiftKey: true,
+              });
+              cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+            });
+
+            cy.get('[data-annotation-id="ann-rect"]')
+              .invoke("attr", "width")
+              .then((afterW) => {
+                cy.wrap(Number(afterW)).should("be.gt", Number(beforeW));
+                cy.get('[data-annotation-id="ann-rect"]')
+                  .invoke("attr", "height")
+                  .then((afterH) => {
+                    const ratioBefore = Number(beforeW) / Number(beforeH);
+                    const ratioAfter = Number(afterW) / Number(afterH);
+                    cy.wrap(Math.abs(ratioAfter - ratioBefore)).should(
+                      "be.lessThan",
+                      0.05
+                    );
+                  });
+              });
           });
       });
   });
