@@ -31,6 +31,9 @@ stages:
 
 variables:
   CARGO_TERM_COLOR: always
+  # Keep Cargo downloads inside the repo workspace so GitLab cache paths are
+  # relative and we avoid caching huge build outputs like src-tauri/target/.
+  CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
   # Use cached dependencies
   npm_config_cache: "$CI_PROJECT_DIR/.npm"
   # Increase npm timeout and retries for flaky K8s runner network
@@ -47,9 +50,8 @@ default:
         - src-tauri/Cargo.lock
     paths:
       - .npm/
-      - src-tauri/target/
-      - ~/.cargo/registry/
-      - ~/.cargo/git/
+      - .cargo/registry/
+      - .cargo/git/
 
 .linux: &linux
   image: rust:latest
