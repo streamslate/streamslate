@@ -311,4 +311,119 @@ describe("Annotations UX (Canvas)", () => {
           });
       });
   });
+
+  it("duplicates an annotation via toolbar and keyboard shortcut", () => {
+    const pdfBytes = pdfBytesFromBase64();
+
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        installMockWebSocket(win, "open");
+
+        const originalFetch = win.fetch.bind(win);
+        win.fetch = (input, init) => {
+          const url = typeof input === "string" ? input : input.url;
+          if (url.endsWith("/mock.pdf") || url === "/mock.pdf") {
+            return Promise.resolve(
+              new win.Response(pdfBytes, {
+                status: 200,
+                headers: { "Content-Type": "application/pdf" },
+              })
+            );
+          }
+          return originalFetch(input, init);
+        };
+      },
+    });
+
+    cy.get('[data-testid="status-bar"]')
+      .contains("WebSocket Connected")
+      .should("be.visible");
+
+    // Simulate backend state: PDF is open.
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({
+          type: "STATE",
+          page: 1,
+          total_pages: 1,
+          zoom: 1.0,
+          pdf_loaded: true,
+          pdf_path: "/mock.pdf",
+          pdf_title: "Mock PDF",
+          presenter_active: false,
+        })
+      );
+    });
+
+    cy.contains("button", "Close PDF", { timeout: 20000 }).should("be.visible");
+
+    // Inject a rectangle annotation.
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({
+          type: "ANNOTATIONS_UPDATED",
+          annotations: {
+            1: [
+              {
+                id: "ann-rect",
+                type: "rectangle",
+                pageNumber: 1,
+                x: 40,
+                y: 40,
+                width: 80,
+                height: 50,
+                content: "",
+                color: "#ff0000",
+                opacity: 0.8,
+                strokeWidth: 2,
+                created: "2026-02-12T00:00:00.000Z",
+                modified: "2026-02-12T00:00:00.000Z",
+                visible: true,
+              },
+            ],
+          },
+        })
+      );
+    });
+
+    cy.get('[data-testid="annotation-layer"]', { timeout: 20000 }).should(
+      "be.visible"
+    );
+
+    // Select (shows toolbar).
+    cy.get('[data-annotation-id="ann-rect"]').then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+      const clientX = rect.left + rect.width / 2;
+      const clientY = rect.top + rect.height / 2;
+      cy.wrap($el).trigger("mousedown", {
+        clientX,
+        clientY,
+        button: 0,
+        force: true,
+      });
+    });
+    cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+
+    cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
+    cy.get('[data-annotation-type="rectangle"]').should("have.length", 1);
+
+    // Toolbar duplicate.
+    cy.get('[data-testid="annotation-toolbar"]')
+      .contains("button", "Duplicate")
+      .click();
+    cy.get('[data-annotation-type="rectangle"]').should("have.length", 2);
+
+    // Keyboard duplicate (Ctrl/Cmd+D).
+    const chord = Cypress.platform === "darwin" ? "{meta}d" : "{ctrl}d";
+    cy.focused().type(chord);
+    cy.get('[data-annotation-type="rectangle"]').should("have.length", 3);
+  });
 });

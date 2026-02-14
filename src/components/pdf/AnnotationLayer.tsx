@@ -901,6 +901,56 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     onAnnotationDelete(selectedAnnotationId);
   }, [onAnnotationDelete, selectedAnnotationId]);
 
+  const handleDuplicateSelected = useCallback(() => {
+    if (!selectedAnnotation) {
+      return;
+    }
+
+    // Close any in-progress grouping from keyboard nudges, etc, so duplicate is
+    // its own single undo/redo step.
+    endHistoryGroup();
+
+    const dx = 12 / viewport.scale;
+    const dy = 12 / viewport.scale;
+    const now = new Date();
+
+    const copied: Annotation = {
+      ...selectedAnnotation,
+      id: crypto.randomUUID(),
+      created: now,
+      modified: now,
+      x: selectedAnnotation.x + dx,
+      y: selectedAnnotation.y + dy,
+      points: selectedAnnotation.points?.map((p) => ({ ...p })),
+    };
+
+    if (selectedAnnotation.type === AnnotationType.FREE_DRAW) {
+      const points = getPointsFromAnnotation(selectedAnnotation);
+      if (points) {
+        const shifted = points.map((p) => ({ x: p.x + dx, y: p.y + dy }));
+        const bbox = bboxFromPoints(shifted);
+        copied.points = shifted;
+        copied.content = JSON.stringify(shifted);
+        copied.x = bbox.x;
+        copied.y = bbox.y;
+        copied.width = bbox.width;
+        copied.height = bbox.height;
+      }
+    }
+
+    beginHistoryGroup();
+    onAnnotationCreate(copied);
+    selectAnnotation(copied.id);
+    endHistoryGroup();
+  }, [
+    beginHistoryGroup,
+    endHistoryGroup,
+    onAnnotationCreate,
+    selectedAnnotation,
+    selectAnnotation,
+    viewport.scale,
+  ]);
+
   // Render annotation based on type
   const renderAnnotation = (annotation: Annotation) => {
     const key = annotation.id;
@@ -1270,6 +1320,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         return;
       }
 
+      if (isCommand && key === "d" && selectedAnnotation) {
+        event.preventDefault();
+        handleDuplicateSelected();
+        return;
+      }
+
       if (
         selectedAnnotation &&
         (event.key === "ArrowUp" ||
@@ -1325,6 +1381,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       drawingState.isDrawing,
       endHistoryGroup,
       handleDeleteSelected,
+      handleDuplicateSelected,
       onAnnotationUpdate,
       onRedo,
       onUndo,
@@ -1644,6 +1701,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               title="Style"
             >
               Style
+            </button>
+            <button
+              onClick={handleDuplicateSelected}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-text-primary hover:bg-bg-tertiary transition-colors"
+              title="Duplicate (Ctrl/Cmd+D)"
+            >
+              Duplicate
             </button>
             {selectedAnnotation.type === AnnotationType.TEXT && (
               <button
