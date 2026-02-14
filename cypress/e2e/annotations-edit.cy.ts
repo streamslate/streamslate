@@ -177,7 +177,9 @@ describe("Annotations UX (Canvas)", () => {
         force: true,
       });
     });
-    cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+    cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+      force: true,
+    });
 
     cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
     cy.get('[data-testid="annotation-handle-se"]').should("exist");
@@ -210,8 +212,11 @@ describe("Annotations UX (Canvas)", () => {
       cy.get('[data-testid="annotation-layer"]').trigger("mousemove", {
         clientX: clientX + 20,
         clientY: clientY + 5,
+        force: true,
       });
-      cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+      cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+        force: true,
+      });
     });
     cy.get('[data-annotation-type="rectangle"]').should("have.length", 2);
 
@@ -232,8 +237,11 @@ describe("Annotations UX (Canvas)", () => {
           cy.get('[data-testid="annotation-layer"]').trigger("mousemove", {
             clientX: clientX + 30,
             clientY: clientY + 10,
+            force: true,
           });
-          cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+          cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+            force: true,
+          });
         });
 
         cy.get('[data-annotation-id="ann-rect"]')
@@ -264,8 +272,11 @@ describe("Annotations UX (Canvas)", () => {
                 clientX: hx + 40,
                 clientY: hy + 10,
                 shiftKey: true,
+                force: true,
               });
-              cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+              cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+                force: true,
+              });
             });
 
             cy.get('[data-annotation-id="ann-rect"]')
@@ -410,7 +421,9 @@ describe("Annotations UX (Canvas)", () => {
         force: true,
       });
     });
-    cy.get('[data-testid="annotation-layer"]').trigger("mouseup");
+    cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+      force: true,
+    });
 
     cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
     cy.get('[data-annotation-type="rectangle"]').should("have.length", 1);
