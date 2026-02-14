@@ -45,6 +45,7 @@ variables:
 default:
   cache:
     key:
+      prefix: v2
       files:
         - package-lock.json
         - src-tauri/Cargo.lock
