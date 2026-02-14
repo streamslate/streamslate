@@ -1417,6 +1417,25 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     viewport.width,
   ]);
 
+  const visibleToolbarPosition = useMemo(() => {
+    if (!selectedAnnotation) {
+      return null;
+    }
+    if (!toolbarPosition) {
+      return null;
+    }
+    if (dragState || resizeState || drawingState.isDrawing) {
+      return null;
+    }
+    return toolbarPosition;
+  }, [
+    drawingState.isDrawing,
+    dragState,
+    resizeState,
+    selectedAnnotation,
+    toolbarPosition,
+  ]);
+
   const renderSelectionHandles = () => {
     if (!selectedAnnotation || !selectionBox) {
       return null;
@@ -1584,12 +1603,15 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       </svg>
 
       {/* Floating contextual toolbar */}
-      {selectedAnnotation && toolbarPosition && (
+      {selectedAnnotation && visibleToolbarPosition && (
         <div
           data-testid="annotation-toolbar"
           ref={toolbarRef}
           className="absolute z-10 rounded-lg border border-border-primary bg-surface-primary/95 backdrop-blur-md shadow-lg px-1.5 py-1"
-          style={{ left: toolbarPosition.left, top: toolbarPosition.top }}
+          style={{
+            left: visibleToolbarPosition.left,
+            top: visibleToolbarPosition.top,
+          }}
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">

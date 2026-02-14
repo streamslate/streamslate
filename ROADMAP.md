@@ -35,17 +35,17 @@ StreamSlate is production-ready. Core annotation, streaming integration, and liv
 
 ### Post-1.0
 
-- [ ] NDI output (requires NDI SDK) — target v1.1
-- [ ] Syphon output (macOS only) — target v1.1
-- [ ] Auto-update key setup — target v1.0.1
-- [ ] Annotation presets library
-- [ ] Template system for common use cases
+- [ ] NDI output (requires NDI SDK) — target v1.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
+- [ ] Syphon output (macOS only) — target v1.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+- [ ] Auto-update key setup — target v1.0.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
+- [ ] Annotation presets library ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/5))
+- [ ] Template system for common use cases ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/6))
 
 ### Future
 
-- [ ] Mobile companion (iPad side-car)
-- [ ] Cloud sync for settings
-- [ ] Multi-monitor capture
+- [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
+- [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
+- [ ] Multi-monitor capture ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
 
 ## References
 
