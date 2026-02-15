@@ -1474,8 +1474,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     viewport.width,
   ]);
 
+  // Keep the toolbar interactive after a simple click-to-select.
+  // We only disable it while a drag/resize is actively moving (or while drawing)
+  // to prevent the toolbar from intercepting pointer events over the canvas.
   const toolbarDisabled = Boolean(
-    dragState || resizeState || drawingState.isDrawing
+    (dragState && dragState.hasMoved) ||
+    (resizeState && resizeState.hasMoved) ||
+    drawingState.isDrawing
   );
 
   const renderSelectionHandles = () => {
