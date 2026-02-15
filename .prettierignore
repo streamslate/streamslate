@@ -1,0 +1,11 @@
+# Dependencies / caches
+node_modules/
+.npm/
+.cargo/
+
+# Rust build output
+src-tauri/target/
+
+# Frontend build output
+dist/
+build/
