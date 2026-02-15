@@ -9,3 +9,7 @@ src-tauri/target/
 # Frontend build output
 dist/
 build/
+
+# Local-only scratch files (not committed)
+docs/roadmap-reconciliation-*.md
+run_jobs.json
