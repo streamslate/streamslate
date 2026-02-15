@@ -97,6 +97,8 @@ export default [
     ignores: [
       "dist",
       "node_modules",
+      ".cargo",
+      ".npm",
       ".eslintrc.cjs",
       "src-tauri",
       "scripts/*.cjs",
