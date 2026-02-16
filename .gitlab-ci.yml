@@ -18,7 +18,7 @@
 #   No additional CI variables needed - BuildKit server has push credentials
 #
 # Runner Requirements:
-#   - Linux runner for test:linux job (any GitLab runner)
+#   - Linux runner for test:linux:rust and test:linux:e2e jobs (any GitLab runner)
 #   - macOS runner with tag 'macos' for build:macos job
 #   - K3s runner with Harbor image pull access for docker:build job
 #
@@ -42,17 +42,29 @@ variables:
   npm_config_fetch_timeout: "120000"
   RUST_BACKTRACE: 1
 
+.cache_npm: &cache_npm
+  key:
+    prefix: npm-v3
+    files:
+      - package-lock.json
+  paths:
+    - .npm/
+
+.cache_cargo: &cache_cargo
+  key:
+    prefix: cargo-v3
+    files:
+      - src-tauri/Cargo.lock
+  paths:
+    - .cargo/registry/
+    - .cargo/git/
+
 default:
   cache:
-    key:
-      prefix: v2
-      files:
-        - package-lock.json
-        - src-tauri/Cargo.lock
-    paths:
-      - .npm/
-      - .cargo/registry/
-      - .cargo/git/
+    - <<: *cache_npm
+      policy: pull-push
+    - <<: *cache_cargo
+      policy: pull-push
 
 .linux: &linux
   image: rust:latest
@@ -73,7 +85,26 @@ default:
     - ln -sf /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so || true
     - ln -sf /usr/lib/x86_64-linux-gnu/libsoup-3.0.so /usr/lib/x86_64-linux-gnu/libsoup-2.4.so || true
     - rustup component add rustfmt clippy
-    - npm ci
+    - npm ci --prefer-offline --no-audit
+
+.linux-rust: &linux-rust
+  image: rust:latest
+  before_script:
+    - apt-get update
+    - apt-get install -y ca-certificates curl
+    - update-ca-certificates --fresh
+    - export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+    - export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+    - export RUSTUP_USE_CURL=1
+    - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
+    - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
+    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
+    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
+    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
+    - ln -sf /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so || true
+    - ln -sf /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so || true
+    - ln -sf /usr/lib/x86_64-linux-gnu/libsoup-3.0.so /usr/lib/x86_64-linux-gnu/libsoup-2.4.so || true
+    - rustup component add rustfmt clippy
 
 lint:linux:
   stage: lint
@@ -91,13 +122,23 @@ lint:linux:
     - cargo fmt --all -- --check || echo "Skipping cargo fmt check"
     - cargo clippy --all-targets -- -D warnings
 
-test:linux:
+test:linux:rust:
+  stage: test
+  <<: *linux-rust
+  cache:
+    - <<: *cache_cargo
+      policy: pull
+  script:
+    # Rust tests
+    - cd src-tauri && cargo test
+
+test:linux:e2e:
   stage: test
   <<: *linux
+  cache:
+    - <<: *cache_npm
+      policy: pull
   script:
-    # Rust tests (primary validation)
-    - cd src-tauri && cargo test
-    - cd ..
     # Start xvfb for headless browser testing (Cypress requires a display)
     - Xvfb :99 -screen 0 1920x1080x24 &
     - export DISPLAY=:99
@@ -120,8 +161,8 @@ test:linux:
       if [ "$DEV_SERVER_READY" = "true" ]; then
         npm run test:headless
       else
-        echo "⚠️ Dev server did not start - skipping Cypress E2E tests"
-        echo "Rust tests passed, E2E tests will run on macOS build"
+        echo "❌ Dev server did not start - failing E2E test job"
+        exit 1
       fi
     - kill $DEV_PID || true
 
@@ -156,7 +197,8 @@ build:macos:
 docker:build:
   stage: deploy
   # Run as soon as tests pass — don't wait for macOS build stage
-  needs: ["test:linux"]
+  needs: ["test:linux:rust", "test:linux:e2e"]
+  cache: []
   # BuildKit client image (cached in Harbor) - no DinD needed.
   # Override entrypoint: the default is 'buildkitd' (the daemon), but we
   # only need the 'buildctl' CLI to talk to the remote BuildKit server.
