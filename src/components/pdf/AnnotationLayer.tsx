@@ -1326,12 +1326,25 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         return;
       }
 
+      // Some environments (and some synthetic events) still produce legacy key values
+      // like "Left"/"Right"/"Up"/"Down" instead of "ArrowLeft"...; accept both.
+      const arrowKey =
+        event.key === "Left"
+          ? "ArrowLeft"
+          : event.key === "Right"
+            ? "ArrowRight"
+            : event.key === "Up"
+              ? "ArrowUp"
+              : event.key === "Down"
+                ? "ArrowDown"
+                : event.key;
+
       if (
         selectedAnnotation &&
-        (event.key === "ArrowUp" ||
-          event.key === "ArrowDown" ||
-          event.key === "ArrowLeft" ||
-          event.key === "ArrowRight")
+        (arrowKey === "ArrowUp" ||
+          arrowKey === "ArrowDown" ||
+          arrowKey === "ArrowLeft" ||
+          arrowKey === "ArrowRight")
       ) {
         event.preventDefault();
 
@@ -1346,17 +1359,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         const stepPx = event.shiftKey ? 10 : 1;
         const step = stepPx / viewport.scale;
         const dx =
-          event.key === "ArrowLeft"
+          arrowKey === "ArrowLeft"
             ? -step
-            : event.key === "ArrowRight"
+            : arrowKey === "ArrowRight"
               ? step
               : 0;
         const dy =
-          event.key === "ArrowUp"
-            ? -step
-            : event.key === "ArrowDown"
-              ? step
-              : 0;
+          arrowKey === "ArrowUp" ? -step : arrowKey === "ArrowDown" ? step : 0;
 
         const next = moveAnnotationBy(selectedAnnotation, dx, dy);
         onAnnotationUpdate(selectedAnnotation.id, {
