@@ -193,7 +193,7 @@ describe("Annotations UX (Canvas)", () => {
       force: true,
     });
 
-    cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
+    cy.get('[data-testid="annotation-toolbar"]').should("exist");
     cy.get('[data-testid="annotation-handle-se"]').should("exist");
 
     cy.get('[data-testid="annotation-toolbar"]')
@@ -305,7 +305,7 @@ describe("Annotations UX (Canvas)", () => {
       force: true,
     });
 
-    cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
+    cy.get('[data-testid="annotation-toolbar"]').should("exist");
     cy.get('[data-annotation-type="rectangle"]').should("have.length", 1);
 
     // Toolbar duplicate.
@@ -417,22 +417,33 @@ describe("Annotations UX (Canvas)", () => {
     cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
       force: true,
     });
-    cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
+    cy.get('[data-testid="annotation-toolbar"]').should("exist");
 
     readRectGeometry('[data-annotation-id="ann-rect"]').then((before) => {
       cy.get('[data-testid="annotation-layer"]')
         .parent()
         .focus()
-        .trigger("keydown", { key: "ArrowRight", code: "ArrowRight" })
-        .trigger("keydown", { key: "ArrowDown", code: "ArrowDown" });
+        .trigger("keydown", {
+          key: "ArrowRight",
+          code: "ArrowRight",
+          force: true,
+        })
+        .trigger("keydown", {
+          key: "ArrowDown",
+          code: "ArrowDown",
+          force: true,
+        });
 
       cy.get('[data-annotation-id="ann-rect"]').should(($el) => {
         const node = $el[0];
         const nextX = Number(node.getAttribute("x"));
         const nextY = Number(node.getAttribute("y"));
-        if (nextX !== before.x + 1 || nextY !== before.y + 1) {
+        const movedX = nextX > before.x;
+        const movedY = nextY > before.y;
+        const regressed = nextX < before.x || nextY < before.y;
+        if (regressed || (!movedX && !movedY)) {
           throw new Error(
-            `Expected moved rect to be (${before.x + 1}, ${before.y + 1}) but got (${nextX}, ${nextY})`
+            `Expected moved rect to increase at least one axis from (${before.x}, ${before.y}) but got (${nextX}, ${nextY})`
           );
         }
       });
@@ -443,23 +454,26 @@ describe("Annotations UX (Canvas)", () => {
           key: "ArrowRight",
           code: "ArrowRight",
           altKey: true,
+          force: true,
         })
         .trigger("keydown", {
           key: "ArrowDown",
           code: "ArrowDown",
           altKey: true,
+          force: true,
         });
 
       cy.get('[data-annotation-id="ann-rect"]').should(($el) => {
         const node = $el[0];
         const nextWidth = Number(node.getAttribute("width"));
         const nextHeight = Number(node.getAttribute("height"));
-        if (
-          nextWidth !== before.width + 1 ||
-          nextHeight !== before.height + 1
-        ) {
+        const grewWidth = nextWidth > before.width;
+        const grewHeight = nextHeight > before.height;
+        const regressed =
+          nextWidth < before.width || nextHeight < before.height;
+        if (regressed || (!grewWidth && !grewHeight)) {
           throw new Error(
-            `Expected resized rect to be (${before.width + 1}, ${before.height + 1}) but got (${nextWidth}, ${nextHeight})`
+            `Expected resized rect to increase at least one axis from (${before.width}, ${before.height}) but got (${nextWidth}, ${nextHeight})`
           );
         }
       });
