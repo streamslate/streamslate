@@ -78,6 +78,8 @@ export function annotationToDTO(annotation: Annotation): AnnotationDTO {
     opacity: annotation.opacity,
     strokeWidth: annotation.strokeWidth,
     fontSize: annotation.fontSize,
+    backgroundColor: annotation.backgroundColor,
+    backgroundOpacity: annotation.backgroundOpacity,
     created: annotation.created.toISOString(),
     modified: annotation.modified.toISOString(),
     visible: annotation.visible,
@@ -104,6 +106,8 @@ export function dtoToAnnotation(dto: AnnotationDTO): Annotation {
     opacity: dto.opacity,
     strokeWidth: dto.strokeWidth,
     fontSize: dto.fontSize,
+    backgroundColor: dto.backgroundColor,
+    backgroundOpacity: dto.backgroundOpacity,
     points: points ?? undefined,
     created: new Date(dto.created),
     modified: new Date(dto.modified),
@@ -171,6 +175,11 @@ export function parseAnnotationDTO(value: unknown): AnnotationDTO | null {
   const strokeWidth =
     readNumber(payload, ["strokeWidth", "stroke_width"]) ?? undefined;
   const fontSize = readNumber(payload, ["fontSize", "font_size"]) ?? undefined;
+  const backgroundColor =
+    readString(payload, ["backgroundColor", "background_color"]) ?? undefined;
+  const backgroundOpacity =
+    readNumber(payload, ["backgroundOpacity", "background_opacity"]) ??
+    undefined;
   const created = readString(payload, ["created"]) ?? new Date().toISOString();
   const modified =
     readString(payload, ["modified"]) ?? new Date().toISOString();
@@ -204,6 +213,8 @@ export function parseAnnotationDTO(value: unknown): AnnotationDTO | null {
     opacity,
     strokeWidth,
     fontSize,
+    backgroundColor,
+    backgroundOpacity,
     created,
     modified,
     visible,

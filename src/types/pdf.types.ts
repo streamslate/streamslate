@@ -54,6 +54,8 @@ export interface Annotation {
   opacity: number;
   strokeWidth?: number;
   fontSize?: number;
+  backgroundColor?: string;
+  backgroundOpacity?: number;
   points?: { x: number; y: number }[];
   created: Date;
   modified: Date;

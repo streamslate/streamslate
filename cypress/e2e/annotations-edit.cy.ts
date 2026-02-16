@@ -75,6 +75,18 @@ function pdfBytesFromBase64(): Uint8Array {
   return bytes;
 }
 
+function readRectGeometry(selector: string) {
+  return cy.get(selector).then(($el) => {
+    const node = $el[0];
+    return {
+      x: Number(node.getAttribute("x") ?? 0),
+      y: Number(node.getAttribute("y") ?? 0),
+      width: Number(node.getAttribute("width") ?? 0),
+      height: Number(node.getAttribute("height") ?? 0),
+    };
+  });
+}
+
 describe("Annotations UX (Canvas)", () => {
   it("selects a rectangle annotation and can delete it via the toolbar", () => {
     const pdfBytes = pdfBytesFromBase64();
@@ -306,5 +318,151 @@ describe("Annotations UX (Canvas)", () => {
     const chord = Cypress.platform === "darwin" ? "{meta}d" : "{ctrl}d";
     cy.get('[data-testid="annotation-layer"]').parent().focus().type(chord);
     cy.get('[data-annotation-type="rectangle"]').should("have.length", 3);
+  });
+
+  it("moves with arrow keys and resizes with Alt+Arrow keys", () => {
+    const pdfBytes = pdfBytesFromBase64();
+
+    cy.visit("/", {
+      onBeforeLoad(win) {
+        installMockWebSocket(win, "open");
+
+        const originalFetch = win.fetch.bind(win);
+        win.fetch = (input, init) => {
+          const url = typeof input === "string" ? input : input.url;
+          if (url.endsWith("/mock.pdf") || url === "/mock.pdf") {
+            return Promise.resolve(
+              new win.Response(pdfBytes, {
+                status: 200,
+                headers: { "Content-Type": "application/pdf" },
+              })
+            );
+          }
+          return originalFetch(input, init);
+        };
+      },
+    });
+
+    cy.get('[data-testid="status-bar"]')
+      .contains("WebSocket Connected")
+      .should("be.visible");
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({
+          type: "STATE",
+          page: 1,
+          total_pages: 1,
+          zoom: 1.0,
+          pdf_loaded: true,
+          pdf_path: "/mock.pdf",
+          pdf_title: "Mock PDF",
+          presenter_active: false,
+        })
+      );
+    });
+
+    cy.contains("button", "Close PDF", { timeout: 20000 }).should("be.visible");
+
+    cy.window().then((win) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sockets = (win as any).__mockSockets as Array<{
+        emitMessage: (payload: Record<string, unknown>) => void;
+      }>;
+      sockets.forEach((socket) =>
+        socket.emitMessage({
+          type: "ANNOTATIONS_UPDATED",
+          annotations: {
+            1: [
+              {
+                id: "ann-rect",
+                type: "rectangle",
+                pageNumber: 1,
+                x: 40,
+                y: 40,
+                width: 80,
+                height: 50,
+                content: "",
+                color: "#ff0000",
+                opacity: 0.8,
+                strokeWidth: 2,
+                created: "2026-02-12T00:00:00.000Z",
+                modified: "2026-02-12T00:00:00.000Z",
+                visible: true,
+              },
+            ],
+          },
+        })
+      );
+    });
+
+    cy.get('[data-testid="annotation-layer"]', { timeout: 20000 }).should(
+      "be.visible"
+    );
+    cy.get('[data-annotation-id="ann-rect"]').then(($el) => {
+      const rect = $el[0].getBoundingClientRect();
+      const clientX = rect.left + rect.width / 2;
+      const clientY = rect.top + rect.height / 2;
+      cy.wrap($el).trigger("mousedown", {
+        clientX,
+        clientY,
+        button: 0,
+        force: true,
+      });
+    });
+    cy.get('[data-testid="annotation-layer"]').trigger("mouseup", {
+      force: true,
+    });
+    cy.get('[data-testid="annotation-toolbar"]').should("be.visible");
+
+    readRectGeometry('[data-annotation-id="ann-rect"]').then((before) => {
+      cy.get('[data-testid="annotation-layer"]')
+        .parent()
+        .focus()
+        .trigger("keydown", { key: "ArrowRight", code: "ArrowRight" })
+        .trigger("keydown", { key: "ArrowDown", code: "ArrowDown" });
+
+      cy.get('[data-annotation-id="ann-rect"]').should(($el) => {
+        const node = $el[0];
+        const nextX = Number(node.getAttribute("x"));
+        const nextY = Number(node.getAttribute("y"));
+        if (nextX !== before.x + 1 || nextY !== before.y + 1) {
+          throw new Error(
+            `Expected moved rect to be (${before.x + 1}, ${before.y + 1}) but got (${nextX}, ${nextY})`
+          );
+        }
+      });
+
+      cy.get('[data-testid="annotation-layer"]')
+        .parent()
+        .trigger("keydown", {
+          key: "ArrowRight",
+          code: "ArrowRight",
+          altKey: true,
+        })
+        .trigger("keydown", {
+          key: "ArrowDown",
+          code: "ArrowDown",
+          altKey: true,
+        });
+
+      cy.get('[data-annotation-id="ann-rect"]').should(($el) => {
+        const node = $el[0];
+        const nextWidth = Number(node.getAttribute("width"));
+        const nextHeight = Number(node.getAttribute("height"));
+        if (
+          nextWidth !== before.width + 1 ||
+          nextHeight !== before.height + 1
+        ) {
+          throw new Error(
+            `Expected resized rect to be (${before.width + 1}, ${before.height + 1}) but got (${nextWidth}, ${nextHeight})`
+          );
+        }
+      });
+    });
   });
 });

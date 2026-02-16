@@ -44,6 +44,49 @@ const PRESET_COLORS = [
   "#ffffff",
 ];
 
+const PRESET_BACKGROUND_COLORS = [
+  "#ffffff",
+  "#fef3c7",
+  "#dbeafe",
+  "#dcfce7",
+  "#fee2e2",
+  "#e2e8f0",
+  "#1f2937",
+  "#000000",
+];
+
+function defaultTextBackground(): { color: string; opacity: number } {
+  const isDark = document.documentElement.classList.contains("dark");
+  return {
+    color: isDark ? "#0a0a0a" : "#ffffff",
+    opacity: isDark ? 0.72 : 0.82,
+  };
+}
+
+function normalizeHexColor(hex: string): string {
+  if (/^#[a-f\d]{6}$/i.test(hex)) {
+    return hex;
+  }
+
+  if (/^#[a-f\d]{3}$/i.test(hex)) {
+    const r = hex[1];
+    const g = hex[2];
+    const b = hex[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+
+  return "#ffffff";
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = normalizeHexColor(hex);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  const clamped = Math.max(0, Math.min(1, alpha));
+  return `rgba(${r}, ${g}, ${b}, ${clamped})`;
+}
+
 export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
   annotation,
   onSave,
@@ -53,6 +96,12 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
   const [content, setContent] = useState(annotation.content || "");
   const [color, setColor] = useState(annotation.color || "#000000");
   const [fontSize, setFontSize] = useState(annotation.fontSize ?? 16);
+  const [backgroundColor, setBackgroundColor] = useState(
+    annotation.backgroundColor ?? defaultTextBackground().color
+  );
+  const [backgroundOpacity, setBackgroundOpacity] = useState(
+    annotation.backgroundOpacity ?? defaultTextBackground().opacity
+  );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Focus textarea on mount
@@ -69,9 +118,11 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
       content,
       color,
       fontSize,
+      backgroundColor,
+      backgroundOpacity,
       modified: new Date(),
     });
-  }, [content, color, fontSize, onSave]);
+  }, [backgroundColor, backgroundOpacity, content, color, fontSize, onSave]);
 
   // Handle keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -200,6 +251,56 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
             </div>
           </div>
 
+          {/* Background */}
+          <div>
+            <label className="block text-xs font-semibold text-text-tertiary mb-2 uppercase tracking-wider">
+              Background
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {PRESET_BACKGROUND_COLORS.map((presetColor) => (
+                <button
+                  key={presetColor}
+                  onClick={() => setBackgroundColor(presetColor)}
+                  className={`w-8 h-8 rounded-lg border-2 transition-all duration-200 ${
+                    backgroundColor === presetColor
+                      ? "border-primary shadow-lg scale-110 ring-2 ring-primary/20"
+                      : "border-border-primary hover:border-border-secondary hover:scale-105"
+                  }`}
+                  style={{ backgroundColor: presetColor }}
+                  title={presetColor}
+                />
+              ))}
+              <div className="relative">
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="w-8 h-8 rounded-lg border-2 border-border-primary bg-transparent cursor-pointer hover:border-border-secondary transition-colors"
+                  title="Custom background color"
+                />
+              </div>
+            </div>
+            <div className="mt-2">
+              <label className="flex items-center justify-between text-[10px] font-semibold text-text-tertiary uppercase tracking-wider mb-1">
+                <span>Background Opacity</span>
+                <span className="normal-case text-text-secondary font-normal">
+                  {Math.round(backgroundOpacity * 100)}%
+                </span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={backgroundOpacity}
+                onChange={(e) =>
+                  setBackgroundOpacity(parseFloat(e.target.value))
+                }
+                className="w-full h-2 bg-bg-tertiary rounded-full appearance-none cursor-pointer slider hover:bg-surface-tertiary transition-colors"
+              />
+            </div>
+          </div>
+
           {/* Preview */}
           <div>
             <label className="block text-xs font-semibold text-text-tertiary mb-2 uppercase tracking-wider">
@@ -213,6 +314,13 @@ export const TextAnnotationEditor: React.FC<TextAnnotationEditorProps> = ({
                   lineHeight: 1.4,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
+                  backgroundColor: hexToRgba(
+                    backgroundColor,
+                    backgroundOpacity
+                  ),
+                  padding: "6px 8px",
+                  borderRadius: "6px",
+                  display: "inline-block",
                 }}
               >
                 {content || "Your text will appear here..."}

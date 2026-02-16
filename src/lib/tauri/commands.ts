@@ -163,6 +163,8 @@ export interface AnnotationDTO {
   opacity: number;
   strokeWidth?: number;
   fontSize?: number;
+  backgroundColor?: string;
+  backgroundOpacity?: number;
   created: string;
   modified: string;
   visible: boolean;

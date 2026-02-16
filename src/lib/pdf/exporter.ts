@@ -14,7 +14,12 @@ import type { Point } from "../utils/geometry";
  * Convert hex color string to pdf-lib RGB color
  */
 function hexToRgb(hex: string): RGB {
-  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  const normalized = normalizeHexColor(hex);
+  if (!normalized) {
+    return rgb(0, 0, 0);
+  }
+
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(normalized);
   return result
     ? rgb(
         parseInt(result[1], 16) / 255,
@@ -22,6 +27,36 @@ function hexToRgb(hex: string): RGB {
         parseInt(result[3], 16) / 255
       )
     : rgb(0, 0, 0);
+}
+
+function normalizeHexColor(hex: string | undefined): string | null {
+  if (!hex || typeof hex !== "string") {
+    return null;
+  }
+
+  const trimmed = hex.trim();
+  if (/^#[a-f\d]{6}$/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^#[a-f\d]{3}$/i.test(trimmed)) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+
+  return null;
+}
+
+function normalizeOpacity(
+  opacity: number | undefined,
+  fallback: number
+): number {
+  if (typeof opacity !== "number" || !Number.isFinite(opacity)) {
+    return fallback;
+  }
+  return Math.max(0, Math.min(1, opacity));
 }
 
 /**
@@ -228,6 +263,27 @@ export async function exportPDF(
           // Note: coordinates are in PDF units, not CSS pixels.
           // This matches current editor behavior.
           const fontSize = annotation.fontSize ?? 14;
+          const textBackgroundColor = hexToRgb(
+            annotation.backgroundColor ?? "#ffffff"
+          );
+          const textBackgroundOpacity = normalizeOpacity(
+            annotation.backgroundOpacity,
+            0.82
+          );
+          const textHeight = fontSize * 1.35;
+          const textWidth = Math.max(annotation.width, fontSize * 2);
+
+          if (textBackgroundOpacity > 0) {
+            page.drawRectangle({
+              x: annotation.x - 2,
+              y: pageHeight - annotation.y - textHeight,
+              width: textWidth + 4,
+              height: textHeight + 4,
+              color: textBackgroundColor,
+              opacity: textBackgroundOpacity,
+            });
+          }
+
           page.drawText(annotation.content, {
             x: annotation.x,
             y: pageHeight - annotation.y - fontSize, // Baseline adjustment

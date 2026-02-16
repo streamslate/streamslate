@@ -50,6 +50,12 @@ pub struct Annotation {
     /// Optional font size for text annotations
     #[serde(skip_serializing_if = "Option::is_none")]
     pub font_size: Option<f64>,
+    /// Optional text background color (hex) for text annotations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_color: Option<String>,
+    /// Optional text background opacity for text annotations
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_opacity: Option<f64>,
     pub created: String,
     pub modified: String,
     pub visible: bool,
@@ -315,6 +321,8 @@ mod tests {
             opacity: 0.5,
             stroke_width: None,
             font_size: None,
+            background_color: None,
+            background_opacity: None,
             created: "2025-01-01T00:00:00Z".to_string(),
             modified: "2025-01-01T00:00:00Z".to_string(),
             visible: true,

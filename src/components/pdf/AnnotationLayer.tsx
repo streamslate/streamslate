@@ -46,6 +46,17 @@ const PRESET_COLORS = [
 ];
 
 const FONT_SIZES = [12, 14, 16, 18, 20, 24, 28];
+const TEXT_BACKGROUND_COLORS = [
+  "#ffffff",
+  "#fef3c7",
+  "#dbeafe",
+  "#dcfce7",
+  "#fee2e2",
+  "#e2e8f0",
+  "#1f2937",
+  "#000000",
+];
+const MIN_ANNOTATION_SIZE = 5;
 
 interface AnnotationLayerProps {
   pageNumber: number;
@@ -74,6 +85,59 @@ interface AnnotationLayerProps {
 interface Point {
   x: number;
   y: number;
+}
+
+function getTextDefaults() {
+  const isDark =
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark");
+
+  return {
+    textColor: isDark ? "#f5f5f5" : "#0a0a0a",
+    backgroundColor: isDark ? "#0a0a0a" : "#ffffff",
+    backgroundOpacity: isDark ? 0.72 : 0.82,
+  };
+}
+
+function normalizeHexColor(hex: string | undefined): string | null {
+  if (!hex) {
+    return null;
+  }
+
+  const trimmed = hex.trim();
+  if (/^#[a-f\d]{6}$/i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (/^#[a-f\d]{3}$/i.test(trimmed)) {
+    const r = trimmed[1];
+    const g = trimmed[2];
+    const b = trimmed[3];
+    return `#${r}${r}${g}${g}${b}${b}`;
+  }
+
+  return null;
+}
+
+function clampOpacity(opacity: number | undefined, fallback: number): number {
+  if (typeof opacity !== "number" || !Number.isFinite(opacity)) {
+    return fallback;
+  }
+
+  return Math.max(0, Math.min(1, opacity));
+}
+
+function hexToRgba(
+  hex: string | undefined,
+  opacity: number | undefined,
+  fallbackHex: string
+): string {
+  const normalized = normalizeHexColor(hex) ?? fallbackHex;
+  const alpha = clampOpacity(opacity, 1);
+  const r = parseInt(normalized.slice(1, 3), 16);
+  const g = parseInt(normalized.slice(3, 5), 16);
+  const b = parseInt(normalized.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 /**
@@ -471,6 +535,9 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
       // TEXT annotation: create immediately on click and open editor
       if (activeTool === AnnotationType.TEXT) {
+        const defaults = getTextDefaults();
+        const isLegacyHighlightYellow = /^#ffff00$/i.test(toolConfig.color);
+
         const newAnnotation: Annotation = {
           id: crypto.randomUUID(),
           type: AnnotationType.TEXT,
@@ -480,9 +547,13 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
           width: 200, // Default width for text box
           height: 30, // Default height for text box
           content: "",
-          color: toolConfig.color,
+          color: isLegacyHighlightYellow
+            ? defaults.textColor
+            : toolConfig.color,
           opacity: 1.0,
           fontSize: 16,
+          backgroundColor: defaults.backgroundColor,
+          backgroundOpacity: defaults.backgroundOpacity,
           created: new Date(),
           modified: new Date(),
           visible: true,
@@ -533,7 +604,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
       if (resizeState && selectedAnnotation) {
         const { x, y } = screenToPdfCoords(event.clientX, event.clientY);
 
-        const minSize = 5;
+        const minSize = MIN_ANNOTATION_SIZE;
         const origin = resizeState.origin;
 
         if (origin.type === AnnotationType.ARROW) {
@@ -1066,6 +1137,17 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         const y = annotation.y * viewport.scale;
         const fontSize = (annotation.fontSize ?? 14) * viewport.scale;
         const selectionStroke = "rgb(var(--color-primary))";
+        const defaults = getTextDefaults();
+        const backgroundColor =
+          annotation.backgroundColor ?? defaults.backgroundColor;
+        const backgroundOpacity = clampOpacity(
+          annotation.backgroundOpacity,
+          defaults.backgroundOpacity
+        );
+        const textBoxHeight = Math.max(
+          annotation.height * viewport.scale,
+          fontSize + 8
+        );
 
         return (
           <g
@@ -1086,8 +1168,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               x={x - 2}
               y={y - fontSize}
               width={annotation.width * viewport.scale + 4}
-              height={fontSize + 8}
-              fill="rgba(255, 255, 255, 0.8)"
+              height={textBoxHeight}
+              fill={hexToRgba(
+                backgroundColor,
+                backgroundOpacity,
+                defaults.backgroundColor
+              )}
               stroke={isSelected ? selectionStroke : "transparent"}
               strokeWidth={isSelected ? 2 : 0}
               rx={3}
@@ -1342,6 +1428,104 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
 
       if (
         selectedAnnotation &&
+        event.altKey &&
+        (arrowKey === "ArrowUp" ||
+          arrowKey === "ArrowDown" ||
+          arrowKey === "ArrowLeft" ||
+          arrowKey === "ArrowRight")
+      ) {
+        event.preventDefault();
+
+        // Free-draw does not support keyboard resizing yet because it needs
+        // point-path scaling; arrow keys continue to move it.
+        if (selectedAnnotation.type === AnnotationType.FREE_DRAW) {
+          return;
+        }
+
+        if (!isNudgingRef.current) {
+          beginHistoryGroup();
+          isNudgingRef.current = true;
+        }
+        if (nudgeTimeoutRef.current) {
+          clearTimeout(nudgeTimeoutRef.current);
+        }
+
+        const stepPx = event.shiftKey ? 10 : 1;
+        const step = stepPx / viewport.scale;
+        const minSize = MIN_ANNOTATION_SIZE;
+
+        if (selectedAnnotation.type === AnnotationType.ARROW) {
+          const widthSign = selectedAnnotation.width >= 0 ? 1 : -1;
+          const heightSign = selectedAnnotation.height >= 0 ? 1 : -1;
+
+          const widthDelta =
+            arrowKey === "ArrowLeft"
+              ? -step
+              : arrowKey === "ArrowRight"
+                ? step
+                : 0;
+          const heightDelta =
+            arrowKey === "ArrowUp"
+              ? -step
+              : arrowKey === "ArrowDown"
+                ? step
+                : 0;
+
+          let nextWidth = selectedAnnotation.width + widthDelta;
+          let nextHeight = selectedAnnotation.height + heightDelta;
+
+          if (Math.abs(nextWidth) < minSize) {
+            nextWidth = widthSign * minSize;
+          }
+          if (Math.abs(nextHeight) < minSize) {
+            nextHeight = heightSign * minSize;
+          }
+
+          onAnnotationUpdate(selectedAnnotation.id, {
+            width: nextWidth,
+            height: nextHeight,
+            modified: new Date(),
+          });
+        } else {
+          const widthDelta =
+            arrowKey === "ArrowLeft"
+              ? -step
+              : arrowKey === "ArrowRight"
+                ? step
+                : 0;
+          const heightDelta =
+            arrowKey === "ArrowUp"
+              ? -step
+              : arrowKey === "ArrowDown"
+                ? step
+                : 0;
+
+          const nextWidth = Math.max(
+            minSize,
+            selectedAnnotation.width + widthDelta
+          );
+          const nextHeight = Math.max(
+            minSize,
+            selectedAnnotation.height + heightDelta
+          );
+
+          onAnnotationUpdate(selectedAnnotation.id, {
+            width: nextWidth,
+            height: nextHeight,
+            modified: new Date(),
+          });
+        }
+
+        nudgeTimeoutRef.current = setTimeout(() => {
+          isNudgingRef.current = false;
+          endHistoryGroup();
+        }, 350);
+        return;
+      }
+
+      if (
+        selectedAnnotation &&
+        !event.altKey &&
         (arrowKey === "ArrowUp" ||
           arrowKey === "ArrowDown" ||
           arrowKey === "ArrowLeft" ||
@@ -1444,38 +1628,92 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
     }
 
     const padding = 8;
-
-    const canPlaceRight =
-      selectionBox.x + selectionBox.width + padding + toolbarSize.width <=
-      viewport.width;
-    const canPlaceLeft = selectionBox.x - padding - toolbarSize.width >= 0;
-    const canPlaceAbove = selectionBox.y - padding - toolbarSize.height >= 0;
-    const canPlaceBelow =
-      selectionBox.y + selectionBox.height + padding + toolbarSize.height <=
-      viewport.height;
-
-    const rawLeft = canPlaceRight
-      ? selectionBox.x + selectionBox.width + padding
-      : canPlaceLeft
-        ? selectionBox.x - toolbarSize.width - padding
-        : selectionBox.x + selectionBox.width + padding;
-
-    const rawTop = canPlaceAbove
-      ? selectionBox.y - toolbarSize.height - padding
-      : canPlaceBelow
-        ? selectionBox.y + selectionBox.height + padding
-        : selectionBox.y - toolbarSize.height - padding;
-
-    const left = Math.max(
+    const minLeft = padding;
+    const minTop = padding;
+    const maxLeft = Math.max(
       padding,
-      Math.min(rawLeft, viewport.width - toolbarSize.width - padding)
+      viewport.width - toolbarSize.width - padding
     );
-    const top = Math.max(
+    const maxTop = Math.max(
       padding,
-      Math.min(rawTop, viewport.height - toolbarSize.height - padding)
+      viewport.height - toolbarSize.height - padding
     );
+    const handlePadding = 12;
 
-    return { left, top };
+    const selectionBounds = {
+      left: selectionBox.x - handlePadding,
+      top: selectionBox.y - handlePadding,
+      right: selectionBox.x + selectionBox.width + handlePadding,
+      bottom: selectionBox.y + selectionBox.height + handlePadding,
+    };
+
+    const overlapArea = (
+      a: { left: number; top: number; right: number; bottom: number },
+      b: { left: number; top: number; right: number; bottom: number }
+    ) => {
+      const horizontal = Math.max(
+        0,
+        Math.min(a.right, b.right) - Math.max(a.left, b.left)
+      );
+      const vertical = Math.max(
+        0,
+        Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)
+      );
+      return horizontal * vertical;
+    };
+
+    const clamp = (value: number, min: number, max: number) =>
+      Math.max(min, Math.min(value, max));
+
+    const candidates = [
+      {
+        left: selectionBox.x + selectionBox.width + padding,
+        top: selectionBox.y - toolbarSize.height - padding,
+      },
+      {
+        left: selectionBox.x + selectionBox.width + padding,
+        top: selectionBox.y + selectionBox.height + padding,
+      },
+      {
+        left: selectionBox.x - toolbarSize.width - padding,
+        top: selectionBox.y - toolbarSize.height - padding,
+      },
+      {
+        left: selectionBox.x - toolbarSize.width - padding,
+        top: selectionBox.y + selectionBox.height + padding,
+      },
+      {
+        left: selectionBox.x + (selectionBox.width - toolbarSize.width) / 2,
+        top: selectionBox.y - toolbarSize.height - padding,
+      },
+      {
+        left: selectionBox.x + (selectionBox.width - toolbarSize.width) / 2,
+        top: selectionBox.y + selectionBox.height + padding,
+      },
+    ];
+
+    const scored = candidates
+      .map((candidate) => {
+        const left = clamp(candidate.left, minLeft, maxLeft);
+        const top = clamp(candidate.top, minTop, maxTop);
+
+        const toolbarBounds = {
+          left,
+          top,
+          right: left + toolbarSize.width,
+          bottom: top + toolbarSize.height,
+        };
+
+        const overlap = overlapArea(toolbarBounds, selectionBounds);
+        const travel =
+          Math.abs(left - candidate.left) + Math.abs(top - candidate.top);
+        const score = overlap * 1000 + travel;
+
+        return { left, top, score };
+      })
+      .sort((a, b) => a.score - b.score);
+
+    return scored[0] ?? { left: minLeft, top: minTop };
   }, [
     selectionBox,
     toolbarSize.height,
@@ -1835,6 +2073,79 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
                         {size}
                       </button>
                     ))}
+                  </div>
+
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
+                        Background
+                      </label>
+                      <input
+                        type="color"
+                        value={
+                          selectedAnnotation.backgroundColor ??
+                          getTextDefaults().backgroundColor
+                        }
+                        onChange={(e) =>
+                          updateSelectedAnnotation({
+                            backgroundColor: e.target.value,
+                          })
+                        }
+                        className="w-7 h-7 rounded-md border border-border-primary bg-transparent cursor-pointer"
+                        title="Text background color"
+                      />
+                    </div>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {TEXT_BACKGROUND_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() =>
+                            updateSelectedAnnotation({ backgroundColor: color })
+                          }
+                          className={`w-6 h-6 rounded-md border transition-all ${
+                            (selectedAnnotation.backgroundColor ??
+                              getTextDefaults().backgroundColor) === color
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "border-border-primary hover:border-border-secondary"
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-2">
+                    <label className="flex items-center justify-between text-[10px] font-semibold text-text-tertiary mb-1 uppercase tracking-wider">
+                      <span>Text Background Opacity</span>
+                      <span className="text-text-secondary normal-case font-normal">
+                        {Math.round(
+                          clampOpacity(
+                            selectedAnnotation.backgroundOpacity,
+                            getTextDefaults().backgroundOpacity
+                          ) * 100
+                        )}
+                        %
+                      </span>
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1.0"
+                      step="0.05"
+                      value={clampOpacity(
+                        selectedAnnotation.backgroundOpacity,
+                        getTextDefaults().backgroundOpacity
+                      )}
+                      onMouseDown={beginHistoryGroup}
+                      onMouseUp={endHistoryGroup}
+                      onChange={(e) =>
+                        updateSelectedAnnotation({
+                          backgroundOpacity: parseFloat(e.target.value),
+                        })
+                      }
+                      className="w-full h-2 bg-bg-tertiary rounded-full appearance-none cursor-pointer slider hover:bg-surface-tertiary transition-colors"
+                    />
                   </div>
                 </div>
               )}
