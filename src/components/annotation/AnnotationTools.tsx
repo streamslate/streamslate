@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   AnnotationType,
   type Tool,
@@ -88,6 +88,82 @@ const TOOLS: Tool[] = [
   },
 ];
 
+type ToolPreset = {
+  id: string;
+  name: string;
+  tool: AnnotationType;
+  config: Partial<ToolConfig>;
+  builtIn?: boolean;
+};
+
+const PRESET_STORAGE_KEY = "streamslate.annotation-presets.v1";
+const MAX_CUSTOM_PRESETS = 12;
+
+const BUILT_IN_PRESETS: ToolPreset[] = [
+  {
+    id: "builtin-highlight-focus",
+    name: "Focus Highlight",
+    tool: AnnotationType.HIGHLIGHT,
+    config: { color: "#ffff00", opacity: 0.45, strokeWidth: 2 },
+    builtIn: true,
+  },
+  {
+    id: "builtin-rectangle-callout",
+    name: "Callout Box",
+    tool: AnnotationType.RECTANGLE,
+    config: { color: "#ff0000", opacity: 0.95, strokeWidth: 3 },
+    builtIn: true,
+  },
+  {
+    id: "builtin-arrow-flow",
+    name: "Flow Arrow",
+    tool: AnnotationType.ARROW,
+    config: { color: "#2563eb", opacity: 1, strokeWidth: 4 },
+    builtIn: true,
+  },
+  {
+    id: "builtin-text-note",
+    name: "Readable Text",
+    tool: AnnotationType.TEXT,
+    config: { color: "#111827", opacity: 1, strokeWidth: 1, fontSize: 16 },
+    builtIn: true,
+  },
+];
+
+function readCustomPresets(): ToolPreset[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(PRESET_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .filter((entry) => {
+        return (
+          entry &&
+          typeof entry === "object" &&
+          typeof entry.id === "string" &&
+          typeof entry.name === "string" &&
+          typeof entry.tool === "string" &&
+          entry.config &&
+          typeof entry.config === "object"
+        );
+      })
+      .slice(0, MAX_CUSTOM_PRESETS) as ToolPreset[];
+  } catch {
+    return [];
+  }
+}
+
 export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   activeTool,
   toolConfig,
@@ -96,6 +172,31 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   className = "",
 }) => {
   const [showConfig, setShowConfig] = useState(false);
+  const [showPresetCreator, setShowPresetCreator] = useState(false);
+  const [presetName, setPresetName] = useState("");
+  const [customPresets, setCustomPresets] = useState<ToolPreset[]>(() =>
+    readCustomPresets()
+  );
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        PRESET_STORAGE_KEY,
+        JSON.stringify(customPresets)
+      );
+    } catch {
+      // Ignore storage write errors to keep annotation UX functional.
+    }
+  }, [customPresets]);
+
+  const allPresets = useMemo(
+    () => [...BUILT_IN_PRESETS, ...customPresets],
+    [customPresets]
+  );
 
   const handleToolClick = (toolType: AnnotationType) => {
     if (activeTool === toolType) {
@@ -115,6 +216,45 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
 
   const handleStrokeWidthChange = (strokeWidth: number) => {
     onToolConfigChange({ strokeWidth });
+  };
+
+  const applyPreset = (preset: ToolPreset) => {
+    onToolSelect(preset.tool);
+    onToolConfigChange(preset.config);
+  };
+
+  const saveCurrentAsPreset = () => {
+    const trimmedName = presetName.trim();
+    if (!activeTool || !trimmedName) {
+      return;
+    }
+
+    const newPreset: ToolPreset = {
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `preset-${Date.now()}`,
+      name: trimmedName.slice(0, 32),
+      tool: activeTool,
+      config: {
+        color: toolConfig.color,
+        opacity: toolConfig.opacity,
+        strokeWidth: toolConfig.strokeWidth,
+        fontSize: toolConfig.fontSize,
+        fontFamily: toolConfig.fontFamily,
+      },
+      builtIn: false,
+    };
+
+    setCustomPresets((prev) =>
+      [newPreset, ...prev].slice(0, MAX_CUSTOM_PRESETS)
+    );
+    setPresetName("");
+    setShowPresetCreator(false);
+  };
+
+  const deleteCustomPreset = (id: string) => {
+    setCustomPresets((prev) => prev.filter((preset) => preset.id !== id));
   };
 
   const PRESET_COLORS = [
@@ -159,6 +299,76 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
             </div>
           </button>
         ))}
+      </div>
+
+      <div className="border-t border-border-primary mt-4 pt-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+            Presets
+          </div>
+          <button
+            onClick={() => setShowPresetCreator((prev) => !prev)}
+            disabled={!activeTool}
+            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+            title={
+              activeTool
+                ? "Save current tool settings as preset"
+                : "Select a tool to save a preset"
+            }
+          >
+            Save Current
+          </button>
+        </div>
+
+        {showPresetCreator && (
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              type="text"
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              placeholder="Preset name"
+              maxLength={32}
+              className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+            <button
+              onClick={saveCurrentAsPreset}
+              disabled={!presetName.trim() || !activeTool}
+              className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Save
+            </button>
+          </div>
+        )}
+
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {allPresets.map((preset) => {
+            const isCustom = !preset.builtIn;
+            return (
+              <div
+                key={preset.id}
+                className="inline-flex items-center rounded-md border border-border-primary bg-bg-tertiary/80"
+              >
+                <button
+                  onClick={() => applyPreset(preset)}
+                  className="px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-l-md transition-colors"
+                  title={`Apply ${preset.name}`}
+                >
+                  {preset.name}
+                </button>
+                {isCustom && (
+                  <button
+                    onClick={() => deleteCustomPreset(preset.id)}
+                    className="px-1.5 py-1 text-xs text-text-tertiary hover:text-error hover:bg-error/10 rounded-r-md transition-colors border-l border-border-primary"
+                    title={`Delete ${preset.name}`}
+                    aria-label={`Delete preset ${preset.name}`}
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {activeTool && (
