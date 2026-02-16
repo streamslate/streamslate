@@ -18,7 +18,7 @@
 #   No additional CI variables needed - BuildKit server has push credentials
 #
 # Runner Requirements:
-#   - Linux runner for test:linux:rust and test:linux:e2e jobs (any GitLab runner)
+#   - Linux runner for test:linux:rust and test:linux:e2e:* jobs (any GitLab runner)
 #   - macOS runner with tag 'macos' for build:macos job
 #   - K3s runner with Harbor image pull access for docker:build job
 #
@@ -132,7 +132,7 @@ test:linux:rust:
     # Rust tests
     - cd src-tauri && cargo test
 
-test:linux:e2e:
+.test:linux:e2e:
   stage: test
   <<: *linux
   # Start immediately (don't wait for lint stage) for faster test feedback.
@@ -163,12 +163,22 @@ test:linux:e2e:
     # Run Cypress E2E tests only if dev server started
     - |
       if [ "$DEV_SERVER_READY" = "true" ]; then
-        npm run test:headless
+        npx cypress run --spec "${CYPRESS_SPECS}"
       else
         echo "❌ Dev server did not start - failing E2E test job"
         exit 1
       fi
     - kill $DEV_PID || true
+
+test:linux:e2e:core:
+  extends: .test:linux:e2e
+  variables:
+    CYPRESS_SPECS: "cypress/e2e/annotations-edit.cy.ts,cypress/e2e/app.cy.ts,cypress/e2e/pdf-viewer.cy.ts,cypress/e2e/settings.cy.ts"
+
+test:linux:e2e:integration:
+  extends: .test:linux:e2e
+  variables:
+    CYPRESS_SPECS: "cypress/e2e/integration-websocket.cy.ts,cypress/e2e/sidebar.cy.ts,cypress/e2e/workflow.cy.ts"
 
 build:macos:
   stage: build
@@ -201,7 +211,13 @@ build:macos:
 docker:build:
   stage: deploy
   # Run as soon as tests pass — don't wait for macOS build stage
-  needs: ["lint:linux", "test:linux:rust", "test:linux:e2e"]
+  needs:
+    [
+      "lint:linux",
+      "test:linux:rust",
+      "test:linux:e2e:core",
+      "test:linux:e2e:integration",
+    ]
   cache: []
   # BuildKit client image (cached in Harbor) - no DinD needed.
   # Override entrypoint: the default is 'buildkitd' (the daemon), but we
