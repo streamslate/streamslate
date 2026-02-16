@@ -77,7 +77,6 @@ default:
     - export RUSTUP_USE_CURL=1
     - apt-get install -y npm nodejs
     - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
-    - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
@@ -97,7 +96,6 @@ default:
     - export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     - export RUSTUP_USE_CURL=1
     - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
-    - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | xargs apt-get install -y
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
     - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
@@ -139,6 +137,8 @@ test:linux:e2e:
     - <<: *cache_npm
       policy: pull
   script:
+    # Install E2E-only runtime deps (skip cross-compiler toolchains)
+    - grep -v '^#' requirements/ubuntu-dev.txt | grep -v '^$' | grep -v '^-r' | grep -v 'gcc-arm-linux-gnueabihf' | grep -v 'gcc-aarch64-linux-gnu' | xargs apt-get install -y
     # Start xvfb for headless browser testing (Cypress requires a display)
     - Xvfb :99 -screen 0 1920x1080x24 &
     - export DISPLAY=:99
