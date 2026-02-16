@@ -123,6 +123,8 @@ lint:linux:
 test:linux:rust:
   stage: test
   <<: *linux-rust
+  # Start immediately (don't wait for lint stage) for faster test feedback.
+  needs: []
   cache:
     - <<: *cache_cargo
       policy: pull
@@ -133,6 +135,8 @@ test:linux:rust:
 test:linux:e2e:
   stage: test
   <<: *linux
+  # Start immediately (don't wait for lint stage) for faster test feedback.
+  needs: []
   cache:
     - <<: *cache_npm
       policy: pull
@@ -197,7 +201,7 @@ build:macos:
 docker:build:
   stage: deploy
   # Run as soon as tests pass — don't wait for macOS build stage
-  needs: ["test:linux:rust", "test:linux:e2e"]
+  needs: ["lint:linux", "test:linux:rust", "test:linux:e2e"]
   cache: []
   # BuildKit client image (cached in Harbor) - no DinD needed.
   # Override entrypoint: the default is 'buildkitd' (the daemon), but we
