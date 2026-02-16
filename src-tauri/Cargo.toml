@@ -53,3 +53,6 @@ custom-protocol = [ "tauri/custom-protocol" ]
 # Requires NDI SDK: https://ndi.video/download-ndi-sdk/
 # macOS: Install to /Library/NDI SDK for Apple
 ndi = ["dep:grafton-ndi"]
+
+# Enable Syphon output scaffolding (macOS only implementation target)
+syphon = []

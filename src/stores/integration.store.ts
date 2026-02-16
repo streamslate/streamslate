@@ -36,6 +36,7 @@ import type {
   OBSIntegration,
   StreamDeckIntegration,
   NDIIntegration,
+  SyphonIntegration,
   IntegrationConfig,
   IntegrationError,
   IntegrationEvent,
@@ -47,6 +48,7 @@ interface IntegrationStore {
   obs: OBSIntegration;
   streamDeck: StreamDeckIntegration;
   ndi: NDIIntegration;
+  syphon: SyphonIntegration;
   config: IntegrationConfig;
   errors: IntegrationError[];
   events: IntegrationEvent[];
@@ -56,6 +58,7 @@ interface IntegrationStore {
   setOBSState: (state: Partial<OBSIntegration>) => void;
   setStreamDeckState: (state: Partial<StreamDeckIntegration>) => void;
   setNDIState: (state: Partial<NDIIntegration>) => void;
+  setSyphonState: (state: Partial<SyphonIntegration>) => void;
   updateConfig: (config: Partial<IntegrationConfig>) => void;
 
   // Error handling
@@ -110,6 +113,12 @@ const initialNDIState: NDIIntegration = {
   outputName: "StreamSlate",
 };
 
+const initialSyphonState: SyphonIntegration = {
+  enabled: false,
+  outputEnabled: false,
+  outputName: "StreamSlate Syphon",
+};
+
 const initialConfig: IntegrationConfig = {
   obs: {
     enabled: false,
@@ -128,6 +137,10 @@ const initialConfig: IntegrationConfig = {
     outputName: "StreamSlate",
     quality: NDIQuality.HIGH,
     framerate: 30,
+  },
+  syphon: {
+    enabled: false,
+    outputName: "StreamSlate Syphon",
   },
   websocket: {
     enabled: true,
@@ -176,6 +189,7 @@ export const useIntegrationStore = create<IntegrationStore>()(
       obs: initialOBSState,
       streamDeck: initialStreamDeckState,
       ndi: initialNDIState,
+      syphon: initialSyphonState,
       config: initialConfig,
       errors: [],
       events: [],
@@ -201,6 +215,11 @@ export const useIntegrationStore = create<IntegrationStore>()(
           ndi: { ...current.ndi, ...state },
         })),
 
+      setSyphonState: (state) =>
+        set((current) => ({
+          syphon: { ...current.syphon, ...state },
+        })),
+
       updateConfig: (config) =>
         set((current) => ({
           config: {
@@ -209,6 +228,7 @@ export const useIntegrationStore = create<IntegrationStore>()(
             obs: { ...current.config.obs, ...config.obs },
             streamDeck: { ...current.config.streamDeck, ...config.streamDeck },
             ndi: { ...current.config.ndi, ...config.ndi },
+            syphon: { ...current.config.syphon, ...config.syphon },
             websocket: { ...current.config.websocket, ...config.websocket },
           },
         })),
@@ -512,6 +532,7 @@ export const useIntegrationStore = create<IntegrationStore>()(
           obs: initialOBSState,
           streamDeck: initialStreamDeckState,
           ndi: initialNDIState,
+          syphon: initialSyphonState,
           config: initialConfig,
           errors: [],
           events: [],
@@ -523,7 +544,9 @@ export const useIntegrationStore = create<IntegrationStore>()(
         return (
           state.websocket.connected ||
           state.obs.connected ||
-          state.streamDeck.connected
+          state.streamDeck.connected ||
+          state.ndi.outputEnabled ||
+          state.syphon.outputEnabled
         );
       },
     }),

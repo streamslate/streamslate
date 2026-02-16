@@ -72,7 +72,11 @@ pub fn run() {
             send_video_frame,
             list_capture_targets,
             is_ndi_available,
-            get_capture_status
+            is_syphon_available,
+            get_output_capabilities,
+            get_capture_status,
+            start_syphon_output,
+            stop_syphon_output
         ])
         .setup(|app| {
             // Initialize structured logging with tracing

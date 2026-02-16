@@ -29,8 +29,9 @@ pub mod presenter;
 // Re-export all commands for easy access
 pub use annotations::*;
 pub use ndi::{
-    get_capture_status, is_ndi_available, list_capture_targets, send_video_frame, start_ndi_sender,
-    stop_ndi_sender,
+    get_capture_status, get_output_capabilities, is_ndi_available, is_syphon_available,
+    list_capture_targets, send_video_frame, start_ndi_sender, start_syphon_output, stop_ndi_sender,
+    stop_syphon_output,
 };
 pub use pdf::*;
 pub use presenter::*;

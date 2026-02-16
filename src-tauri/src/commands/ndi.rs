@@ -36,10 +36,20 @@ pub struct CaptureStatus {
     pub is_capturing: bool,
     pub ndi_available: bool,
     pub ndi_running: bool,
+    pub syphon_available: bool,
+    pub syphon_running: bool,
     pub frames_captured: u64,
     pub frames_sent: u64,
     pub target_fps: u8,
     pub current_fps: f64,
+}
+
+/// Runtime output capabilities exposed to the frontend
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OutputCapabilities {
+    pub platform: String,
+    pub ndi_available: bool,
+    pub syphon_available: bool,
 }
 
 /// List available windows for capture
@@ -72,6 +82,22 @@ pub async fn is_ndi_available() -> Result<bool> {
     Ok(cfg!(feature = "ndi"))
 }
 
+/// Check if Syphon feature is available
+#[tauri::command]
+pub async fn is_syphon_available() -> Result<bool> {
+    Ok(cfg!(all(feature = "syphon", target_os = "macos")))
+}
+
+/// Get combined output capabilities
+#[tauri::command]
+pub async fn get_output_capabilities() -> Result<OutputCapabilities> {
+    Ok(OutputCapabilities {
+        platform: std::env::consts::OS.to_string(),
+        ndi_available: cfg!(feature = "ndi"),
+        syphon_available: cfg!(all(feature = "syphon", target_os = "macos")),
+    })
+}
+
 /// Get current capture/NDI status
 #[tauri::command]
 pub async fn get_capture_status(state: State<'_, AppState>) -> Result<CaptureStatus> {
@@ -84,6 +110,9 @@ pub async fn get_capture_status(state: State<'_, AppState>) -> Result<CaptureSta
         is_capturing: integration.ndi_active,
         ndi_available: cfg!(feature = "ndi"),
         ndi_running: integration.ndi_active && cfg!(feature = "ndi"),
+        syphon_available: cfg!(all(feature = "syphon", target_os = "macos")),
+        syphon_running: integration.syphon_active
+            && cfg!(all(feature = "syphon", target_os = "macos")),
         frames_captured: integration.frames_captured,
         frames_sent: integration.frames_sent,
         target_fps: 30,
@@ -149,6 +178,50 @@ pub async fn stop_ndi_sender(state: State<'_, AppState>) -> Result<()> {
     integration.frames_captured = 0;
     integration.frames_sent = 0;
     info!("Signal sent to stop capture/NDI sender...");
+    Ok(())
+}
+
+/// Start Syphon output - macOS + syphon feature implementation stub
+#[tauri::command]
+#[cfg(all(target_os = "macos", feature = "syphon"))]
+pub async fn start_syphon_output(state: State<'_, AppState>) -> Result<()> {
+    let mut integration = state
+        .integration
+        .lock()
+        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+
+    if integration.syphon_active {
+        return Ok(());
+    }
+
+    integration.syphon_enabled = true;
+    integration.syphon_active = true;
+    info!("Syphon output scaffold enabled");
+    Ok(())
+}
+
+/// Start Syphon output stub when unavailable
+#[tauri::command]
+#[cfg(not(all(target_os = "macos", feature = "syphon")))]
+pub async fn start_syphon_output(state: State<'_, AppState>) -> Result<()> {
+    let mut integration = state
+        .integration
+        .lock()
+        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+    integration.syphon_enabled = false;
+    integration.syphon_active = false;
+    warn!("Syphon output is not available in this build");
+    Ok(())
+}
+
+/// Stop Syphon output
+#[tauri::command]
+pub async fn stop_syphon_output(state: State<'_, AppState>) -> Result<()> {
+    let mut integration = state
+        .integration
+        .lock()
+        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+    integration.syphon_active = false;
     Ok(())
 }
 

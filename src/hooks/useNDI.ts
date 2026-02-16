@@ -17,10 +17,18 @@ export interface CaptureStatus {
   is_capturing: boolean;
   ndi_available: boolean;
   ndi_running: boolean;
+  syphon_available: boolean;
+  syphon_running: boolean;
   frames_captured: number;
   frames_sent: number;
   target_fps: number;
   current_fps: number;
+}
+
+export interface OutputCapabilities {
+  platform: string;
+  ndi_available: boolean;
+  syphon_available: boolean;
 }
 
 /**
@@ -36,17 +44,22 @@ export const useNDI = () => {
   const [fps, setFps] = useState(0);
   const [captureTargets, setCaptureTargets] = useState<CaptureTarget[]>([]);
   const [ndiAvailable, setNdiAvailable] = useState(false);
+  const [syphonAvailable, setSyphonAvailable] = useState(false);
   const [status, setStatus] = useState<CaptureStatus | null>(null);
 
-  // Check NDI availability on mount
+  // Check output availability on mount
   useEffect(() => {
     const check = async () => {
       try {
-        const available = await invoke<boolean>("is_ndi_available");
-        setNdiAvailable(available);
+        const capabilities = await invoke<OutputCapabilities>(
+          "get_output_capabilities"
+        );
+        setNdiAvailable(capabilities.ndi_available);
+        setSyphonAvailable(capabilities.syphon_available);
       } catch (err) {
-        console.error("Failed to check NDI availability:", err);
+        console.error("Failed to check output capabilities:", err);
         setNdiAvailable(false);
+        setSyphonAvailable(false);
       }
     };
     check();
@@ -62,6 +75,19 @@ export const useNDI = () => {
     } catch (err) {
       console.error("Failed to check NDI availability:", err);
       setNdiAvailable(false);
+    }
+  }, []);
+
+  /**
+   * Check if Syphon feature is compiled in
+   */
+  const checkSyphonAvailable = useCallback(async () => {
+    try {
+      const available = await invoke<boolean>("is_syphon_available");
+      setSyphonAvailable(available);
+    } catch (err) {
+      console.error("Failed to check Syphon availability:", err);
+      setSyphonAvailable(false);
     }
   }, []);
 
@@ -119,6 +145,30 @@ export const useNDI = () => {
     }
   }, [getCaptureStatus]);
 
+  /**
+   * Start Syphon output (scaffold)
+   */
+  const startSyphonOutput = useCallback(async () => {
+    try {
+      await invoke("start_syphon_output");
+      await getCaptureStatus();
+    } catch (err) {
+      console.error("Failed to start Syphon output:", err);
+    }
+  }, [getCaptureStatus]);
+
+  /**
+   * Stop Syphon output (scaffold)
+   */
+  const stopSyphonOutput = useCallback(async () => {
+    try {
+      await invoke("stop_syphon_output");
+      await getCaptureStatus();
+    } catch (err) {
+      console.error("Failed to stop Syphon output:", err);
+    }
+  }, [getCaptureStatus]);
+
   // Legacy aliases for backward compatibility
   const startTestPattern = startCapture;
   const stopTestPattern = stopCapture;
@@ -161,14 +211,18 @@ export const useNDI = () => {
     fps,
     captureTargets,
     ndiAvailable,
+    syphonAvailable,
     status,
 
     // Actions
     startCapture,
     stopCapture,
+    startSyphonOutput,
+    stopSyphonOutput,
     listCaptureTargets,
     getCaptureStatus,
     checkNdiAvailable,
+    checkSyphonAvailable,
 
     // Legacy (backward compat)
     startTestPattern,

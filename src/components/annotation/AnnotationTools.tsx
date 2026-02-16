@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnnotationType,
   type Tool,
@@ -28,6 +28,7 @@ interface AnnotationToolsProps {
   toolConfig: ToolConfig;
   onToolSelect: (tool: AnnotationType | undefined) => void;
   onToolConfigChange: (config: Partial<ToolConfig>) => void;
+  documentPath?: string;
   className?: string;
 }
 
@@ -103,8 +104,29 @@ type UseCaseTemplate = {
   preset: ToolPreset;
 };
 
-const PRESET_STORAGE_KEY = "streamslate.annotation-presets.v1";
-const MAX_CUSTOM_PRESETS = 12;
+type TemplateProfile = {
+  id: string;
+  name: string;
+  presets: ToolPreset[];
+  createdAt: string;
+  updatedAt: string;
+  builtIn?: boolean;
+};
+
+type TemplateProfileExport = {
+  version: number;
+  exportedAt: string;
+  profiles: TemplateProfile[];
+};
+
+const LEGACY_PRESET_STORAGE_KEY = "streamslate.annotation-presets.v1";
+const PROFILE_STORAGE_KEY = "streamslate.annotation-template-profiles.v1";
+const DOCUMENT_PROFILE_STORAGE_KEY =
+  "streamslate.annotation-document-profile-map.v1";
+const TEMPLATE_PROFILE_EXPORT_VERSION = 1;
+const MAX_PRESETS_PER_PROFILE = 12;
+const MAX_CUSTOM_PROFILES = 12;
+const BUILT_IN_PROFILE_ID = "profile-built-in";
 
 const BUILT_IN_PRESETS: ToolPreset[] = [
   {
@@ -137,6 +159,15 @@ const BUILT_IN_PRESETS: ToolPreset[] = [
   },
 ];
 
+const BUILT_IN_PROFILE: TemplateProfile = {
+  id: BUILT_IN_PROFILE_ID,
+  name: "Built-in Essentials",
+  presets: BUILT_IN_PRESETS,
+  createdAt: "2026-01-01T00:00:00.000Z",
+  updatedAt: "2026-01-01T00:00:00.000Z",
+  builtIn: true,
+};
+
 const USE_CASE_TEMPLATES: UseCaseTemplate[] = [
   {
     id: "template-lecture-focus",
@@ -164,53 +195,314 @@ const USE_CASE_TEMPLATES: UseCaseTemplate[] = [
   },
 ];
 
-function readCustomPresets(): ToolPreset[] {
+const ANNOTATION_TYPE_SET = new Set(Object.values(AnnotationType));
+
+function isAnnotationType(value: unknown): value is AnnotationType {
+  return typeof value === "string" && ANNOTATION_TYPE_SET.has(value as never);
+}
+
+function createId(prefix: string): string {
+  return typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function sanitizeConfig(config: unknown): Partial<ToolConfig> {
+  if (!config || typeof config !== "object") {
+    return {};
+  }
+
+  const source = config as Partial<ToolConfig>;
+  const normalized: Partial<ToolConfig> = {};
+
+  if (typeof source.color === "string") {
+    normalized.color = source.color.slice(0, 32);
+  }
+  if (typeof source.opacity === "number" && Number.isFinite(source.opacity)) {
+    normalized.opacity = Math.max(0.05, Math.min(1, source.opacity));
+  }
+  if (
+    typeof source.strokeWidth === "number" &&
+    Number.isFinite(source.strokeWidth)
+  ) {
+    normalized.strokeWidth = Math.max(1, Math.min(12, source.strokeWidth));
+  }
+  if (typeof source.fontSize === "number" && Number.isFinite(source.fontSize)) {
+    normalized.fontSize = Math.max(8, Math.min(96, source.fontSize));
+  }
+  if (typeof source.fontFamily === "string") {
+    normalized.fontFamily = source.fontFamily.slice(0, 64);
+  }
+
+  return normalized;
+}
+
+function sanitizePreset(input: unknown): ToolPreset | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const entry = input as ToolPreset;
+  if (!isAnnotationType(entry.tool)) {
+    return null;
+  }
+  if (typeof entry.name !== "string" || !entry.name.trim()) {
+    return null;
+  }
+
+  return {
+    id:
+      typeof entry.id === "string" && entry.id.trim()
+        ? entry.id
+        : createId("preset"),
+    name: entry.name.trim().slice(0, 32),
+    tool: entry.tool,
+    config: sanitizeConfig(entry.config),
+    builtIn: entry.builtIn === true,
+  };
+}
+
+function sanitizeProfile(input: unknown): TemplateProfile | null {
+  if (!input || typeof input !== "object") {
+    return null;
+  }
+
+  const entry = input as TemplateProfile;
+  if (typeof entry.name !== "string" || !entry.name.trim()) {
+    return null;
+  }
+
+  const presets = Array.isArray(entry.presets)
+    ? entry.presets
+        .map((preset) => sanitizePreset(preset))
+        .filter((preset): preset is ToolPreset => Boolean(preset))
+        .slice(0, MAX_PRESETS_PER_PROFILE)
+    : [];
+
+  const now = new Date().toISOString();
+  return {
+    id:
+      typeof entry.id === "string" && entry.id.trim()
+        ? entry.id
+        : createId("profile"),
+    name: entry.name.trim().slice(0, 48),
+    presets,
+    createdAt:
+      typeof entry.createdAt === "string" && entry.createdAt
+        ? entry.createdAt
+        : now,
+    updatedAt:
+      typeof entry.updatedAt === "string" && entry.updatedAt
+        ? entry.updatedAt
+        : now,
+    builtIn: false,
+  };
+}
+
+function readDocumentProfileMap(): Record<string, string> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  try {
+    const raw = window.localStorage.getItem(DOCUMENT_PROFILE_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return {};
+    }
+
+    const normalized: Record<string, string> = {};
+    for (const [key, value] of Object.entries(
+      parsed as Record<string, unknown>
+    )) {
+      if (typeof value === "string") {
+        normalized[key] = value;
+      }
+    }
+    return normalized;
+  } catch {
+    return {};
+  }
+}
+
+function readCustomProfiles(): TemplateProfile[] {
   if (typeof window === "undefined") {
     return [];
   }
 
   try {
-    const raw = window.localStorage.getItem(PRESET_STORAGE_KEY);
-    if (!raw) {
+    const rawProfiles = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (rawProfiles) {
+      const parsed = JSON.parse(rawProfiles);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((entry) => sanitizeProfile(entry))
+          .filter((entry): entry is TemplateProfile => Boolean(entry))
+          .slice(0, MAX_CUSTOM_PROFILES);
+      }
+    }
+  } catch {
+    // Ignore read errors and try legacy fallback.
+  }
+
+  // Legacy migration from single preset list.
+  try {
+    const rawLegacy = window.localStorage.getItem(LEGACY_PRESET_STORAGE_KEY);
+    if (!rawLegacy) {
+      return [];
+    }
+    const parsedLegacy = JSON.parse(rawLegacy);
+    if (!Array.isArray(parsedLegacy)) {
       return [];
     }
 
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
+    const presets = parsedLegacy
+      .map((entry) => sanitizePreset(entry))
+      .filter((entry): entry is ToolPreset => Boolean(entry))
+      .slice(0, MAX_PRESETS_PER_PROFILE);
+
+    if (presets.length === 0) {
       return [];
     }
 
-    return parsed
-      .filter((entry) => {
-        return (
-          entry &&
-          typeof entry === "object" &&
-          typeof entry.id === "string" &&
-          typeof entry.name === "string" &&
-          typeof entry.tool === "string" &&
-          entry.config &&
-          typeof entry.config === "object"
-        );
-      })
-      .slice(0, MAX_CUSTOM_PRESETS) as ToolPreset[];
+    const now = new Date().toISOString();
+    return [
+      {
+        id: createId("profile"),
+        name: "Imported Legacy Presets",
+        presets,
+        createdAt: now,
+        updatedAt: now,
+        builtIn: false,
+      },
+    ];
   } catch {
     return [];
   }
 }
+
+function pickPresetForProfile(
+  profile: TemplateProfile,
+  activeTool?: AnnotationType
+): ToolPreset | null {
+  if (profile.presets.length === 0) {
+    return null;
+  }
+
+  if (!activeTool) {
+    return profile.presets[0];
+  }
+
+  return (
+    profile.presets.find((preset) => preset.tool === activeTool) ??
+    profile.presets[0]
+  );
+}
+
+function makeUniqueProfileName(
+  candidate: string,
+  existingNames: string[]
+): string {
+  const cleaned = candidate.trim().slice(0, 48) || "Template Pack";
+  const normalized = new Set(existingNames.map((name) => name.toLowerCase()));
+  if (!normalized.has(cleaned.toLowerCase())) {
+    return cleaned;
+  }
+
+  let suffix = 2;
+  while (suffix <= 200) {
+    const attempt = `${cleaned} ${suffix}`;
+    if (!normalized.has(attempt.toLowerCase())) {
+      return attempt;
+    }
+    suffix += 1;
+  }
+
+  return `${cleaned} ${Date.now()}`;
+}
+
+function parseImportProfiles(rawJson: string): TemplateProfile[] {
+  const parsed = JSON.parse(rawJson) as unknown;
+
+  let candidates: unknown[] = [];
+  if (Array.isArray(parsed)) {
+    candidates = parsed;
+  } else if (
+    parsed &&
+    typeof parsed === "object" &&
+    "profiles" in parsed &&
+    Array.isArray((parsed as { profiles: unknown[] }).profiles)
+  ) {
+    candidates = (parsed as { profiles: unknown[] }).profiles;
+  } else if (parsed && typeof parsed === "object") {
+    candidates = [parsed];
+  }
+
+  return candidates
+    .map((entry) => sanitizeProfile(entry))
+    .filter((entry): entry is TemplateProfile => Boolean(entry));
+}
+
+function exportProfiles(profiles: TemplateProfile[]): TemplateProfileExport {
+  return {
+    version: TEMPLATE_PROFILE_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    profiles: profiles.map((profile) => ({
+      ...profile,
+      builtIn: false,
+      presets: profile.presets.map((preset) => ({
+        ...preset,
+        builtIn: false,
+        config: sanitizeConfig(preset.config),
+      })),
+    })),
+  };
+}
+
+const INITIAL_CUSTOM_PROFILES = readCustomProfiles();
 
 export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   activeTool,
   toolConfig,
   onToolSelect,
   onToolConfigChange,
+  documentPath,
   className = "",
 }) => {
   const [showConfig, setShowConfig] = useState(false);
   const [showPresetCreator, setShowPresetCreator] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
-  const [customPresets, setCustomPresets] = useState<ToolPreset[]>(() =>
-    readCustomPresets()
+  const [customProfiles, setCustomProfiles] = useState<TemplateProfile[]>(
+    INITIAL_CUSTOM_PROFILES
+  );
+  const [selectedProfileId, setSelectedProfileId] = useState<string>(
+    INITIAL_CUSTOM_PROFILES[0]?.id ?? BUILT_IN_PROFILE_ID
+  );
+  const [profileNameInput, setProfileNameInput] = useState("");
+  const [documentProfileMap, setDocumentProfileMap] = useState<
+    Record<string, string>
+  >(() => readDocumentProfileMap());
+  const [activeDocumentProfileId, setActiveDocumentProfileId] = useState<
+    string | null
+  >(null);
+  const [importMessage, setImportMessage] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const autoAppliedDocumentRef = useRef<string | null>(null);
+
+  const allProfiles = useMemo(
+    () => [BUILT_IN_PROFILE, ...customProfiles],
+    [customProfiles]
+  );
+
+  const selectedProfile = useMemo(
+    () =>
+      allProfiles.find((profile) => profile.id === selectedProfileId) ??
+      BUILT_IN_PROFILE,
+    [allProfiles, selectedProfileId]
   );
 
   useEffect(() => {
@@ -220,18 +512,104 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
 
     try {
       window.localStorage.setItem(
-        PRESET_STORAGE_KEY,
-        JSON.stringify(customPresets)
+        PROFILE_STORAGE_KEY,
+        JSON.stringify(customProfiles)
       );
     } catch {
       // Ignore storage write errors to keep annotation UX functional.
     }
-  }, [customPresets]);
+  }, [customProfiles]);
 
-  const allPresets = useMemo(
-    () => [...BUILT_IN_PRESETS, ...customPresets],
-    [customPresets]
-  );
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        DOCUMENT_PROFILE_STORAGE_KEY,
+        JSON.stringify(documentProfileMap)
+      );
+    } catch {
+      // Ignore storage write errors to keep annotation UX functional.
+    }
+  }, [documentProfileMap]);
+
+  useEffect(() => {
+    const exists = allProfiles.some(
+      (profile) => profile.id === selectedProfileId
+    );
+    if (!exists) {
+      setSelectedProfileId(allProfiles[0]?.id ?? BUILT_IN_PROFILE_ID);
+    }
+  }, [allProfiles, selectedProfileId]);
+
+  useEffect(() => {
+    setProfileNameInput(selectedProfile.name);
+  }, [selectedProfile.id, selectedProfile.name]);
+
+  useEffect(() => {
+    const validProfileIds = new Set(allProfiles.map((profile) => profile.id));
+    let changed = false;
+    const nextMap: Record<string, string> = {};
+
+    for (const [doc, profileId] of Object.entries(documentProfileMap)) {
+      if (validProfileIds.has(profileId)) {
+        nextMap[doc] = profileId;
+      } else {
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      setDocumentProfileMap(nextMap);
+    }
+  }, [allProfiles, documentProfileMap]);
+
+  useEffect(() => {
+    if (!documentPath) {
+      setActiveDocumentProfileId(null);
+      autoAppliedDocumentRef.current = null;
+      return;
+    }
+
+    const mappedProfileId = documentProfileMap[documentPath] ?? null;
+    setActiveDocumentProfileId(mappedProfileId);
+
+    if (autoAppliedDocumentRef.current === documentPath) {
+      return;
+    }
+
+    autoAppliedDocumentRef.current = documentPath;
+
+    if (!mappedProfileId) {
+      return;
+    }
+
+    const mappedProfile = allProfiles.find(
+      (profile) => profile.id === mappedProfileId
+    );
+    if (!mappedProfile) {
+      return;
+    }
+
+    const preset =
+      pickPresetForProfile(mappedProfile, activeTool) ??
+      pickPresetForProfile(BUILT_IN_PROFILE, activeTool);
+    if (!preset) {
+      return;
+    }
+
+    onToolSelect(preset.tool);
+    onToolConfigChange(preset.config);
+  }, [
+    activeTool,
+    allProfiles,
+    documentPath,
+    documentProfileMap,
+    onToolConfigChange,
+    onToolSelect,
+  ]);
 
   const handleToolClick = (toolType: AnnotationType) => {
     if (activeTool === toolType) {
@@ -263,6 +641,80 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
     applyPreset(template.preset);
   };
 
+  const createProfile = () => {
+    const name = makeUniqueProfileName(
+      "Template Pack",
+      allProfiles.map((profile) => profile.name)
+    );
+    const now = new Date().toISOString();
+    const profile: TemplateProfile = {
+      id: createId("profile"),
+      name,
+      presets: [],
+      createdAt: now,
+      updatedAt: now,
+      builtIn: false,
+    };
+
+    setCustomProfiles((prev) =>
+      [profile, ...prev].slice(0, MAX_CUSTOM_PROFILES)
+    );
+    setSelectedProfileId(profile.id);
+    setProfileNameInput(name);
+  };
+
+  const renameSelectedProfile = () => {
+    if (selectedProfile.builtIn) {
+      return;
+    }
+
+    const trimmed = profileNameInput.trim();
+    if (!trimmed) {
+      return;
+    }
+
+    const uniqueName = makeUniqueProfileName(
+      trimmed,
+      allProfiles
+        .filter((profile) => profile.id !== selectedProfile.id)
+        .map((profile) => profile.name)
+    );
+
+    setCustomProfiles((prev) =>
+      prev.map((profile) =>
+        profile.id === selectedProfile.id
+          ? {
+              ...profile,
+              name: uniqueName,
+              updatedAt: new Date().toISOString(),
+            }
+          : profile
+      )
+    );
+    setProfileNameInput(uniqueName);
+  };
+
+  const deleteSelectedProfile = () => {
+    if (selectedProfile.builtIn) {
+      return;
+    }
+
+    const deletedId = selectedProfile.id;
+    setCustomProfiles((prev) =>
+      prev.filter((profile) => profile.id !== deletedId)
+    );
+    setSelectedProfileId(BUILT_IN_PROFILE_ID);
+    setDocumentProfileMap((prev) => {
+      const next = { ...prev };
+      for (const [doc, profileId] of Object.entries(next)) {
+        if (profileId === deletedId) {
+          delete next[doc];
+        }
+      }
+      return next;
+    });
+  };
+
   const saveCurrentAsPreset = () => {
     const trimmedName = presetName.trim();
     if (!activeTool || !trimmedName) {
@@ -286,15 +738,203 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
       builtIn: false,
     };
 
-    setCustomPresets((prev) =>
-      [newPreset, ...prev].slice(0, MAX_CUSTOM_PRESETS)
-    );
+    setCustomProfiles((prev) => {
+      let profiles = [...prev];
+      let targetProfileId = selectedProfile.id;
+
+      if (selectedProfile.builtIn) {
+        const name = makeUniqueProfileName(
+          "My Template Pack",
+          allProfiles.map((profile) => profile.name)
+        );
+        const now = new Date().toISOString();
+        const autoProfile: TemplateProfile = {
+          id: createId("profile"),
+          name,
+          presets: [],
+          createdAt: now,
+          updatedAt: now,
+          builtIn: false,
+        };
+        profiles = [autoProfile, ...profiles].slice(0, MAX_CUSTOM_PROFILES);
+        targetProfileId = autoProfile.id;
+        setSelectedProfileId(targetProfileId);
+        setProfileNameInput(name);
+      }
+
+      return profiles.map((profile) =>
+        profile.id === targetProfileId
+          ? {
+              ...profile,
+              presets: [newPreset, ...profile.presets].slice(
+                0,
+                MAX_PRESETS_PER_PROFILE
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : profile
+      );
+    });
     setPresetName("");
     setShowPresetCreator(false);
   };
 
-  const deleteCustomPreset = (id: string) => {
-    setCustomPresets((prev) => prev.filter((preset) => preset.id !== id));
+  const deletePresetFromSelectedProfile = (presetId: string) => {
+    if (selectedProfile.builtIn) {
+      return;
+    }
+
+    setCustomProfiles((prev) =>
+      prev.map((profile) =>
+        profile.id === selectedProfile.id
+          ? {
+              ...profile,
+              presets: profile.presets.filter(
+                (preset) => preset.id !== presetId
+              ),
+              updatedAt: new Date().toISOString(),
+            }
+          : profile
+      )
+    );
+  };
+
+  const applySelectedProfileToDocument = () => {
+    if (!documentPath) {
+      return;
+    }
+
+    const profileId = selectedProfile.id;
+    setDocumentProfileMap((prev) => ({
+      ...prev,
+      [documentPath]: profileId,
+    }));
+    setActiveDocumentProfileId(profileId);
+
+    const preset =
+      pickPresetForProfile(selectedProfile, activeTool) ??
+      pickPresetForProfile(BUILT_IN_PROFILE, activeTool);
+    if (preset) {
+      applyPreset(preset);
+    }
+  };
+
+  const clearDocumentProfile = () => {
+    if (!documentPath) {
+      return;
+    }
+
+    setDocumentProfileMap((prev) => {
+      const next = { ...prev };
+      delete next[documentPath];
+      return next;
+    });
+    setActiveDocumentProfileId(null);
+  };
+
+  const exportSelectedProfile = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const payload = exportProfiles([selectedProfile]);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${
+      selectedProfile.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "") || "template-pack"
+    }.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportAllCustomProfiles = () => {
+    if (typeof window === "undefined" || customProfiles.length === 0) {
+      return;
+    }
+
+    const payload = exportProfiles(customProfiles);
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "streamslate-template-packs.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importProfilesFromFile = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    try {
+      const raw = await file.text();
+      const importedProfiles = parseImportProfiles(raw);
+      if (importedProfiles.length === 0) {
+        setImportMessage("No valid template profiles found in JSON.");
+        return;
+      }
+
+      let firstImportedId: string | null = null;
+
+      setCustomProfiles((prev) => {
+        const existingIds = new Set(prev.map((profile) => profile.id));
+        const existingNames = new Set(
+          [...allProfiles, ...prev].map((profile) => profile.name.toLowerCase())
+        );
+        const merged = [...prev];
+
+        for (const profile of importedProfiles) {
+          let nextId = profile.id;
+          if (existingIds.has(nextId) || nextId === BUILT_IN_PROFILE_ID) {
+            nextId = createId("profile");
+          }
+
+          const nextName = makeUniqueProfileName(profile.name, [
+            ...Array.from(existingNames.values()),
+          ]);
+
+          const normalizedProfile: TemplateProfile = {
+            ...profile,
+            id: nextId,
+            name: nextName,
+            builtIn: false,
+            presets: profile.presets
+              .map((preset) => sanitizePreset(preset))
+              .filter((preset): preset is ToolPreset => Boolean(preset))
+              .slice(0, MAX_PRESETS_PER_PROFILE),
+            updatedAt: new Date().toISOString(),
+          };
+
+          existingIds.add(nextId);
+          existingNames.add(nextName.toLowerCase());
+          merged.unshift(normalizedProfile);
+          firstImportedId = firstImportedId ?? nextId;
+        }
+
+        return merged.slice(0, MAX_CUSTOM_PROFILES);
+      });
+
+      if (firstImportedId) {
+        setSelectedProfileId(firstImportedId);
+      }
+      setImportMessage(`Imported ${importedProfiles.length} profile(s).`);
+    } catch {
+      setImportMessage("Invalid JSON file. Import failed.");
+    }
   };
 
   const PRESET_COLORS = [
@@ -308,6 +948,15 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
     "#000000",
     "#ffffff",
   ];
+
+  const selectedProfileHasPresets = selectedProfile.presets.length > 0;
+  const activeDocumentProfileName = activeDocumentProfileId
+    ? allProfiles.find((profile) => profile.id === activeDocumentProfileId)
+        ?.name
+    : null;
+  const documentLabel = documentPath
+    ? documentPath.split(/[\\/]/).pop() || documentPath
+    : "No PDF loaded";
 
   return (
     <div
@@ -369,9 +1018,142 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
       </div>
 
       <div className="border-t border-border-primary mt-4 pt-4">
+        <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+          Template Profiles
+        </div>
+        <div className="mt-2 flex items-center gap-2">
+          <select
+            value={selectedProfile.id}
+            onChange={(event) => setSelectedProfileId(event.target.value)}
+            className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            {allProfiles.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.name}
+                {profile.builtIn ? " (built-in)" : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={createProfile}
+            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+          >
+            New
+          </button>
+          {!selectedProfile.builtIn && (
+            <button
+              onClick={deleteSelectedProfile}
+              className="rounded-md px-2 py-1.5 text-xs font-semibold text-error hover:bg-error/10"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            type="text"
+            value={profileNameInput}
+            onChange={(event) => setProfileNameInput(event.target.value)}
+            maxLength={48}
+            disabled={selectedProfile.builtIn}
+            className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+            placeholder="Profile name"
+          />
+          <button
+            onClick={renameSelectedProfile}
+            disabled={
+              selectedProfile.builtIn ||
+              !profileNameInput.trim() ||
+              profileNameInput.trim() === selectedProfile.name
+            }
+            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Rename
+          </button>
+        </div>
+
+        <div className="mt-2 flex items-center flex-wrap gap-1.5">
+          <button
+            onClick={exportSelectedProfile}
+            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+          >
+            Export Pack
+          </button>
+          {customProfiles.length > 0 && (
+            <button
+              onClick={exportAllCustomProfiles}
+              className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+            >
+              Export All
+            </button>
+          )}
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
+          >
+            Import JSON
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={importProfilesFromFile}
+            className="hidden"
+          />
+        </div>
+
+        {importMessage && (
+          <div className="mt-1 text-[11px] text-text-tertiary">
+            {importMessage}
+          </div>
+        )}
+
+        {selectedProfile.builtIn && (
+          <div className="mt-1 text-[11px] text-text-tertiary">
+            Built-in profile is read-only. Saving a preset creates a new custom
+            profile automatically.
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-border-primary mt-4 pt-4">
+        <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+          Current Document
+        </div>
+        <div
+          className="mt-2 text-xs text-text-secondary truncate"
+          title={documentPath}
+        >
+          {documentLabel}
+        </div>
+        <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <button
+            onClick={applySelectedProfileToDocument}
+            disabled={!documentPath}
+            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Apply Selected Pack
+          </button>
+          <button
+            onClick={clearDocumentProfile}
+            disabled={!documentPath || !activeDocumentProfileId}
+            className="rounded-md px-2 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Clear
+          </button>
+        </div>
+        <div className="mt-1 text-[11px] text-text-tertiary">
+          {activeDocumentProfileName
+            ? `Applied profile: ${activeDocumentProfileName}`
+            : "No profile mapped for this document yet."}
+        </div>
+      </div>
+
+      <div className="border-t border-border-primary mt-4 pt-4">
         <div className="flex items-center justify-between gap-2">
           <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-            Presets
+            Presets In Profile
           </div>
           <button
             onClick={() => setShowPresetCreator((prev) => !prev)}
@@ -408,33 +1190,35 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
         )}
 
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {allPresets.map((preset) => {
-            const isCustom = !preset.builtIn;
-            return (
-              <div
-                key={preset.id}
-                className="inline-flex items-center rounded-md border border-border-primary bg-bg-tertiary/80"
+          {selectedProfile.presets.map((preset) => (
+            <div
+              key={preset.id}
+              className="inline-flex items-center rounded-md border border-border-primary bg-bg-tertiary/80"
+            >
+              <button
+                onClick={() => applyPreset(preset)}
+                className="px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-l-md transition-colors"
+                title={`Apply ${preset.name}`}
               >
+                {preset.name}
+              </button>
+              {!selectedProfile.builtIn && (
                 <button
-                  onClick={() => applyPreset(preset)}
-                  className="px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-l-md transition-colors"
-                  title={`Apply ${preset.name}`}
+                  onClick={() => deletePresetFromSelectedProfile(preset.id)}
+                  className="px-1.5 py-1 text-xs text-text-tertiary hover:text-error hover:bg-error/10 rounded-r-md transition-colors border-l border-border-primary"
+                  title={`Delete ${preset.name}`}
+                  aria-label={`Delete preset ${preset.name}`}
                 >
-                  {preset.name}
+                  ×
                 </button>
-                {isCustom && (
-                  <button
-                    onClick={() => deleteCustomPreset(preset.id)}
-                    className="px-1.5 py-1 text-xs text-text-tertiary hover:text-error hover:bg-error/10 rounded-r-md transition-colors border-l border-border-primary"
-                    title={`Delete ${preset.name}`}
-                    aria-label={`Delete preset ${preset.name}`}
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
+          {!selectedProfileHasPresets && (
+            <div className="text-xs text-text-tertiary">
+              This profile has no presets yet.
+            </div>
+          )}
         </div>
       </div>
 

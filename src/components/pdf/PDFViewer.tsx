@@ -238,6 +238,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               onToolSelect={setActiveTool}
               toolConfig={toolConfig}
               onToolConfigChange={handleToolConfigChange}
+              documentPath={document?.path}
               className="flex-1 max-w-fit"
             />
 

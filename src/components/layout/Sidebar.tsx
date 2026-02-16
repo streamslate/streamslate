@@ -710,7 +710,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {/* Experimental Section */}
                   <div className="pt-6 border-t border-border-secondary space-y-4">
                     <h4 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider">
-                      Experimental (NDI)
+                      Experimental (NDI / Syphon)
                     </h4>
                     <NDIControls />
                   </div>

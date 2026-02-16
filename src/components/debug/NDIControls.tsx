@@ -15,10 +15,13 @@ export const NDIControls: React.FC = () => {
     isSending,
     fps,
     ndiAvailable,
+    syphonAvailable,
     status,
     captureTargets,
     startCapture,
     stopCapture,
+    startSyphonOutput,
+    stopSyphonOutput,
     listCaptureTargets,
     getCaptureStatus,
     sendCanvasFrame,
@@ -86,17 +89,28 @@ export const NDIControls: React.FC = () => {
   return (
     <div className="p-4 bg-surface-tertiary rounded-lg border border-border-primary space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-semibold">Capture & NDI Controls</h4>
+        <h4 className="text-sm font-semibold">Capture Outputs</h4>
         <div className="flex items-center gap-2">
           {ndiAvailable ? (
             <span className="text-xs text-green-400 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-green-400" />
-              NDI Available
+              NDI
             </span>
           ) : (
             <span className="text-xs text-yellow-400 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-yellow-400" />
-              NDI Not Available
+              NDI Unavailable
+            </span>
+          )}
+          {syphonAvailable ? (
+            <span className="text-xs text-green-400 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-400" />
+              Syphon
+            </span>
+          ) : (
+            <span className="text-xs text-yellow-400 flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-yellow-400" />
+              Syphon Unavailable
             </span>
           )}
         </div>
@@ -119,6 +133,10 @@ export const NDIControls: React.FC = () => {
               <span>{status.frames_sent}</span>
             </div>
           )}
+          <div className="flex justify-between">
+            <span className="text-text-tertiary">Syphon Active:</span>
+            <span>{status.syphon_running ? "Yes" : "No"}</span>
+          </div>
         </div>
       )}
 
@@ -146,6 +164,23 @@ export const NDIControls: React.FC = () => {
         >
           List Windows
         </button>
+        {status?.syphon_running ? (
+          <button
+            onClick={stopSyphonOutput}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs disabled:opacity-50"
+            disabled={!syphonAvailable}
+          >
+            Stop Syphon
+          </button>
+        ) : (
+          <button
+            onClick={startSyphonOutput}
+            className="px-3 py-1 bg-cyan-600 text-white rounded hover:bg-cyan-700 text-xs disabled:opacity-50"
+            disabled={!syphonAvailable}
+          >
+            Start Syphon
+          </button>
+        )}
 
         <label className="flex items-center gap-1 text-xs">
           <input
@@ -202,7 +237,8 @@ export const NDIControls: React.FC = () => {
       {/* Help Text */}
       <p className="text-xs text-text-tertiary">
         Native capture uses macOS ScreenCaptureKit for high-performance window
-        capture. NDI output requires the NDI SDK to be installed.
+        capture. NDI requires the NDI SDK, and Syphon output is scaffolded
+        behind a feature flag.
       </p>
     </div>
   );

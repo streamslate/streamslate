@@ -65,6 +65,8 @@ export enum IntegrationMessageType {
   // NDI
   NDI_SOURCE_FOUND = "ndi_source_found",
   NDI_SOURCE_LOST = "ndi_source_lost",
+  SYPHON_OUTPUT_STARTED = "syphon_output_started",
+  SYPHON_OUTPUT_STOPPED = "syphon_output_stopped",
 
   // Commands
   COMMAND_NEXT_PAGE = "command_next_page",
@@ -85,6 +87,7 @@ export enum IntegrationSource {
   OBS = "obs",
   STREAM_DECK = "stream_deck",
   NDI = "ndi",
+  SYPHON = "syphon",
   EXTERNAL_API = "external_api",
 }
 
@@ -166,6 +169,12 @@ export interface NDIIntegration {
   outputName: string;
 }
 
+export interface SyphonIntegration {
+  enabled: boolean;
+  outputEnabled: boolean;
+  outputName: string;
+}
+
 export interface NDISource {
   name: string;
   url: string;
@@ -191,6 +200,10 @@ export interface IntegrationConfig {
     outputName: string;
     quality: NDIQuality;
     framerate: number;
+  };
+  syphon: {
+    enabled: boolean;
+    outputName: string;
   };
   websocket: {
     enabled: boolean;

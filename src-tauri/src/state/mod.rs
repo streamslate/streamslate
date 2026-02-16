@@ -75,6 +75,8 @@ pub struct IntegrationState {
     pub stream_deck_connected: bool,
     pub ndi_enabled: bool,
     pub ndi_active: bool,
+    pub syphon_enabled: bool,
+    pub syphon_active: bool,
     /// Number of frames captured from screen
     pub frames_captured: u64,
     /// Number of frames sent to NDI/Syphon output
