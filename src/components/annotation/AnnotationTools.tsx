@@ -96,6 +96,13 @@ type ToolPreset = {
   builtIn?: boolean;
 };
 
+type UseCaseTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  preset: ToolPreset;
+};
+
 const PRESET_STORAGE_KEY = "streamslate.annotation-presets.v1";
 const MAX_CUSTOM_PRESETS = 12;
 
@@ -127,6 +134,33 @@ const BUILT_IN_PRESETS: ToolPreset[] = [
     tool: AnnotationType.TEXT,
     config: { color: "#111827", opacity: 1, strokeWidth: 1, fontSize: 16 },
     builtIn: true,
+  },
+];
+
+const USE_CASE_TEMPLATES: UseCaseTemplate[] = [
+  {
+    id: "template-lecture-focus",
+    name: "Lecture Focus",
+    description: "Soft highlight for following key lines live.",
+    preset: BUILT_IN_PRESETS[0],
+  },
+  {
+    id: "template-live-review",
+    name: "Live Review",
+    description: "Bold red boxes for visual QA callouts.",
+    preset: BUILT_IN_PRESETS[1],
+  },
+  {
+    id: "template-process-walkthrough",
+    name: "Process Walkthrough",
+    description: "Stronger arrows for step-by-step flow narration.",
+    preset: BUILT_IN_PRESETS[2],
+  },
+  {
+    id: "template-commentary-notes",
+    name: "Commentary Notes",
+    description: "Readable text annotations for presenter context.",
+    preset: BUILT_IN_PRESETS[3],
   },
 ];
 
@@ -174,6 +208,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   const [showConfig, setShowConfig] = useState(false);
   const [showPresetCreator, setShowPresetCreator] = useState(false);
   const [presetName, setPresetName] = useState("");
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [customPresets, setCustomPresets] = useState<ToolPreset[]>(() =>
     readCustomPresets()
   );
@@ -221,6 +256,11 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   const applyPreset = (preset: ToolPreset) => {
     onToolSelect(preset.tool);
     onToolConfigChange(preset.config);
+  };
+
+  const applyTemplate = (template: UseCaseTemplate) => {
+    setActiveTemplateId(template.id);
+    applyPreset(template.preset);
   };
 
   const saveCurrentAsPreset = () => {
@@ -299,6 +339,33 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
             </div>
           </button>
         ))}
+      </div>
+
+      <div className="border-t border-border-primary mt-4 pt-4">
+        <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+          Use-Case Templates
+        </div>
+        <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {USE_CASE_TEMPLATES.map((template) => (
+            <button
+              key={template.id}
+              onClick={() => applyTemplate(template)}
+              className={`text-left rounded-lg border px-2.5 py-2 transition-colors ${
+                activeTemplateId === template.id
+                  ? "border-primary bg-primary/10"
+                  : "border-border-primary bg-bg-tertiary/70 hover:bg-surface-secondary"
+              }`}
+              title={template.description}
+            >
+              <div className="text-xs font-semibold text-text-primary">
+                {template.name}
+              </div>
+              <div className="mt-0.5 text-[11px] leading-4 text-text-tertiary">
+                {template.description}
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="border-t border-border-primary mt-4 pt-4">
