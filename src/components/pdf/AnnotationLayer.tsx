@@ -1013,6 +1013,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
         const endX = (annotation.x + annotation.width) * viewport.scale;
         const endY = (annotation.y + annotation.height) * viewport.scale;
         const hitStrokeWidth = Math.max(12, (annotation.strokeWidth ?? 2) + 8);
+        const markerId = `arrowhead-${annotation.id}`;
 
         return (
           <g key={key}>
@@ -1037,12 +1038,12 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               y1={startY}
               x2={endX}
               y2={endY}
-              markerEnd="url(#arrowhead)"
+              markerEnd={`url(#${markerId})`}
               pointerEvents="none"
             />
             <defs>
               <marker
-                id="arrowhead"
+                id={markerId}
                 markerWidth="10"
                 markerHeight="7"
                 refX="9"
@@ -1051,7 +1052,7 @@ export const AnnotationLayer: React.FC<AnnotationLayerProps> = ({
               >
                 <polygon
                   points="0 0, 10 3.5, 0 7"
-                  fill={annotation.color}
+                  fill={isSelected ? selectionStroke : annotation.color}
                   opacity={annotation.opacity}
                 />
               </marker>
