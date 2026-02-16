@@ -473,6 +473,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   className = "",
 }) => {
   const [showConfig, setShowConfig] = useState(false);
+  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
   const [showPresetCreator, setShowPresetCreator] = useState(false);
   const [presetName, setPresetName] = useState("");
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -1018,208 +1019,236 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
       </div>
 
       <div className="border-t border-border-primary mt-4 pt-4">
-        <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-          Template Profiles
-        </div>
-        <div className="mt-2 flex items-center gap-2">
-          <select
-            value={selectedProfile.id}
-            onChange={(event) => setSelectedProfileId(event.target.value)}
-            className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            {allProfiles.map((profile) => (
-              <option key={profile.id} value={profile.id}>
-                {profile.name}
-                {profile.builtIn ? " (built-in)" : ""}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={createProfile}
-            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
-          >
-            New
-          </button>
-          {!selectedProfile.builtIn && (
-            <button
-              onClick={deleteSelectedProfile}
-              className="rounded-md px-2 py-1.5 text-xs font-semibold text-error hover:bg-error/10"
-            >
-              Delete
-            </button>
-          )}
-        </div>
-
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="text"
-            value={profileNameInput}
-            onChange={(event) => setProfileNameInput(event.target.value)}
-            maxLength={48}
-            disabled={selectedProfile.builtIn}
-            className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
-            placeholder="Profile name"
-          />
-          <button
-            onClick={renameSelectedProfile}
-            disabled={
-              selectedProfile.builtIn ||
-              !profileNameInput.trim() ||
-              profileNameInput.trim() === selectedProfile.name
-            }
-            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Rename
-          </button>
-        </div>
-
-        <div className="mt-2 flex items-center flex-wrap gap-1.5">
-          <button
-            onClick={exportSelectedProfile}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
-          >
-            Export Pack
-          </button>
-          {customProfiles.length > 0 && (
-            <button
-              onClick={exportAllCustomProfiles}
-              className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
-            >
-              Export All
-            </button>
-          )}
-          <button
-            onClick={() => importInputRef.current?.click()}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary"
-          >
-            Import JSON
-          </button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".json,application/json"
-            onChange={importProfilesFromFile}
-            className="hidden"
-          />
-        </div>
-
-        {importMessage && (
-          <div className="mt-1 text-[11px] text-text-tertiary">
-            {importMessage}
-          </div>
-        )}
-
-        {selectedProfile.builtIn && (
-          <div className="mt-1 text-[11px] text-text-tertiary">
-            Built-in profile is read-only. Saving a preset creates a new custom
-            profile automatically.
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-border-primary mt-4 pt-4">
-        <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-          Current Document
-        </div>
-        <div
-          className="mt-2 text-xs text-text-secondary truncate"
-          title={documentPath}
+        <button
+          onClick={() => setShowTemplatePanel((prev) => !prev)}
+          className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-lg transition-all duration-200"
         >
-          {documentLabel}
-        </div>
-        <div className="mt-2 flex items-center gap-2 flex-wrap">
-          <button
-            onClick={applySelectedProfileToDocument}
-            disabled={!documentPath}
-            className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+          <span className="flex items-center gap-2">Template Packs</span>
+          <svg
+            className={`w-4 h-4 transform transition-transform ${showTemplatePanel ? "rotate-180" : ""}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Apply Selected Pack
-          </button>
-          <button
-            onClick={clearDocumentProfile}
-            disabled={!documentPath || !activeDocumentProfileId}
-            className="rounded-md px-2 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Clear
-          </button>
-        </div>
-        <div className="mt-1 text-[11px] text-text-tertiary">
-          {activeDocumentProfileName
-            ? `Applied profile: ${activeDocumentProfileName}`
-            : "No profile mapped for this document yet."}
-        </div>
-      </div>
-
-      <div className="border-t border-border-primary mt-4 pt-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
-            Presets In Profile
-          </div>
-          <button
-            onClick={() => setShowPresetCreator((prev) => !prev)}
-            disabled={!activeTool}
-            className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-bg-tertiary disabled:opacity-40 disabled:cursor-not-allowed"
-            title={
-              activeTool
-                ? "Save current tool settings as preset"
-                : "Select a tool to save a preset"
-            }
-          >
-            Save Current
-          </button>
-        </div>
-
-        {showPresetCreator && (
-          <div className="mt-2 flex items-center gap-2">
-            <input
-              type="text"
-              value={presetName}
-              onChange={(e) => setPresetName(e.target.value)}
-              placeholder="Preset name"
-              maxLength={32}
-              className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
             />
-            <button
-              onClick={saveCurrentAsPreset}
-              disabled={!presetName.trim() || !activeTool}
-              className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Save
-            </button>
-          </div>
-        )}
+          </svg>
+        </button>
 
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {selectedProfile.presets.map((preset) => (
-            <div
-              key={preset.id}
-              className="inline-flex items-center rounded-md border border-border-primary bg-bg-tertiary/80"
-            >
-              <button
-                onClick={() => applyPreset(preset)}
-                className="px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-l-md transition-colors"
-                title={`Apply ${preset.name}`}
-              >
-                {preset.name}
-              </button>
-              {!selectedProfile.builtIn && (
-                <button
-                  onClick={() => deletePresetFromSelectedProfile(preset.id)}
-                  className="px-1.5 py-1 text-xs text-text-tertiary hover:text-error hover:bg-error/10 rounded-r-md transition-colors border-l border-border-primary"
-                  title={`Delete ${preset.name}`}
-                  aria-label={`Delete preset ${preset.name}`}
+        {showTemplatePanel && (
+          <div className="mt-3 space-y-4 bg-bg-tertiary rounded-lg p-4">
+            <div>
+              <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+                Template Profiles
+              </div>
+              <div className="mt-2 flex items-center gap-2">
+                <select
+                  value={selectedProfile.id}
+                  onChange={(event) => setSelectedProfileId(event.target.value)}
+                  className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
-                  ×
+                  {allProfiles.map((profile) => (
+                    <option key={profile.id} value={profile.id}>
+                      {profile.name}
+                      {profile.builtIn ? " (built-in)" : ""}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={createProfile}
+                  className="rounded-md px-2 py-1.5 text-xs font-semibold bg-surface-secondary text-text-secondary hover:text-text-primary"
+                >
+                  New
                 </button>
+                {!selectedProfile.builtIn && (
+                  <button
+                    onClick={deleteSelectedProfile}
+                    className="rounded-md px-2 py-1.5 text-xs font-semibold text-error hover:bg-error/10"
+                  >
+                    Delete
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={profileNameInput}
+                  onChange={(event) => setProfileNameInput(event.target.value)}
+                  maxLength={48}
+                  disabled={selectedProfile.builtIn}
+                  className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+                  placeholder="Profile name"
+                />
+                <button
+                  onClick={renameSelectedProfile}
+                  disabled={
+                    selectedProfile.builtIn ||
+                    !profileNameInput.trim() ||
+                    profileNameInput.trim() === selectedProfile.name
+                  }
+                  className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Rename
+                </button>
+              </div>
+
+              <div className="mt-2 flex items-center flex-wrap gap-1.5">
+                <button
+                  onClick={exportSelectedProfile}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                >
+                  Export Pack
+                </button>
+                {customProfiles.length > 0 && (
+                  <button
+                    onClick={exportAllCustomProfiles}
+                    className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                  >
+                    Export All
+                  </button>
+                )}
+                <button
+                  onClick={() => importInputRef.current?.click()}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                >
+                  Import JSON
+                </button>
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={importProfilesFromFile}
+                  className="hidden"
+                />
+              </div>
+
+              {importMessage && (
+                <div className="mt-1 text-[11px] text-text-tertiary">
+                  {importMessage}
+                </div>
+              )}
+
+              {selectedProfile.builtIn && (
+                <div className="mt-1 text-[11px] text-text-tertiary">
+                  Built-in profile is read-only. Saving a preset creates a new
+                  custom profile automatically.
+                </div>
               )}
             </div>
-          ))}
-          {!selectedProfileHasPresets && (
-            <div className="text-xs text-text-tertiary">
-              This profile has no presets yet.
+
+            <div>
+              <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+                Current Document
+              </div>
+              <div
+                className="mt-2 text-xs text-text-secondary truncate"
+                title={documentPath}
+              >
+                {documentLabel}
+              </div>
+              <div className="mt-2 flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={applySelectedProfileToDocument}
+                  disabled={!documentPath}
+                  className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Apply Selected Pack
+                </button>
+                <button
+                  onClick={clearDocumentProfile}
+                  disabled={!documentPath || !activeDocumentProfileId}
+                  className="rounded-md px-2 py-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="mt-1 text-[11px] text-text-tertiary">
+                {activeDocumentProfileName
+                  ? `Applied profile: ${activeDocumentProfileName}`
+                  : "No profile mapped for this document yet."}
+              </div>
             </div>
-          )}
-        </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-xs font-semibold text-text-tertiary uppercase tracking-wider">
+                  Presets In Profile
+                </div>
+                <button
+                  onClick={() => setShowPresetCreator((prev) => !prev)}
+                  disabled={!activeTool}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-text-secondary hover:text-text-primary hover:bg-surface-secondary disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    activeTool
+                      ? "Save current tool settings as preset"
+                      : "Select a tool to save a preset"
+                  }
+                >
+                  Save Current
+                </button>
+              </div>
+
+              {showPresetCreator && (
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={presetName}
+                    onChange={(e) => setPresetName(e.target.value)}
+                    placeholder="Preset name"
+                    maxLength={32}
+                    className="flex-1 min-w-0 rounded-md border border-border-primary bg-surface-primary px-2.5 py-1.5 text-xs text-text-primary placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  />
+                  <button
+                    onClick={saveCurrentAsPreset}
+                    disabled={!presetName.trim() || !activeTool}
+                    className="rounded-md px-2 py-1.5 text-xs font-semibold bg-primary text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Save
+                  </button>
+                </div>
+              )}
+
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {selectedProfile.presets.map((preset) => (
+                  <div
+                    key={preset.id}
+                    className="inline-flex items-center rounded-md border border-border-primary bg-surface-secondary"
+                  >
+                    <button
+                      onClick={() => applyPreset(preset)}
+                      className="px-2 py-1 text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-l-md transition-colors"
+                      title={`Apply ${preset.name}`}
+                    >
+                      {preset.name}
+                    </button>
+                    {!selectedProfile.builtIn && (
+                      <button
+                        onClick={() =>
+                          deletePresetFromSelectedProfile(preset.id)
+                        }
+                        className="px-1.5 py-1 text-xs text-text-tertiary hover:text-error hover:bg-error/10 rounded-r-md transition-colors border-l border-border-primary"
+                        title={`Delete ${preset.name}`}
+                        aria-label={`Delete preset ${preset.name}`}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {!selectedProfileHasPresets && (
+                  <div className="text-xs text-text-tertiary">
+                    This profile has no presets yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {activeTool && (
