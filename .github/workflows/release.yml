@@ -330,13 +330,45 @@ jobs:
           ls -la artifacts/
 
       - name: Install Butler
+        id: install-butter
+        continue-on-error: true
         run: |
-          curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
-          unzip butler.zip
+          set -euo pipefail
+
+          READY=false
+
+          for attempt in 1 2 3; do
+            echo "Downloading Butler (attempt ${attempt}/3)..."
+            if curl -L -f -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default; then
+              READY=true
+              break
+            fi
+            echo "Butler download failed on attempt ${attempt}, retrying shortly..."
+            sleep 5
+          done
+
+          if [ "$READY" != "true" ]; then
+            echo "::warning::Butler download failed; skipping itch.io upload steps for this release"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if ! unzip butler.zip; then
+            echo "::warning::Butler archive failed to unzip; skipping itch.io upload steps"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           chmod +x butler
-          ./butler -V
+          if ./butler -V >/dev/null; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Butler binary check failed; skipping itch.io upload steps"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Upload macOS build to itch.io
+        if: steps.install-butter.outputs.ready == 'true'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -348,6 +380,7 @@ jobs:
           fi
 
       - name: Upload Windows build to itch.io
+        if: steps.install-butter.outputs.ready == 'true'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -359,6 +392,7 @@ jobs:
           fi
 
       - name: Upload Linux build to itch.io
+        if: steps.install-butter.outputs.ready == 'true'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: |
@@ -370,6 +404,7 @@ jobs:
           fi
 
       - name: Verify itch.io uploads
+        if: steps.install-butter.outputs.ready == 'true'
         env:
           BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
         run: ./butler status caedus90/streamslate

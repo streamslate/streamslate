@@ -31,6 +31,9 @@ stages:
 
 variables:
   CARGO_TERM_COLOR: always
+  # Some tooling (notably Cypress output) calls `tput`; GitLab runners may not
+  # provide TERM by default, which can cause spurious failures.
+  TERM: "xterm"
   # Keep Cargo downloads inside the repo workspace so GitLab cache paths are
   # relative and we avoid caching huge build outputs like src-tauri/target/.
   CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
@@ -273,15 +276,51 @@ docker:build:
         return "$RC"
       }
 
+      is_cache_export_failure() {
+        grep -Eq "error writing manifest blob|/manifests/buildcache|buildcache" buildctl.log
+      }
+
+      is_registry_network_failure() {
+        # Harbor can intermittently time out during push/HEAD requests; treat as retryable.
+        grep -Eq "TLS handshake timeout|context deadline exceeded|i/o timeout|connection reset by peer|unexpected EOF" buildctl.log
+      }
+
+      retry_build_if_registry_network() {
+        local max_retries="${1}"
+        shift
+
+        for attempt in $(seq 1 "$max_retries"); do
+          if ! is_registry_network_failure; then
+            return 1
+          fi
+          echo "Registry network error detected; retrying build (${attempt}/${max_retries})..."
+          sleep $((attempt * 10))
+          if run_build_with_log "$@"; then
+            return 0
+          fi
+        done
+
+        return 1
+      }
+
       if ! run_build_with_log \
           --export-cache "type=registry,ref=${CACHE_REF},mode=max" \
           --import-cache "type=registry,ref=${CACHE_REF}"; then
-        if grep -Eq "error writing manifest blob|/manifests/buildcache|buildcache" buildctl.log; then
+        if is_cache_export_failure; then
           echo "Registry cache export failed; retrying build without registry cache flags..."
-          run_build_with_log
+          if ! run_build_with_log; then
+            if ! retry_build_if_registry_network 2; then
+              echo "buildctl failed after retrying without registry cache; failing job."
+              exit 1
+            fi
+          fi
         else
-          echo "buildctl failed (not a known registry-cache export failure); failing job."
-          exit 1
+          if ! retry_build_if_registry_network 2 \
+              --export-cache "type=registry,ref=${CACHE_REF},mode=max" \
+              --import-cache "type=registry,ref=${CACHE_REF}"; then
+            echo "buildctl failed (not a known registry-cache export failure); failing job."
+            exit 1
+          fi
         fi
       fi
   rules:
