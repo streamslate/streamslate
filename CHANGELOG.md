@@ -2,6 +2,71 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/cblevins/streamslate/compare/v1.0.1...v1.1.0) (2026-02-17)
+
+### 📚 Documentation
+
+- **itch:** update profile copy for v1.0.1 hotfix ([d25a765](https://github.com/cblevins/streamslate/commit/d25a7652f0cf22d5c7190feff2c4fce63c135624))
+- refresh loom context pack for ui/core hardening ([1361db1](https://github.com/cblevins/streamslate/commit/1361db1e040f72987c59d7c4cadb7df0fedcd6f4))
+
+### 💄 Styles
+
+- align pdf navigation controls with design tokens ([51a8077](https://github.com/cblevins/streamslate/commit/51a80779f084740f45f1c6707d8c4f67ac89b61b))
+- format roadmap and cypress support ([486793e](https://github.com/cblevins/streamslate/commit/486793e6039d44fb36c31dfc48d1c3dd2f9a655a))
+
+### ✅ Tests
+
+- add remote workflow e2e and tauri ipc mock ([fe8d4bf](https://github.com/cblevins/streamslate/commit/fe8d4bfb08e2a1dd54a082f1ec55668abe4601d2))
+- cover annotation move and resize ([d20fa52](https://github.com/cblevins/streamslate/commit/d20fa529e681f0ec1e382cd3fb5e4a4a64ac449f))
+- force canvas mouse events in annotation e2e ([83ac41b](https://github.com/cblevins/streamslate/commit/83ac41bffb02e5b17f572153679a1056219f17f4))
+
+### 🔧 Chores
+
+- ignore cache dirs in prettier ([8fbd9e4](https://github.com/cblevins/streamslate/commit/8fbd9e42820b498167fe7430e6602c1efb8a247c))
+- ignore local scratch docs in prettier ([8b47fe6](https://github.com/cblevins/streamslate/commit/8b47fe6e16d7b8e6852d431d750d99163c28c8ce))
+
+### ✨ Features
+
+- add template profiles and syphon output scaffolding ([70cc7b6](https://github.com/cblevins/streamslate/commit/70cc7b6693b5d81c5ae040791106b09de313c011))
+- add undo/redo buttons to annotation toolbar ([518bb78](https://github.com/cblevins/streamslate/commit/518bb78abfd457f90f062811927bbe7402d1c0c8))
+- annotation toolbar style controls ([5906a37](https://github.com/cblevins/streamslate/commit/5906a3723fdd5c9b7964389e9a9280b8dcf5dc9c))
+- **annotations:** persist text backgrounds and stabilize edit ux ([3afdf12](https://github.com/cblevins/streamslate/commit/3afdf12082c95fdaf1f3e876dd15ed965e3452cf))
+- apply websocket events to app state ([0d4013c](https://github.com/cblevins/streamslate/commit/0d4013c6d7df7f7c0fcf70eace3b936e24b619c5))
+- clamp annotation toolbar using measured size ([bf76426](https://github.com/cblevins/streamslate/commit/bf7642677f10522adf643f3cb70a0dcc4c25d590))
+- duplicate annotations via toolbar and shortcut ([0455219](https://github.com/cblevins/streamslate/commit/0455219c7bd80040d8f47507339baf8f91c12a15))
+- expand integration event sync and annotation mapping ([e035bab](https://github.com/cblevins/streamslate/commit/e035bab7eae3cbb06bea496b1818ac1ee40ba139))
+- harden websocket state and tighten shell UI ([73955e9](https://github.com/cblevins/streamslate/commit/73955e9b32fa419827b75213e05ce0b83aab7002))
+- keyboard nudge and copy-resize modifiers ([221dc80](https://github.com/cblevins/streamslate/commit/221dc8037417847439f132be75513dcb7ab5aa94))
+- persist annotation style and geometry ([ecd4354](https://github.com/cblevins/streamslate/commit/ecd4354a9681a53f0e9b23e0143e2d2df38b32a2))
+- persist sidebar layout state and reload behavior ([9d4880e](https://github.com/cblevins/streamslate/commit/9d4880e74840177bb0307feb3df91c1928c6bca3))
+- persist view mode preferences ([688085f](https://github.com/cblevins/streamslate/commit/688085fef81307e83d5e99f4f6aeeb9bb96a941e))
+- surface remote websocket activity in status bar ([a2662a2](https://github.com/cblevins/streamslate/commit/a2662a2e9c1227e2b191a4737b4858a8e7fce9b7))
+- **ui:** add annotation preset library in toolbar ([96d2558](https://github.com/cblevins/streamslate/commit/96d2558b608d66a8fc17d26afd59c0cd703f49c7))
+- **ui:** add use-case annotation templates ([ccf98d0](https://github.com/cblevins/streamslate/commit/ccf98d0cc1162672c4af4f153fe1df586cba4140))
+- undo and redo annotation edits ([efb1fbd](https://github.com/cblevins/streamslate/commit/efb1fbdc67592a126eba77f2231ef18c0764b183))
+
+### 🐛 Bug Fixes
+
+- accept legacy arrow key names for nudge ([f2160ed](https://github.com/cblevins/streamslate/commit/f2160edacee35db695614dbcc82df3b478dd07e9))
+- collapse template controls to keep annotation canvas visible ([0edba76](https://github.com/cblevins/streamslate/commit/0edba765e038d0135c9b0f4303651e49d7da4a6f))
+- **e2e:** harden annotation toolbar assertions in headless linux ([2155588](https://github.com/cblevins/streamslate/commit/21555889560cfc775dc5cd93aa91234ab6f476e0))
+- hide annotation toolbar while dragging ([5df35d2](https://github.com/cblevins/streamslate/commit/5df35d2005c7d65c24002baa93a463edfb70a902))
+- keep annotation toolbar clickable after selection ([ba8bd79](https://github.com/cblevins/streamslate/commit/ba8bd798f4e47072acee120c84c72229d3c14362))
+- keep annotation toolbar visible but non-interactive during drags ([49c5296](https://github.com/cblevins/streamslate/commit/49c5296ea944d5ee927915b9e0de7557ff30d7f8))
+- use unique arrowhead markers and selected color ([1efed1f](https://github.com/cblevins/streamslate/commit/1efed1f367fe45cf9700de76f051a04984dfcc98))
+
+### 👷 CI/CD
+
+- bump cache key to avoid old large cache ([0c5ab98](https://github.com/cblevins/streamslate/commit/0c5ab9876c08712de72d1c3fc0638cd69390fa17))
+- harden release + harbor docker build ([e6a3eff](https://github.com/cblevins/streamslate/commit/e6a3effd16232e6068aac02b962560cca5d2897c))
+- ignore cargo/npm caches in eslint ([d09687f](https://github.com/cblevins/streamslate/commit/d09687f1246816c985ec1eb8926700a9c5da63a6))
+- reduce cache size and fix cargo cache paths ([ca9bdcd](https://github.com/cblevins/streamslate/commit/ca9bdcd4707efe8bbd2439d24e58f0e0b9735db6))
+- scope linux package installs to required jobs ([8b36dd6](https://github.com/cblevins/streamslate/commit/8b36dd6e3f41de5541ca132781ff9d77576eebd8))
+- shard linux cypress specs across parallel jobs ([7a8d719](https://github.com/cblevins/streamslate/commit/7a8d7194be53281369d3deb8122b755fe76e9183))
+- split linux tests and tighten cache usage ([9ea2aa6](https://github.com/cblevins/streamslate/commit/9ea2aa6a804713905cc71d94cbd50a51d92027a7))
+- start linux tests immediately with needs ([b9aab00](https://github.com/cblevins/streamslate/commit/b9aab00da26735d7b496669c1cd9cf4876f7dfe5))
+- tolerate harbor build cache export failures ([cb4815d](https://github.com/cblevins/streamslate/commit/cb4815dc58e10f0d3fe97959a74274438af9df46))
+
 ## [1.0.0](https://github.com/streamslate/streamslate/compare/v0.0.2-beta.10...v1.0.0) (2026-02-11)
 
 ### 🎉 v1.0 — Public Release
