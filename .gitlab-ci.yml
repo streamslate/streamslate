@@ -281,8 +281,8 @@ docker:build:
       }
 
       is_registry_network_failure() {
-        # Harbor can intermittently time out during push/HEAD requests; treat as retryable.
-        grep -Eq "TLS handshake timeout|context deadline exceeded|i/o timeout|connection reset by peer|unexpected EOF" buildctl.log
+        # Treat transient Harbor push/HEAD timeouts and occasional BuildKit connectivity blips as retryable.
+        grep -Eq "TLS handshake timeout|context deadline exceeded|i/o timeout|connection reset by peer|unexpected EOF|failed to list workers|transport: error while dialing|dial tcp|connection refused" buildctl.log
       }
 
       retry_build_if_registry_network() {
