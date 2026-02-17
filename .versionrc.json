@@ -25,7 +25,7 @@
   },
   "scripts": {
     "prerelease": "npm run lint",
-    "postbump": "npm run sync-versions",
+    "postbump": "npm run sync-versions && git add src-tauri/Cargo.toml src-tauri/tauri.conf.json",
     "postchangelog": "prettier --write CHANGELOG.md"
   },
   "bumpFiles": [
