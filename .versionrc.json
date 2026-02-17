@@ -12,9 +12,9 @@
     { "type": "chore", "section": "🔧 Chores" },
     { "type": "revert", "section": "⏪ Reverts" }
   ],
-  "commitUrlFormat": "https://github.com/cblevins/streamslate/commit/{{hash}}",
-  "compareUrlFormat": "https://github.com/cblevins/streamslate/compare/{{previousTag}}...{{currentTag}}",
-  "issueUrlFormat": "https://github.com/cblevins/streamslate/issues/{{id}}",
+  "commitUrlFormat": "https://github.com/streamslate/streamslate/commit/{{hash}}",
+  "compareUrlFormat": "https://github.com/streamslate/streamslate/compare/{{previousTag}}...{{currentTag}}",
+  "issueUrlFormat": "https://github.com/streamslate/streamslate/issues/{{id}}",
   "userUrlFormat": "https://github.com/{{user}}",
   "releaseCommitMessageFormat": "chore(release): 🚀 v{{currentTag}}",
   "skip": {
