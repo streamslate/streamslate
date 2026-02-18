@@ -1,5 +1,34 @@
 # Worklog
 
+## 2026-02-18
+
+- What changed:
+  - Ran RALPH loop Review phase across ROADMAP.md, README.md, CHANGELOG.md, and .loom/ artifacts.
+  - Identified drift: v1.1.0/v1.1.1 shipped (annotation presets, templates, Syphon scaffolding, hardening) but ROADMAP/README not updated.
+  - Updated ROADMAP.md:
+    - Added "1.1 ✅" section with all delivered items.
+    - Moved NDI, Syphon GA, and auto-update to "Post-1.1" section.
+    - Marked annotation presets and template system as complete.
+  - Updated README.md:
+    - Changed Presenter Mode and OBS/Stream Deck status from 🛠️ to ✅.
+    - Added Presets & Templates row.
+    - Removed premature NDI integration guide claim.
+    - Updated roadmap summary to reflect v1.1 delivery.
+  - Updated .loom/30-implementation-plan.md:
+    - Marked M1, M2, M3 as complete with evidence.
+    - Set M4 as in-progress.
+  - Added this worklog entry.
+- Why:
+  - RALPH M4 docs reconciliation slice, closing the hardening cycle.
+- What's next:
+  - Verify lint/build remain green.
+  - Close M4 and decide next feature slice (NDI output vs. auto-update key setup).
+- Sources:
+  - CHANGELOG.md (v1.1.0, v1.1.1 entries)
+  - ROADMAP.md
+  - README.md
+  - .loom/30-implementation-plan.md
+
 ## 2026-02-12
 
 - What changed:

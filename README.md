@@ -17,7 +17,7 @@ Mark it. Show it. – A lightning-fast PDF annotator built specifically for stre
 Teaching live, reacting to research papers, or breaking down patch notes on stream usually means fumbling with clunky viewers or overlay hacks. StreamSlate gives you a purpose-built workspace that:
 • Stays invisible until you need it – auto-hiding chrome and a one-click Presenter Mode keep the focus on content, not UI.
 • Loves the dark – true dark-mode page inversion + neon/pastel highlight palette pop on camera without glare.
-• Plugs straight into OBS / StreamYard / vMix – local WebSocket server and optional NDI output make scene setup trivial.
+• Plugs straight into OBS / StreamYard / vMix – local WebSocket server makes scene setup trivial.
 • Runs light – powered by Tauri + PDF.js; <10 MB install and <80 MB RAM with a 100-page PDF.
 
 ⸻
@@ -27,10 +27,11 @@ Teaching live, reacting to research papers, or breaking down patch notes on stre
 Category What you get Status
 ✏️ Annotations Highlight • underline • free-ink • shapes • call-outs ✅
 🌙 Dark-First UI Adaptive page inversion, WCAG-contrast color swatches ✅
-🎥 Presenter Mode Borderless window/Browser Source, transparent bg toggle 🛠️
-🖥️ OBS / Stream Deck Global hotkeys + plug-in, WebSocket control 🛠️
+🎥 Presenter Mode Borderless window/Browser Source, transparent bg toggle ✅
+🖥️ OBS / Stream Deck Global hotkeys + plug-in, WebSocket control ✅
 🌐 Collaboration Live cursors & comments for co-hosts ✅
 📦 Export Embed annotations back into PDF or JSON layer ✅
+🎨 Presets & Templates Annotation preset library + use-case templates ✅
 
 ⸻
 
@@ -60,7 +61,7 @@ The first build will compile the Tauri (Rust) side – subsequent runs are much 
 Tool Steps
 OBS Studio Install OBS WebSocket 5.x → Add Browser Source with the Presenter URL (auto-generated in StreamSlate → Integrations panel)
 Stream Deck Install the official StreamSlate plug-in → Map actions like Next Page, Toggle Highlighter, Clean Mode
-vMix / NDI Enable NDI Output in Settings → Presenter and add it as an NDI source
+vMix / NDI NDI output is planned — see [ROADMAP.md](ROADMAP.md) for status
 Shortcuts / Automations Every function is exposed over a local WebSocket API (`ws://127.0.0.1:11451`) – see [docs/api.md](docs/api.md)
 
 ⸻
@@ -69,7 +70,8 @@ Shortcuts / Automations Every function is exposed over a local WebSocket API (`w
 • MVP – Dark viewer, highlighter, OBS browser source
 • Beta – Annotation save/export, Stream Deck plug-in
 • 1.0 – Live collaboration, cross-platform builds, auto-update
-• 1.1 – NDI output, Syphon output, presets/templates
+• 1.1 – Presets/templates, annotation toolbar, Syphon scaffolding ✅
+• Next – NDI output, Syphon GA, auto-update key setup
 • Mobile companion (iPad side-car)
 
 See more in ROADMAP.md. Have a feature request? Open an issue or vote on the board!

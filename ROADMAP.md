@@ -8,9 +8,9 @@
 
 ## Current Status
 
-**v1.0.0 — Public Release** (February 2026)
+**v1.1.1** (February 2026)
 
-StreamSlate is production-ready. Core annotation, streaming integration, and live collaboration features are complete. See README.md for feature highlights.
+StreamSlate is production-ready. Core annotation, streaming integration, live collaboration, presets, and template features are complete. See README.md for feature highlights.
 
 ## Phases
 
@@ -33,13 +33,20 @@ StreamSlate is production-ready. Core annotation, streaming integration, and liv
 - [x] CI/CD with code signing and notarization
 - [x] E2E test coverage (Cypress)
 
-### Post-1.0
+### 1.1 ✅ (Annotation Presets, Templates, Hardening)
 
-- [ ] NDI output (requires NDI SDK) — target v1.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
-- [ ] Syphon output (macOS only) — target v1.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
-- [ ] Auto-update key setup — target v1.0.1 ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
-- [ ] Annotation presets library ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/5))
-- [ ] Template system for common use cases ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/6))
+- [x] Annotation presets library ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/5))
+- [x] Template system for common use cases ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/6))
+- [x] Real WebSocket integration state (replaced simulated status)
+- [x] UI consistency and design token alignment
+- [x] Core workflow E2E test coverage
+- [x] Syphon output scaffolding (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+
+### Post-1.1
+
+- [ ] NDI output (requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
+- [ ] Syphon output GA (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+- [ ] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
 
 ### Future
 

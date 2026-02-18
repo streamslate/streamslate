@@ -12,9 +12,19 @@ Execute a focused hardening cycle for UI consistency and core workflow reliabili
 
 ## Current Status
 
-- `M1` is in progress:
-  - completed: WebSocket connection state moved from simulated to real client-backed state.
-  - remaining: richer event mapping + removal of remaining simulated OBS path.
+- `M1` is **complete** (v1.1.0):
+  - WebSocket connection state moved from simulated to real client-backed state.
+  - Event mapping expanded for page/zoom/presenter/annotation/integration events.
+  - All simulated/placeholder patterns removed from integration store.
+- `M2` is **complete** (v1.1.0):
+  - Shell components aligned with design tokens.
+  - PDF viewer overlay class fixed. Update banner and borderless/presenter UI normalized.
+- `M3` is **complete** (v1.1.0):
+  - 7 E2E specs (1105 lines): annotations-edit, app, integration-websocket, pdf-viewer, settings, sidebar, workflow.
+  - Covers annotation creation/editing, WebSocket integration, remote control workflow.
+- `M4` is **in progress**:
+  - docs/api.md created.
+  - ROADMAP.md and README.md reconciliation in progress (2026-02-18).
 
 ## Milestones
 
