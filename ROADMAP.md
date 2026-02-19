@@ -42,11 +42,11 @@ StreamSlate is production-ready. Core annotation, streaming integration, live co
 - [x] Core workflow E2E test coverage
 - [x] Syphon output scaffolding (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
 
-### Post-1.1
+### Post-1.1 ✅
 
-- [ ] NDI output (requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
-- [ ] Syphon output GA (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
-- [ ] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
+- [x] NDI output (requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
+- [x] Syphon output GA (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+- [x] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
 
 ### Future
 
