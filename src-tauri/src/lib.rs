@@ -75,6 +75,7 @@ pub fn run() {
             stop_ndi_sender,
             send_video_frame,
             list_capture_targets,
+            list_capture_displays,
             is_ndi_available,
             is_syphon_available,
             get_output_capabilities,

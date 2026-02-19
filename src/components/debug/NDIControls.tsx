@@ -18,18 +18,28 @@ export const NDIControls: React.FC = () => {
     syphonAvailable,
     status,
     captureTargets,
+    displayTargets,
     startCapture,
     stopCapture,
     startSyphonOutput,
     stopSyphonOutput,
     listCaptureTargets,
+    listDisplays,
     getCaptureStatus,
     sendCanvasFrame,
   } = useNDI();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [showTargets, setShowTargets] = useState(false);
+  const [selectedDisplayId, setSelectedDisplayId] = useState<
+    number | undefined
+  >(undefined);
   const [legacyMode, setLegacyMode] = useState(false);
+
+  // Load displays on mount
+  useEffect(() => {
+    listDisplays();
+  }, [listDisplays]);
 
   // Refresh status periodically while capturing
   useEffect(() => {
@@ -140,11 +150,36 @@ export const NDIControls: React.FC = () => {
         </div>
       )}
 
+      {/* Display Selector */}
+      {displayTargets.length > 0 && (
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-text-tertiary">Capture source:</label>
+          <select
+            value={selectedDisplayId ?? ""}
+            onChange={(e) =>
+              setSelectedDisplayId(
+                e.target.value ? Number(e.target.value) : undefined
+              )
+            }
+            disabled={isSending}
+            className="text-xs bg-surface-secondary border border-border-primary rounded px-2 py-1 disabled:opacity-50"
+          >
+            <option value="">StreamSlate Window</option>
+            {displayTargets.map((d) => (
+              <option key={d.id} value={d.id}>
+                Display {d.id} ({d.width}x{d.height})
+                {d.is_primary ? " — Primary" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex flex-wrap gap-2">
         {!isSending ? (
           <button
-            onClick={startCapture}
+            onClick={() => startCapture(selectedDisplayId)}
             className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-xs"
           >
             Start Native Capture

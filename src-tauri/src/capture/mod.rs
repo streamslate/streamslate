@@ -218,6 +218,41 @@ pub fn find_primary_display() -> Option<SCDisplay> {
     displays.into_iter().next()
 }
 
+/// Get a list of all connected displays
+pub fn list_capturable_displays() -> Vec<(u32, u32, u32, f64, f64)> {
+    let content = match SCShareableContent::get() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Failed to get shareable content: {:?}", e);
+            return vec![];
+        }
+    };
+
+    content
+        .displays()
+        .into_iter()
+        .map(|d| {
+            let frame = d.frame();
+            (
+                d.display_id(),
+                d.width(),
+                d.height(),
+                frame.origin().x,
+                frame.origin().y,
+            )
+        })
+        .collect()
+}
+
+/// Find a display by its ID
+pub fn find_display_by_id(display_id: u32) -> Option<SCDisplay> {
+    let content = SCShareableContent::get().ok()?;
+    content
+        .displays()
+        .into_iter()
+        .find(|d| d.display_id() == display_id)
+}
+
 /// Get a list of all available windows for capture
 pub fn list_capturable_windows() -> Vec<(u32, String, String)> {
     let content = match SCShareableContent::get() {

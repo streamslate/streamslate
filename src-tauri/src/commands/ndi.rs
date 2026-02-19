@@ -18,8 +18,9 @@ use tracing::{debug, info, warn};
 
 #[cfg(target_os = "macos")]
 use crate::capture::{
-    create_stream_config, create_window_filter, find_streamslate_window, list_capturable_windows,
-    CaptureConfig, FrameCallback, StreamHandler,
+    create_display_filter, create_stream_config, create_window_filter, find_display_by_id,
+    find_streamslate_window, list_capturable_displays, list_capturable_windows, CaptureConfig,
+    FrameCallback, StreamHandler,
 };
 #[cfg(target_os = "macos")]
 use screencapturekit::prelude::{SCStream, SCStreamOutputType};
@@ -32,6 +33,17 @@ pub struct CaptureTarget {
     pub id: u32,
     pub app_name: String,
     pub title: String,
+}
+
+/// Information about a capturable display/monitor
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DisplayTarget {
+    pub id: u32,
+    pub width: u32,
+    pub height: u32,
+    pub origin_x: f64,
+    pub origin_y: f64,
+    pub is_primary: bool,
 }
 
 /// NDI/Capture feature status
@@ -80,6 +92,33 @@ pub async fn list_capture_targets() -> Result<Vec<CaptureTarget>> {
     Ok(vec![])
 }
 
+/// List available displays/monitors for capture
+#[tauri::command]
+#[cfg(target_os = "macos")]
+pub async fn list_capture_displays() -> Result<Vec<DisplayTarget>> {
+    let displays = list_capturable_displays();
+    let primary_id = displays.first().map(|d| d.0);
+
+    Ok(displays
+        .into_iter()
+        .map(|(id, width, height, origin_x, origin_y)| DisplayTarget {
+            id,
+            width,
+            height,
+            origin_x,
+            origin_y,
+            is_primary: Some(id) == primary_id,
+        })
+        .collect())
+}
+
+/// List available displays for capture (non-macOS stub)
+#[tauri::command]
+#[cfg(not(target_os = "macos"))]
+pub async fn list_capture_displays() -> Result<Vec<DisplayTarget>> {
+    Ok(vec![])
+}
+
 /// Check if NDI feature is available
 #[tauri::command]
 pub async fn is_ndi_available() -> Result<bool> {
@@ -125,9 +164,12 @@ pub async fn get_capture_status(state: State<'_, AppState>) -> Result<CaptureSta
 }
 
 /// Start native capture (and optionally NDI output) - macOS implementation
+///
+/// If `display_id` is provided, captures that specific display.
+/// Otherwise, captures the StreamSlate main window.
 #[tauri::command]
 #[cfg(target_os = "macos")]
-pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
+pub async fn start_ndi_sender(state: State<'_, AppState>, display_id: Option<u32>) -> Result<()> {
     // 1. Check/Set State
     {
         let mut integration = state
@@ -170,7 +212,7 @@ pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
     // 3. Spawn capture thread
     let state_arc = state.inner().clone();
     std::thread::spawn(move || {
-        if let Err(e) = run_capture_loop(state_arc) {
+        if let Err(e) = run_capture_loop(state_arc, display_id) {
             warn!("Capture loop exited with error: {:?}", e);
         }
     });
@@ -181,7 +223,7 @@ pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
 /// Start native capture - non-macOS stub
 #[tauri::command]
 #[cfg(not(target_os = "macos"))]
-pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
+pub async fn start_ndi_sender(state: State<'_, AppState>, display_id: Option<u32>) -> Result<()> {
     warn!("Native capture not supported on this platform");
     let mut integration = state
         .integration
@@ -332,41 +374,65 @@ pub async fn send_video_frame(frame_data: Vec<u8>, width: u32, height: u32) -> R
 
 /// Main capture loop using ScreenCaptureKit (macOS only)
 ///
-/// Creates an SCStream targeting the StreamSlate window. Each captured frame
-/// is fanned out to whichever outputs are active (NDI, Syphon) via the
-/// `FrameOutput` handles stored in `state.outputs`.
+/// If `display_id` is Some, captures the specified display.
+/// Otherwise, captures the StreamSlate main window.
+/// Each captured frame is fanned out to whichever outputs are active
+/// (NDI, Syphon) via the `FrameOutput` handles stored in `state.outputs`.
 #[cfg(target_os = "macos")]
-fn run_capture_loop(state: AppState) -> std::result::Result<(), Box<dyn std::error::Error>> {
+fn run_capture_loop(
+    state: AppState,
+    display_id: Option<u32>,
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
     info!("Native capture loop started");
 
-    // Find the StreamSlate window
-    let window = match find_streamslate_window() {
-        Some(w) => {
-            info!(
-                "Capturing StreamSlate window: {} (ID: {})",
-                w.title().unwrap_or_default(),
-                w.window_id()
-            );
-            w
-        }
-        None => {
-            // Fallback: list windows for debug, then bail
-            let windows = list_capturable_windows();
-            info!("Available windows ({}):", windows.len());
-            for (id, app, title) in windows.iter().take(5) {
-                debug!("  - [{}] {} : {}", id, app, title);
-            }
-            warn!("StreamSlate window not found — cannot start capture");
-            let mut integration = state.integration.lock().unwrap();
-            integration.ndi_active = false;
-            return Ok(());
-        }
-    };
-
-    // Build stream configuration and content filter
+    // Build stream configuration
     let config = CaptureConfig::default();
     let stream_config = create_stream_config(&config);
-    let filter = create_window_filter(&window);
+
+    // Create content filter based on capture target
+    let filter = if let Some(id) = display_id {
+        // Display capture mode
+        match find_display_by_id(id) {
+            Some(sc_display) => {
+                info!(
+                    "Capturing display {} ({}x{})",
+                    id,
+                    sc_display.width(),
+                    sc_display.height()
+                );
+                create_display_filter(&sc_display)
+            }
+            None => {
+                warn!("Display {} not found — cannot start capture", id);
+                let mut integration = state.integration.lock().unwrap();
+                integration.ndi_active = false;
+                return Ok(());
+            }
+        }
+    } else {
+        // Window capture mode (legacy default)
+        match find_streamslate_window() {
+            Some(w) => {
+                info!(
+                    "Capturing StreamSlate window: {} (ID: {})",
+                    w.title().unwrap_or_default(),
+                    w.window_id()
+                );
+                create_window_filter(&w)
+            }
+            None => {
+                let windows = list_capturable_windows();
+                info!("Available windows ({}):", windows.len());
+                for (wid, app, title) in windows.iter().take(5) {
+                    debug!("  - [{}] {} : {}", wid, app, title);
+                }
+                warn!("StreamSlate window not found — cannot start capture");
+                let mut integration = state.integration.lock().unwrap();
+                integration.ndi_active = false;
+                return Ok(());
+            }
+        }
+    };
 
     info!("Capture config: {:?}", config);
 

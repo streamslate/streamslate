@@ -25,6 +25,18 @@ export interface CaptureStatus {
   current_fps: number;
 }
 
+/**
+ * Display/monitor target information
+ */
+export interface DisplayTarget {
+  id: number;
+  width: number;
+  height: number;
+  origin_x: number;
+  origin_y: number;
+  is_primary: boolean;
+}
+
 export interface OutputCapabilities {
   platform: string;
   ndi_available: boolean;
@@ -43,6 +55,7 @@ export const useNDI = () => {
   const [isSending, setIsSending] = useState(false);
   const [fps, setFps] = useState(0);
   const [captureTargets, setCaptureTargets] = useState<CaptureTarget[]>([]);
+  const [displayTargets, setDisplayTargets] = useState<DisplayTarget[]>([]);
   const [ndiAvailable, setNdiAvailable] = useState(false);
   const [syphonAvailable, setSyphonAvailable] = useState(false);
   const [status, setStatus] = useState<CaptureStatus | null>(null);
@@ -106,6 +119,20 @@ export const useNDI = () => {
   }, []);
 
   /**
+   * List all available displays/monitors for capture
+   */
+  const listDisplays = useCallback(async () => {
+    try {
+      const displays = await invoke<DisplayTarget[]>("list_capture_displays");
+      setDisplayTargets(displays);
+      return displays;
+    } catch (err) {
+      console.error("Failed to list displays:", err);
+      return [];
+    }
+  }, []);
+
+  /**
    * Get current capture status
    */
   const getCaptureStatus = useCallback(async () => {
@@ -121,16 +148,20 @@ export const useNDI = () => {
 
   /**
    * Start native screen capture (and NDI if available)
+   * @param displayId Optional display ID to capture. If omitted, captures the StreamSlate window.
    */
-  const startCapture = useCallback(async () => {
-    try {
-      await invoke("start_ndi_sender");
-      setIsSending(true);
-      await getCaptureStatus();
-    } catch (err) {
-      console.error("Failed to start capture:", err);
-    }
-  }, [getCaptureStatus]);
+  const startCapture = useCallback(
+    async (displayId?: number) => {
+      try {
+        await invoke("start_ndi_sender", { displayId: displayId ?? null });
+        setIsSending(true);
+        await getCaptureStatus();
+      } catch (err) {
+        console.error("Failed to start capture:", err);
+      }
+    },
+    [getCaptureStatus]
+  );
 
   /**
    * Stop native screen capture
@@ -210,6 +241,7 @@ export const useNDI = () => {
     isSending,
     fps,
     captureTargets,
+    displayTargets,
     ndiAvailable,
     syphonAvailable,
     status,
@@ -220,6 +252,7 @@ export const useNDI = () => {
     startSyphonOutput,
     stopSyphonOutput,
     listCaptureTargets,
+    listDisplays,
     getCaptureStatus,
     checkNdiAvailable,
     checkSyphonAvailable,
