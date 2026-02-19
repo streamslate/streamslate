@@ -16,12 +16,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { usePDF } from "../../hooks/usePDF";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
 import { NDIControls } from "../debug/NDIControls";
 import { usePDFStore } from "../../stores/pdf.store";
+import { useSettingsSync } from "../../hooks/useSettingsSync";
 
 type Panel = "files" | "annotations" | "settings";
 
@@ -174,6 +175,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (state) => state.selectedAnnotationId
   );
   const selectAnnotation = usePDFStore((state) => state.selectAnnotation);
+  const { exportSettings, triggerImport } = useSettingsSync();
+  const [importStatus, setImportStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
   // Access annotation state and actions from PDF hook
   const {
@@ -217,6 +223,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Handle toggling annotation visibility
   const handleToggleVisibility = (annotation: Annotation) => {
     updateAnnotation(annotation.id, { visible: !annotation.visible });
+  };
+
+  const handleImportSettings = async () => {
+    setImportStatus(null);
+    const result = await triggerImport();
+    if (result.success) {
+      setImportStatus({
+        type: "success",
+        message: "Settings imported. Reload to apply all changes.",
+      });
+    } else {
+      setImportStatus({
+        type: "error",
+        message: result.error ?? "Import failed",
+      });
+    }
   };
 
   // Handle deleting an annotation
@@ -706,6 +728,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </p>
                     </div>
                   )}
+
+                  {/* Data Section */}
+                  <div className="pt-6 border-t border-border-secondary space-y-4">
+                    <h4 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider">
+                      Data
+                    </h4>
+                    <p className="text-xs text-text-tertiary">
+                      Export or import all settings (theme, layout, view modes,
+                      annotation templates) as a JSON file.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={exportSettings}
+                        className="flex-1 px-3 py-2 bg-surface-tertiary border border-border-primary rounded-lg text-sm font-medium text-text-primary hover:bg-bg-tertiary transition-colors"
+                      >
+                        Export Settings
+                      </button>
+                      <button
+                        onClick={handleImportSettings}
+                        className="flex-1 px-3 py-2 bg-surface-tertiary border border-border-primary rounded-lg text-sm font-medium text-text-primary hover:bg-bg-tertiary transition-colors"
+                      >
+                        Import Settings
+                      </button>
+                    </div>
+                    {importStatus && (
+                      <div
+                        className={`p-3 rounded-lg text-sm ${
+                          importStatus.type === "success"
+                            ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                            : "bg-red-500/10 border border-red-500/30 text-red-400"
+                        }`}
+                      >
+                        {importStatus.message}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Experimental Section */}
                   <div className="pt-6 border-t border-border-secondary space-y-4">
