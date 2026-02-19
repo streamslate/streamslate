@@ -13,6 +13,13 @@
 #   APPLE_API_KEY_BASE64       - Base64-encoded .p8 API key file
 #   APPLE_TEAM_ID              - Apple Developer Team ID
 #
+# For Tauri Auto-Update Signing (build:macos job):
+#   TAURI_SIGNING_PRIVATE_KEY          - Minisign private key (from `tauri signer generate`)
+#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD - Password for the private key (optional)
+#
+# For GitHub Release Publishing (release:github job):
+#   GH_TOKEN                   - GitHub personal access token with repo scope
+#
 # For Container Registry (docker:build job):
 #   Uses central BuildKit server + Harbor registry (registry.harbor.lan)
 #   No additional CI variables needed - BuildKit server has push credentials
@@ -194,6 +201,7 @@ build:macos:
     - set -a && source build.env && set +a
     - echo "Signing with identity $APPLE_SIGNING_IDENTITY"
     - if [ -n "$APPLE_API_KEY_BASE64" ]; then API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"; echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"; export APPLE_API_KEY_PATH="$API_KEY_PATH"; echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env; echo "Notarization API key ready"; else echo "Warning APPLE_API_KEY_BASE64 not set, notarization will be skipped"; fi
+    - if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then export TAURI_SIGNING_PRIVATE_KEY; export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_SIGNING_PRIVATE_KEY not set, update bundles will not be signed"; fi
     - npm run tauri:build
   after_script:
     - if [ -f build.env ]; then source build.env; fi
@@ -205,6 +213,8 @@ build:macos:
     paths:
       - src-tauri/target/release/bundle/dmg/*.dmg
       - src-tauri/target/release/bundle/macos/*.app
+      - src-tauri/target/release/bundle/macos/*.tar.gz
+      - src-tauri/target/release/bundle/macos/*.tar.gz.sig
     expire_in: 1 week
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
@@ -326,3 +336,15 @@ docker:build:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_COMMIT_BRANCH == "develop"
+
+release:github:
+  stage: deploy
+  tags:
+    - macos
+  needs:
+    - build:macos
+  cache: []
+  script:
+    - ./scripts/publish-update.sh --tag "$CI_COMMIT_TAG"
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/

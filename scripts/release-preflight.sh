@@ -141,6 +141,45 @@ else
   critical_warn "GitHub release assets incomplete: dmg=${dmg_count:-0}, AppImage=${appimage_count:-0}, exe=${exe_count:-0}"
 fi
 
+# Auto-update artifact checks
+tar_gz_count="$(printf '%s\n' "$asset_names" | rg -c '\.tar\.gz$' || true)"
+sig_count="$(printf '%s\n' "$asset_names" | rg -c '\.tar\.gz\.sig$' || true)"
+has_latest_json="$(printf '%s\n' "$asset_names" | rg -c '^latest\.json$' || true)"
+
+if [[ "${tar_gz_count:-0}" -gt 0 ]]; then
+  ok "GitHub release has update bundle (.tar.gz): ${tar_gz_count}"
+else
+  critical_warn "GitHub release missing update bundle (.tar.gz) - auto-update will not work"
+fi
+
+if [[ "${sig_count:-0}" -gt 0 ]]; then
+  ok "GitHub release has update signature (.tar.gz.sig): ${sig_count}"
+else
+  critical_warn "GitHub release missing update signature (.tar.gz.sig) - auto-update will not work"
+fi
+
+if [[ "${has_latest_json:-0}" -gt 0 ]]; then
+  ok "GitHub release has latest.json manifest"
+  # Validate latest.json structure
+  latest_content="$(gh release download "$expected_tag" --repo streamslate/streamslate --pattern "latest.json" --output - 2>/dev/null || true)"
+  if [[ -n "$latest_content" ]]; then
+    latest_version="$(echo "$latest_content" | node -e 'try{const j=JSON.parse(require("fs").readFileSync(0,"utf8")); process.stdout.write(j.version||"")}catch{process.stdout.write("")}' || true)"
+    if [[ "$latest_version" == "$pkg_version" ]]; then
+      ok "latest.json version matches: ${latest_version}"
+    else
+      critical_warn "latest.json version mismatch: json=${latest_version:-empty}, expected=${pkg_version}"
+    fi
+    platform_count="$(echo "$latest_content" | node -e 'try{const j=JSON.parse(require("fs").readFileSync(0,"utf8")); process.stdout.write(String(Object.keys(j.platforms||{}).length))}catch{process.stdout.write("0")}' || true)"
+    if [[ "${platform_count:-0}" -gt 0 ]]; then
+      ok "latest.json has ${platform_count} platform(s) configured"
+    else
+      critical_warn "latest.json has no platforms configured"
+    fi
+  fi
+else
+  critical_warn "GitHub release missing latest.json - auto-update endpoint will 404"
+fi
+
 if [[ -n "${BUTLER_API_KEY:-}" ]]; then
   butler_output="$(butler status "$PROJECT_ITCHIO" 2>&1 || true)"
   if echo "$butler_output" | rg -q "No channel"; then
