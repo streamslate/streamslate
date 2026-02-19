@@ -144,7 +144,7 @@ pub async fn save_annotations(
     {
         let mut state_annotations = state
             .annotations
-            .lock()
+            .write()
             .map_err(|e| StreamSlateError::StateLock(format!("Annotations: {e}")))?;
 
         state_annotations.clear();
@@ -213,7 +213,7 @@ pub async fn load_annotations(state: State<'_, AppState>) -> Result<HashMap<u32,
     {
         let mut state_annotations = state
             .annotations
-            .lock()
+            .write()
             .map_err(|e| StreamSlateError::StateLock(format!("Annotations: {e}")))?;
 
         state_annotations.clear();
@@ -243,7 +243,7 @@ pub async fn get_page_annotations(
 ) -> Result<Vec<Annotation>> {
     let state_annotations = state
         .annotations
-        .lock()
+        .read()
         .map_err(|e| StreamSlateError::StateLock(format!("Annotations: {e}")))?;
 
     let annotations: Vec<Annotation> = state_annotations
@@ -286,7 +286,7 @@ pub async fn clear_annotations(state: State<'_, AppState>) -> Result<()> {
     {
         let mut state_annotations = state
             .annotations
-            .lock()
+            .write()
             .map_err(|e| StreamSlateError::StateLock(format!("Annotations: {e}")))?;
         state_annotations.clear();
     }

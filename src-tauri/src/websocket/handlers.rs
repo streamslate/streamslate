@@ -62,7 +62,7 @@ fn handle_add_annotation(
     };
 
     // 2. Update State
-    if let Err(e) = state.annotations.lock().map(|mut map| {
+    if let Err(e) = state.annotations.write().map(|mut map| {
         map.entry(page).or_default().push(annotation_str.clone());
     }) {
         return WebSocketEvent::error(e.to_string());
@@ -83,7 +83,7 @@ fn handle_add_annotation(
 
 fn handle_clear_annotations(state: &Arc<AppState>, app_handle: &AppHandle) -> WebSocketEvent {
     // 1. Update State
-    if let Err(e) = state.annotations.lock().map(|mut map| map.clear()) {
+    if let Err(e) = state.annotations.write().map(|mut map| map.clear()) {
         return WebSocketEvent::error(e.to_string());
     }
 

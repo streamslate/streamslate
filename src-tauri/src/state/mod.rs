@@ -22,7 +22,7 @@ use crate::error::{Result, StreamSlateError};
 use crate::websocket::WebSocketEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 use tokio::sync::broadcast;
 
 #[cfg(target_os = "macos")]
@@ -105,29 +105,30 @@ pub struct IntegrationState {
 /// Main application state
 ///
 /// This struct holds all application state that needs to be shared across
-/// Tauri commands. Each field is wrapped in Arc<Mutex<T>> for thread-safe access.
+/// Tauri commands. Read-heavy fields use Arc<RwLock<T>> for concurrent reads;
+/// write-heavy fields (integration counters, outputs) use Arc<Mutex<T>>.
 ///
 /// Clone is cheap because it only clones the Arc pointers, not the underlying data.
 #[derive(Clone)]
 pub struct AppState {
     /// PDF metadata state (serializable, sent to frontend)
-    pub pdf: Arc<Mutex<PdfState>>,
+    pub pdf: Arc<RwLock<PdfState>>,
 
     /// The actual loaded PDF document (not serializable)
     /// This is stored separately because lopdf::Document doesn't impl Serialize
-    pub pdf_document: Arc<Mutex<Option<lopdf::Document>>>,
+    pub pdf_document: Arc<RwLock<Option<lopdf::Document>>>,
 
     /// Presenter window state
-    pub presenter: Arc<Mutex<PresenterState>>,
+    pub presenter: Arc<RwLock<PresenterState>>,
 
     /// WebSocket server state
-    pub websocket: Arc<Mutex<WebSocketState>>,
+    pub websocket: Arc<RwLock<WebSocketState>>,
 
-    /// External integrations state
+    /// External integrations state (kept as Mutex — write-heavy at 30fps)
     pub integration: Arc<Mutex<IntegrationState>>,
 
     /// Annotations per page (page_number -> list of annotation JSON strings)
-    pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>,
+    pub annotations: Arc<RwLock<HashMap<u32, Vec<String>>>>,
 
     /// WebSocket broadcast sender (for sending events from commands).
     /// Set once during app setup; lock-free reads via OnceLock.
@@ -194,12 +195,12 @@ impl Default for WebSocketState {
 impl AppState {
     pub fn new() -> Self {
         Self {
-            pdf: Arc::new(Mutex::new(PdfState::default())),
-            pdf_document: Arc::new(Mutex::new(None)),
-            presenter: Arc::new(Mutex::new(PresenterState::default())),
-            websocket: Arc::new(Mutex::new(WebSocketState::default())),
+            pdf: Arc::new(RwLock::new(PdfState::default())),
+            pdf_document: Arc::new(RwLock::new(None)),
+            presenter: Arc::new(RwLock::new(PresenterState::default())),
+            websocket: Arc::new(RwLock::new(WebSocketState::default())),
             integration: Arc::new(Mutex::new(IntegrationState::default())),
-            annotations: Arc::new(Mutex::new(HashMap::new())),
+            annotations: Arc::new(RwLock::new(HashMap::new())),
             broadcast_sender: Arc::new(OnceLock::new()),
             #[cfg(target_os = "macos")]
             outputs: Arc::new(Mutex::new(OutputState::default())),
@@ -209,7 +210,7 @@ impl AppState {
     /// Get current PDF state
     pub fn get_pdf_state(&self) -> Result<PdfState> {
         self.pdf
-            .lock()
+            .read()
             .map(|state| state.clone())
             .map_err(|e| StreamSlateError::StateLock(format!("PDF state: {e}")))
     }
@@ -220,7 +221,7 @@ impl AppState {
         F: FnOnce(&mut PdfState),
     {
         self.pdf
-            .lock()
+            .write()
             .map(|mut state| update_fn(&mut state))
             .map_err(|e| StreamSlateError::StateLock(format!("PDF state: {e}")))
     }
@@ -228,7 +229,7 @@ impl AppState {
     /// Get the loaded PDF document
     pub fn get_pdf_document(&self) -> Result<Option<lopdf::Document>> {
         self.pdf_document
-            .lock()
+            .read()
             .map(|doc| doc.clone())
             .map_err(|e| StreamSlateError::StateLock(format!("PDF document: {e}")))
     }
@@ -237,7 +238,7 @@ impl AppState {
     pub fn set_pdf_document(&self, doc: Option<lopdf::Document>) -> Result<()> {
         let mut guard = self
             .pdf_document
-            .lock()
+            .write()
             .map_err(|e| StreamSlateError::StateLock(format!("PDF document: {e}")))?;
         *guard = doc;
         Ok(())
@@ -246,7 +247,7 @@ impl AppState {
     /// Get current presenter state
     pub fn get_presenter_state(&self) -> Result<PresenterState> {
         self.presenter
-            .lock()
+            .read()
             .map(|state| state.clone())
             .map_err(|e| StreamSlateError::StateLock(format!("Presenter state: {e}")))
     }
@@ -257,7 +258,7 @@ impl AppState {
         F: FnOnce(&mut PresenterState),
     {
         self.presenter
-            .lock()
+            .write()
             .map(|mut state| update_fn(&mut state))
             .map_err(|e| StreamSlateError::StateLock(format!("Presenter state: {e}")))
     }
@@ -266,7 +267,7 @@ impl AppState {
     #[allow(dead_code)]
     pub fn get_websocket_state(&self) -> Result<WebSocketState> {
         self.websocket
-            .lock()
+            .read()
             .map(|state| state.clone())
             .map_err(|e| StreamSlateError::StateLock(format!("WebSocket state: {e}")))
     }
