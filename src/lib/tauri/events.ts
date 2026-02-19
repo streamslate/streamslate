@@ -24,6 +24,7 @@
  */
 
 import { emit } from "@tauri-apps/api/event";
+import { logger } from "../logger";
 
 // Event payload types
 export interface PageChangedPayload {
@@ -59,7 +60,7 @@ export async function emitPageChanged(
   try {
     await emit(EVENTS.PAGE_CHANGED, payload);
   } catch (error) {
-    console.error("[Events] Failed to emit page-changed:", error);
+    logger.error("[Events] Failed to emit page-changed:", error);
   }
 }
 
@@ -70,7 +71,7 @@ export async function emitPdfOpened(payload: PdfOpenedPayload): Promise<void> {
   try {
     await emit(EVENTS.PDF_OPENED, payload);
   } catch (error) {
-    console.error("[Events] Failed to emit pdf-opened:", error);
+    logger.error("[Events] Failed to emit pdf-opened:", error);
   }
 }
 
@@ -81,7 +82,7 @@ export async function emitPdfClosed(): Promise<void> {
   try {
     await emit(EVENTS.PDF_CLOSED, null);
   } catch (error) {
-    console.error("[Events] Failed to emit pdf-closed:", error);
+    logger.error("[Events] Failed to emit pdf-closed:", error);
   }
 }
 
@@ -94,6 +95,6 @@ export async function emitZoomChanged(
   try {
     await emit(EVENTS.ZOOM_CHANGED, payload);
   } catch (error) {
-    console.error("[Events] Failed to emit zoom-changed:", error);
+    logger.error("[Events] Failed to emit zoom-changed:", error);
   }
 }

@@ -9,6 +9,7 @@ import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
 import { pointsToSmoothPath } from "../utils/geometry";
 import type { Point } from "../utils/geometry";
+import { logger } from "../logger";
 
 /**
  * Convert hex color string to pdf-lib RGB color
@@ -66,7 +67,7 @@ export async function exportPDF(
   inputPath: string,
   annotations: Map<number, Annotation[]>
 ): Promise<Uint8Array> {
-  console.log("Starting PDF export...");
+  logger.debug("Starting PDF export...");
 
   // 1. Load the original PDF
   const assetUrl = convertFileSrc(inputPath);
@@ -254,7 +255,7 @@ export async function exportPDF(
               borderOpacity: annotation.opacity,
             });
           } catch (e) {
-            console.warn("Failed to export free draw annotation", e);
+            logger.warn("Failed to export free draw annotation", e);
           }
           break;
 

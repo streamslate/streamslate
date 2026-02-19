@@ -32,6 +32,9 @@ Category What you get Status
 🌐 Collaboration Live cursors & comments for co-hosts ✅
 📦 Export Embed annotations back into PDF or JSON layer ✅
 🎨 Presets & Templates Annotation preset library + use-case templates ✅
+📡 NDI & Syphon Output Native video output to NDI receivers and Syphon clients (macOS) ✅
+🖥️ Multi-Monitor Capture Pick any display for native screen capture ✅
+☁️ Settings Sync Export/import all settings as portable JSON ✅
 
 ⸻
 
@@ -61,7 +64,7 @@ The first build will compile the Tauri (Rust) side – subsequent runs are much 
 Tool Steps
 OBS Studio Install OBS WebSocket 5.x → Add Browser Source with the Presenter URL (auto-generated in StreamSlate → Integrations panel)
 Stream Deck Install the official StreamSlate plug-in → Map actions like Next Page, Toggle Highlighter, Clean Mode
-vMix / NDI NDI output is planned — see [ROADMAP.md](ROADMAP.md) for status
+vMix / NDI Enable NDI output in StreamSlate → Output panel. Requires NDI SDK runtime. Syphon output available on macOS.
 Shortcuts / Automations Every function is exposed over a local WebSocket API (`ws://127.0.0.1:11451`) – see [docs/api.md](docs/api.md)
 
 ⸻
@@ -71,8 +74,8 @@ Shortcuts / Automations Every function is exposed over a local WebSocket API (`w
 • Beta – Annotation save/export, Stream Deck plug-in
 • 1.0 – Live collaboration, cross-platform builds, auto-update
 • 1.1 – Presets/templates, annotation toolbar, Syphon scaffolding ✅
-• Next – NDI output, Syphon GA, auto-update key setup
-• Mobile companion (iPad side-car)
+• 1.2 – NDI & Syphon output, multi-monitor capture, settings sync, auto-update keys ✅
+• Next – Mobile companion (iPad side-car)
 
 See more in ROADMAP.md. Have a feature request? Open an issue or vote on the board!
 
@@ -108,4 +111,4 @@ Built with ❤️ on top of:
 
 ⸻
 
-<p align="center"><sub>&copy; 2025 StreamSlate LLC – Made for creators, by creators.</sub></p>
+<p align="center"><sub>&copy; 2025–2026 StreamSlate LLC – Made for creators, by creators.</sub></p>

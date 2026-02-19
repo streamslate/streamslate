@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import { useState, useCallback, useEffect } from "react";
+import { logger } from "../lib/logger";
 
 /**
  * Capture target information
@@ -70,7 +71,7 @@ export const useNDI = () => {
         setNdiAvailable(capabilities.ndi_available);
         setSyphonAvailable(capabilities.syphon_available);
       } catch (err) {
-        console.error("Failed to check output capabilities:", err);
+        logger.error("Failed to check output capabilities:", err);
         setNdiAvailable(false);
         setSyphonAvailable(false);
       }
@@ -86,7 +87,7 @@ export const useNDI = () => {
       const available = await invoke<boolean>("is_ndi_available");
       setNdiAvailable(available);
     } catch (err) {
-      console.error("Failed to check NDI availability:", err);
+      logger.error("Failed to check NDI availability:", err);
       setNdiAvailable(false);
     }
   }, []);
@@ -99,7 +100,7 @@ export const useNDI = () => {
       const available = await invoke<boolean>("is_syphon_available");
       setSyphonAvailable(available);
     } catch (err) {
-      console.error("Failed to check Syphon availability:", err);
+      logger.error("Failed to check Syphon availability:", err);
       setSyphonAvailable(false);
     }
   }, []);
@@ -113,7 +114,7 @@ export const useNDI = () => {
       setCaptureTargets(targets);
       return targets;
     } catch (err) {
-      console.error("Failed to list capture targets:", err);
+      logger.error("Failed to list capture targets:", err);
       return [];
     }
   }, []);
@@ -127,7 +128,7 @@ export const useNDI = () => {
       setDisplayTargets(displays ?? []);
       return displays;
     } catch (err) {
-      console.error("Failed to list displays:", err);
+      logger.error("Failed to list displays:", err);
       return [];
     }
   }, []);
@@ -141,7 +142,7 @@ export const useNDI = () => {
       setStatus(captureStatus);
       return captureStatus;
     } catch (err) {
-      console.error("Failed to get capture status:", err);
+      logger.error("Failed to get capture status:", err);
       return null;
     }
   }, []);
@@ -157,7 +158,7 @@ export const useNDI = () => {
         setIsSending(true);
         await getCaptureStatus();
       } catch (err) {
-        console.error("Failed to start capture:", err);
+        logger.error("Failed to start capture:", err);
       }
     },
     [getCaptureStatus]
@@ -172,7 +173,7 @@ export const useNDI = () => {
       setIsSending(false);
       await getCaptureStatus();
     } catch (err) {
-      console.error("Failed to stop capture:", err);
+      logger.error("Failed to stop capture:", err);
     }
   }, [getCaptureStatus]);
 
@@ -184,7 +185,7 @@ export const useNDI = () => {
       await invoke("start_syphon_output");
       await getCaptureStatus();
     } catch (err) {
-      console.error("Failed to start Syphon output:", err);
+      logger.error("Failed to start Syphon output:", err);
     }
   }, [getCaptureStatus]);
 
@@ -196,7 +197,7 @@ export const useNDI = () => {
       await invoke("stop_syphon_output");
       await getCaptureStatus();
     } catch (err) {
-      console.error("Failed to stop Syphon output:", err);
+      logger.error("Failed to stop Syphon output:", err);
     }
   }, [getCaptureStatus]);
 

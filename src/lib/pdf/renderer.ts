@@ -27,6 +27,7 @@ import type {
   RenderTask,
 } from "pdfjs-dist/types/src/display/api";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { logger } from "../logger";
 
 // Import PDF.js worker with Vite's ?url syntax
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -64,15 +65,15 @@ export class PDFRenderer {
    * Load a PDF document from a file path
    */
   async loadDocument(filePath: string): Promise<PDFDocumentProxy> {
-    console.log("[PDFRenderer] Loading document from path:", filePath);
+    logger.debug("[PDFRenderer] Loading document from path:", filePath);
 
     try {
       // Convert the file path to a URL that Tauri can serve
       const fileUrl = convertFileSrc(filePath);
-      console.log("[PDFRenderer] Converted file path to URL:", fileUrl);
+      logger.debug("[PDFRenderer] Converted file path to URL:", fileUrl);
 
       const response = await fetch(fileUrl);
-      console.log(
+      logger.debug(
         "[PDFRenderer] Fetch response:",
         response.status,
         response.statusText
@@ -85,7 +86,7 @@ export class PDFRenderer {
       }
 
       const arrayBuffer = await response.arrayBuffer();
-      console.log("[PDFRenderer] ArrayBuffer size:", arrayBuffer.byteLength);
+      logger.debug("[PDFRenderer] ArrayBuffer size:", arrayBuffer.byteLength);
 
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
@@ -94,13 +95,13 @@ export class PDFRenderer {
       });
 
       this.document = await loadingTask.promise;
-      console.log(
+      logger.debug(
         "[PDFRenderer] Document loaded successfully, pages:",
         this.document.numPages
       );
       return this.document;
     } catch (error) {
-      console.error("[PDFRenderer] Failed to load PDF:", error);
+      logger.error("[PDFRenderer] Failed to load PDF:", error);
       throw new Error(
         `Failed to load PDF: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -132,7 +133,7 @@ export class PDFRenderer {
     canvas: HTMLCanvasElement,
     options: RenderOptions
   ): Promise<PDFRenderResult> {
-    console.log(
+    logger.debug(
       "[PDFRenderer] Rendering page",
       pageNumber,
       "with options:",
@@ -145,7 +146,7 @@ export class PDFRenderer {
       rotation: options.rotation,
     });
 
-    console.log(
+    logger.debug(
       "[PDFRenderer] Viewport dimensions:",
       viewport.width,
       "x",
@@ -165,13 +166,13 @@ export class PDFRenderer {
     canvas.style.width = `${viewport.width}px`;
     canvas.style.height = `${viewport.height}px`;
 
-    console.log(
+    logger.debug(
       "[PDFRenderer] Canvas dimensions set to:",
       canvas.width,
       "x",
       canvas.height
     );
-    console.log(
+    logger.debug(
       "[PDFRenderer] Canvas style dimensions set to:",
       canvas.style.width,
       "x",
@@ -181,7 +182,7 @@ export class PDFRenderer {
     // Cancel any existing render task for this page
     const existingTask = this.renderTasks.get(pageNumber);
     if (existingTask) {
-      console.log(
+      logger.debug(
         "[PDFRenderer] Cancelling existing render task for page",
         pageNumber
       );
@@ -201,12 +202,12 @@ export class PDFRenderer {
     this.renderTasks.set(pageNumber, renderTask);
 
     try {
-      console.log("[PDFRenderer] Starting render for page", pageNumber);
-      console.log(
+      logger.debug("[PDFRenderer] Starting render for page", pageNumber);
+      logger.debug(
         `[PDFRenderer] Canvas context type:`,
         context ? "2d" : "unknown"
       );
-      console.log(
+      logger.debug(
         `[PDFRenderer] Canvas style dimensions:`,
         canvas.style.width,
         "x",
@@ -227,13 +228,13 @@ export class PDFRenderer {
         // Check if any pixel is not transparent white
         return index % 4 < 3 && value !== 255; // RGB channels that aren't white
       });
-      console.log(`[PDFRenderer] Canvas has visible content:`, hasContent);
-      console.log(
+      logger.debug(`[PDFRenderer] Canvas has visible content:`, hasContent);
+      logger.debug(
         `[PDFRenderer] Sample pixel data (first 16 bytes):`,
         Array.from(imageData.data.slice(0, 16))
       );
 
-      console.log("[PDFRenderer] Successfully rendered page", pageNumber);
+      logger.debug("[PDFRenderer] Successfully rendered page", pageNumber);
 
       return {
         canvas,
@@ -241,7 +242,7 @@ export class PDFRenderer {
         viewport,
       };
     } catch (error) {
-      console.error(
+      logger.error(
         "[PDFRenderer] Render error for page",
         pageNumber,
         ":",
@@ -317,7 +318,7 @@ export class PDFRenderer {
           });
         }
       } catch (error) {
-        console.warn(`Failed to search page ${pageNum}:`, error);
+        logger.warn(`Failed to search page ${pageNum}:`, error);
       }
     }
 
@@ -358,7 +359,7 @@ export class PDFRenderer {
       const metadata = await this.document.getMetadata();
       return metadata.info as Record<string, unknown>;
     } catch (error) {
-      console.warn("Failed to get PDF metadata:", error);
+      logger.warn("Failed to get PDF metadata:", error);
       return {};
     }
   }

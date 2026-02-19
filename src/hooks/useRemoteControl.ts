@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { type AnnotationDTO } from "../lib/tauri/commands";
 import { dtoToAnnotation } from "../lib/annotations/converters";
 import { usePDFStore } from "../stores/pdf.store";
+import { logger } from "../lib/logger";
 
 interface PageChangedPayload {
   page: number;
@@ -33,7 +34,7 @@ export const useRemoteControl = (
       const unlistenPage = await listen<PageChangedPayload>(
         "page-changed",
         (event) => {
-          console.log("Remote page change:", event.payload);
+          logger.debug("Remote page change:", event.payload);
           setCurrentPage(event.payload.page);
         }
       );
@@ -43,7 +44,7 @@ export const useRemoteControl = (
       const unlistenZoom = await listen<ZoomChangedPayload>(
         "zoom-changed",
         (event) => {
-          console.log("Remote zoom change:", event.payload);
+          logger.debug("Remote zoom change:", event.payload);
           setZoom(event.payload.zoom);
         }
       );
@@ -53,7 +54,7 @@ export const useRemoteControl = (
       const unlistenPresenter = await listen<PresenterChangedPayload>(
         "presenter-changed",
         (event) => {
-          console.log("Remote presenter change:", event.payload);
+          logger.debug("Remote presenter change:", event.payload);
           setPresenterMode(event.payload.active);
         }
       );
@@ -65,7 +66,7 @@ export const useRemoteControl = (
         page: number;
         annotation: AnnotationDTO;
       }>("annotation-added", (event) => {
-        console.log("Remote annotation added:", event.payload);
+        logger.debug("Remote annotation added:", event.payload);
         usePDFStore
           .getState()
           .addAnnotation(dtoToAnnotation(event.payload.annotation));
@@ -74,7 +75,7 @@ export const useRemoteControl = (
 
       // Listen for annotation clearing
       const unlistenClear = await listen("annotations-cleared", () => {
-        console.log("Remote annotations cleared");
+        logger.debug("Remote annotations cleared");
         usePDFStore.getState().clearAnnotations();
       });
       unlisten.push(unlistenClear);

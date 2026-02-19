@@ -25,6 +25,7 @@ import type {
   IntegrationMessage,
   WebSocketState,
 } from "../../types/integration.types";
+import { logger } from "../logger";
 
 export class StreamSlateWebSocketClient {
   private ws: WebSocket | null = null;
@@ -45,7 +46,7 @@ export class StreamSlateWebSocketClient {
         this.ws = new WebSocket(`ws://localhost:${this.port}`);
 
         this.ws.onopen = () => {
-          console.log("WebSocket connected");
+          logger.debug("WebSocket connected");
           this.reconnectAttempts = 0;
           this.notifyStateChange({
             connected: true,
@@ -65,12 +66,12 @@ export class StreamSlateWebSocketClient {
             };
             this.handleMessage(message);
           } catch (error) {
-            console.error("Failed to parse WebSocket message:", error);
+            logger.error("Failed to parse WebSocket message:", error);
           }
         };
 
         this.ws.onclose = (event) => {
-          console.log("WebSocket disconnected:", event.code, event.reason);
+          logger.debug("WebSocket disconnected:", event.code, event.reason);
           this.notifyStateChange({
             connected: false,
             port: this.port,
@@ -87,7 +88,7 @@ export class StreamSlateWebSocketClient {
         };
 
         this.ws.onerror = (error) => {
-          console.error("WebSocket error:", error);
+          logger.error("WebSocket error:", error);
           this.notifyStateChange({
             connected: false,
             port: this.port,
@@ -119,7 +120,7 @@ export class StreamSlateWebSocketClient {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn("WebSocket not connected, cannot send message");
+      logger.warn("WebSocket not connected, cannot send message");
     }
   }
 
@@ -181,7 +182,7 @@ export class StreamSlateWebSocketClient {
   }): void {
     const messageType = typeof message.type === "string" ? message.type : "";
     if (!messageType) {
-      console.log("WebSocket message missing type:", message);
+      logger.debug("WebSocket message missing type:", message);
       return;
     }
 
@@ -189,7 +190,7 @@ export class StreamSlateWebSocketClient {
     if (handler) {
       handler(message.data ?? message);
     } else {
-      console.log("Unhandled WebSocket message:", message);
+      logger.debug("Unhandled WebSocket message:", message);
     }
   }
 
@@ -201,7 +202,7 @@ export class StreamSlateWebSocketClient {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-    console.log(
+    logger.debug(
       `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`
     );
 

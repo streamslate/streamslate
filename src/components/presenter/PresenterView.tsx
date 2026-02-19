@@ -27,6 +27,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { pdfRenderer } from "../../lib/pdf/renderer";
+import { logger } from "../../lib/logger";
 
 interface PageChangedPayload {
   page: number;
@@ -151,7 +152,7 @@ export const PresenterView: React.FC = () => {
         );
         unlistenFns.push(unlistenZoomChanged);
       } catch (err) {
-        console.warn(
+        logger.warn(
           "Failed to setup Tauri listeners, falling back to WebSocket",
           err
         );
@@ -164,7 +165,7 @@ export const PresenterView: React.FC = () => {
       ws = new WebSocket("ws://127.0.0.1:11451");
 
       ws.onopen = () => {
-        console.log("Connected to Presenter WebSocket");
+        logger.debug("Connected to Presenter WebSocket");
       };
 
       ws.onmessage = (event) => {
@@ -202,17 +203,17 @@ export const PresenterView: React.FC = () => {
               break;
           }
         } catch (e) {
-          console.error("Failed to parse WebSocket message", e);
+          logger.error("Failed to parse WebSocket message", e);
         }
       };
 
       ws.onclose = () => {
-        console.log("Presenter WebSocket closed, reconnecting in 3s...");
+        logger.debug("Presenter WebSocket closed, reconnecting in 3s...");
         reconnectTimeout = setTimeout(setupWebSocket, 3000);
       };
 
       ws.onerror = (err) => {
-        console.error("Presenter WebSocket error", err);
+        logger.error("Presenter WebSocket error", err);
       };
     };
 

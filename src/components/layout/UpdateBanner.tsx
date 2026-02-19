@@ -12,6 +12,7 @@ import {
   onUpdaterEvent,
 } from "@tauri-apps/api/updater";
 import { relaunch } from "@tauri-apps/api/process";
+import { logger } from "../../lib/logger";
 
 interface UpdateInfo {
   version: string;
@@ -40,7 +41,7 @@ export function UpdateBanner() {
         }
       } catch (err) {
         // Silently fail - updater may not be configured in dev mode
-        console.debug("Update check failed:", err);
+        logger.debug("Update check failed:", err);
       }
     };
 
@@ -52,7 +53,7 @@ export function UpdateBanner() {
         setError(error);
         setIsInstalling(false);
       }
-      console.debug("Updater status:", status);
+      logger.debug("Updater status:", status);
     });
 
     return () => {
