@@ -22,7 +22,7 @@ use crate::error::{Result, StreamSlateError};
 use crate::websocket::WebSocketEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 use tokio::sync::broadcast;
 
 #[cfg(target_os = "macos")]
@@ -129,8 +129,9 @@ pub struct AppState {
     /// Annotations per page (page_number -> list of annotation JSON strings)
     pub annotations: Arc<Mutex<HashMap<u32, Vec<String>>>>,
 
-    /// WebSocket broadcast sender (for sending events from commands)
-    pub broadcast_sender: Arc<Mutex<Option<broadcast::Sender<WebSocketEvent>>>>,
+    /// WebSocket broadcast sender (for sending events from commands).
+    /// Set once during app setup; lock-free reads via OnceLock.
+    pub broadcast_sender: Arc<OnceLock<broadcast::Sender<WebSocketEvent>>>,
 
     /// Active output handles (NDI, Syphon) for the capture fan-out
     #[cfg(target_os = "macos")]
@@ -199,7 +200,7 @@ impl AppState {
             websocket: Arc::new(Mutex::new(WebSocketState::default())),
             integration: Arc::new(Mutex::new(IntegrationState::default())),
             annotations: Arc::new(Mutex::new(HashMap::new())),
-            broadcast_sender: Arc::new(Mutex::new(None)),
+            broadcast_sender: Arc::new(OnceLock::new()),
             #[cfg(target_os = "macos")]
             outputs: Arc::new(Mutex::new(OutputState::default())),
         }
@@ -279,24 +280,16 @@ impl AppState {
             .map_err(|e| StreamSlateError::StateLock(format!("Integration state: {e}")))
     }
 
-    /// Set the broadcast sender for WebSocket events
+    /// Set the broadcast sender for WebSocket events (called once during setup)
     pub fn set_broadcast_sender(&self, sender: broadcast::Sender<WebSocketEvent>) -> Result<()> {
-        let mut guard = self
-            .broadcast_sender
-            .lock()
-            .map_err(|e| StreamSlateError::StateLock(format!("Broadcast sender: {e}")))?;
-        *guard = Some(sender);
-        Ok(())
+        self.broadcast_sender.set(sender).map_err(|_| {
+            StreamSlateError::Other("Broadcast sender already initialized".to_string())
+        })
     }
 
     /// Broadcast an event to all connected WebSocket clients
     pub fn broadcast(&self, event: WebSocketEvent) -> Result<()> {
-        let guard = self
-            .broadcast_sender
-            .lock()
-            .map_err(|e| StreamSlateError::StateLock(format!("Broadcast sender: {e}")))?;
-
-        if let Some(sender) = &*guard {
+        if let Some(sender) = self.broadcast_sender.get() {
             // Ignore error if no receivers (it's fine)
             let _ = sender.send(event);
         }
