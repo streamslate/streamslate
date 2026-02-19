@@ -223,7 +223,7 @@ pub async fn start_ndi_sender(state: State<'_, AppState>, display_id: Option<u32
 /// Start native capture - non-macOS stub
 #[tauri::command]
 #[cfg(not(target_os = "macos"))]
-pub async fn start_ndi_sender(state: State<'_, AppState>, display_id: Option<u32>) -> Result<()> {
+pub async fn start_ndi_sender(state: State<'_, AppState>, _display_id: Option<u32>) -> Result<()> {
     warn!("Native capture not supported on this platform");
     let mut integration = state
         .integration
