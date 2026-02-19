@@ -86,6 +86,9 @@ jobs:
       - name: Run linting
         run: npm run lint
 
+      - name: Run frontend unit tests
+        run: npm run test:unit
+
       - name: Create dist directory for Rust tests
         run: mkdir -p dist
 
