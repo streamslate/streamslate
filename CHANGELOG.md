@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/streamslate/streamslate/compare/v1.1.1...v1.2.0) (2026-02-19)
+
+### 👷 CI/CD
+
+- retry buildkit connection failures ([9eee5e0](https://github.com/streamslate/streamslate/commit/9eee5e05ca2cb8d89d55e7210f88d88788a9c76c))
+
+### 🐛 Bug Fixes
+
+- guard displayTargets against null in non-Tauri environments ([c956803](https://github.com/streamslate/streamslate/commit/c9568032fab5b45417df39b3b553f77b062f9565))
+- prefix unused display_id param in non-macOS stub ([4f228bc](https://github.com/streamslate/streamslate/commit/4f228bc6791e8905eec11ed50bf1ea9b4c1af893))
+- use correct Tauri v1 env var names and regenerate signing keypair ([8f720e0](https://github.com/streamslate/streamslate/commit/8f720e04a5de8732fdecda3d6d76a8e5650fbb9a))
+
+### ✨ Features
+
+- add multi-monitor capture support ([60da989](https://github.com/streamslate/streamslate/commit/60da9896004069c6cbfc2529577c8ea6c5da5cc9)), closes [#9](https://github.com/streamslate/streamslate/issues/9)
+- add settings export/import for cross-machine sync ([45947b6](https://github.com/streamslate/streamslate/commit/45947b64d1b2822439feabb1b355d0bd30599aed)), closes [#8](https://github.com/streamslate/streamslate/issues/8)
+- wire NDI output and add Syphon Metal bridge ([7d2a53d](https://github.com/streamslate/streamslate/commit/7d2a53d5d881e4d4a3a82282c5bda19c001abb03)), closes [#2](https://github.com/streamslate/streamslate/issues/2) [#3](https://github.com/streamslate/streamslate/issues/3)
+- wire Tauri auto-update signing into CI and release pipeline ([a2dd5be](https://github.com/streamslate/streamslate/commit/a2dd5be049a1d67730ad816885a46debe9a768e1)), closes [#4](https://github.com/streamslate/streamslate/issues/4)
+
+### 📚 Documentation
+
+- mark cloud sync for settings as complete in roadmap ([b72dab3](https://github.com/streamslate/streamslate/commit/b72dab37ebaa8563b0f628450818a3466605dd3c))
+- mark Post-1.1 phase complete and close shipped issues ([45c7bad](https://github.com/streamslate/streamslate/commit/45c7bad63116fd6107c4a9545452eaf058570344)), closes [#3](https://github.com/streamslate/streamslate/issues/3) [#2](https://github.com/streamslate/streamslate/issues/2) [#4](https://github.com/streamslate/streamslate/issues/4) [#5](https://github.com/streamslate/streamslate/issues/5) [#6](https://github.com/streamslate/streamslate/issues/6) [#1](https://github.com/streamslate/streamslate/issues/1)
+- reconcile roadmap and README with v1.1.x shipped state ([7e1856b](https://github.com/streamslate/streamslate/commit/7e1856b3c959e1ada218e6c6d0629e0dda2d6850))
+
 ### [1.1.1](https://github.com/streamslate/streamslate/compare/v1.1.0...v1.1.1) (2026-02-17)
 
 ### 🔧 Chores
