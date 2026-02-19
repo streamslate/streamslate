@@ -3413,8 +3413,9 @@ dependencies = [
 
 [[package]]
 name = "streamslate"
-version = "1.0.1"
+version = "1.1.1"
 dependencies = [
+ "cc",
  "chrono",
  "core-media-rs",
  "futures-util",

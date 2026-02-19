@@ -7,34 +7,35 @@
 
 use crate::capture::CapturedFrame;
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
+    atomic::{AtomicBool, AtomicU64, Ordering},
+    Mutex,
 };
-use std::time::Duration;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
-// Re-export grafton-ndi types
-pub use grafton_ndi::{Sender, SenderOptions, VideoFrame, VideoFrameFourCC, NDI};
+pub use grafton_ndi::{PixelFormat, SenderOptions, VideoFrame, NDI};
+
+use grafton_ndi::frames::{calculate_line_stride, LineStrideOrSize};
+
+/// Holds the NDI instance and sender together so the sender's borrow of NDI
+/// is valid for the lifetime of the pair.
+struct SenderPair {
+    _ndi: NDI,
+    sender: grafton_ndi::Sender<'static>,
+}
 
 /// NDI sender state
 pub struct NdiSender {
-    ndi: Arc<NDI>,
-    sender: Mutex<Option<Sender>>,
+    pair: Mutex<Option<SenderPair>>,
     is_running: AtomicBool,
     source_name: String,
     frames_sent: AtomicU64,
 }
 
-use std::sync::atomic::AtomicU64;
-
 impl NdiSender {
     /// Create a new NDI sender with the given source name
     pub fn new(source_name: &str) -> Result<Self, grafton_ndi::Error> {
-        let ndi = NDI::new()?;
-
         Ok(Self {
-            ndi: Arc::new(ndi),
-            sender: Mutex::new(None),
+            pair: Mutex::new(None),
             is_running: AtomicBool::new(false),
             source_name: source_name.to_string(),
             frames_sent: AtomicU64::new(0),
@@ -48,15 +49,25 @@ impl NdiSender {
             return Ok(());
         }
 
+        let ndi = NDI::new()?;
         let options = SenderOptions::builder(&self.source_name)
             .clock_video(true)
             .build();
 
-        let sender = Sender::new(&self.ndi, &options)?;
+        // SAFETY: We store the NDI instance alongside the Sender in SenderPair.
+        // The Sender borrows &NDI, and both live together in the Mutex. The NDI
+        // instance is never dropped before the Sender because they're in the same
+        // struct and Rust drops fields in declaration order (_ndi after sender).
+        // We transmute the lifetime to 'static since we manage it manually.
+        let sender = unsafe {
+            let ndi_ref: &NDI = &ndi;
+            let ndi_static: &'static NDI = std::mem::transmute(ndi_ref);
+            grafton_ndi::Sender::new(ndi_static, &options)?
+        };
 
         {
-            let mut guard = self.sender.lock().unwrap();
-            *guard = Some(sender);
+            let mut guard = self.pair.lock().unwrap();
+            *guard = Some(SenderPair { _ndi: ndi, sender });
         }
 
         self.is_running.store(true, Ordering::SeqCst);
@@ -73,9 +84,9 @@ impl NdiSender {
 
         self.is_running.store(false, Ordering::SeqCst);
 
-        // Drop the sender to close the NDI connection
         {
-            let mut guard = self.sender.lock().unwrap();
+            let mut guard = self.pair.lock().unwrap();
+            // Drop sender before NDI (struct field order guarantees this)
             *guard = None;
         }
 
@@ -96,31 +107,38 @@ impl NdiSender {
             return Err("NDI sender is not running".to_string());
         }
 
-        let guard = self.sender.lock().unwrap();
-        let sender = guard
+        let guard = self.pair.lock().unwrap();
+        let pair = guard
             .as_ref()
             .ok_or_else(|| "NDI sender not initialized".to_string())?;
 
-        // Create video frame
-        // The frame data from ScreenCaptureKit is typically BGRA
-        let video_frame = VideoFrame::builder()
-            .resolution(frame.width as i32, frame.height as i32)
-            .four_cc(VideoFrameFourCC::BGRA)
-            .frame_rate(30, 1) // 30 fps
-            .line_stride(frame.bytes_per_row as i32)
-            .data(frame.data.clone())
-            .build();
+        // Build a VideoFrame with the captured pixel data (BGRA from ScreenCaptureKit)
+        let stride = calculate_line_stride(PixelFormat::BGRA, frame.width as i32);
+        let video_frame = VideoFrame {
+            width: frame.width as i32,
+            height: frame.height as i32,
+            pixel_format: PixelFormat::BGRA,
+            frame_rate_n: 30,
+            frame_rate_d: 1,
+            picture_aspect_ratio: 16.0 / 9.0,
+            scan_type: grafton_ndi::ScanType::Progressive,
+            timecode: 0,
+            data: frame.data.clone(),
+            line_stride_or_size: LineStrideOrSize::LineStrideBytes(stride),
+            metadata: None,
+            timestamp: 0,
+        };
 
-        // Send the frame
-        sender.send_video(&video_frame);
+        pair.sender.send_video(&video_frame);
 
         self.frames_sent.fetch_add(1, Ordering::SeqCst);
-        debug!(
-            "Sent NDI frame {} ({}x{})",
-            self.frames_sent.load(Ordering::SeqCst),
-            frame.width,
-            frame.height
-        );
+        let count = self.frames_sent.load(Ordering::SeqCst);
+        if count % 60 == 0 {
+            debug!(
+                "Sent NDI frame {} ({}x{})",
+                count, frame.width, frame.height
+            );
+        }
 
         Ok(())
     }
@@ -128,6 +146,20 @@ impl NdiSender {
     /// Get the number of frames sent
     pub fn frames_sent(&self) -> u64 {
         self.frames_sent.load(Ordering::SeqCst)
+    }
+}
+
+impl crate::state::FrameOutput for NdiSender {
+    fn send_frame(&self, frame: &CapturedFrame) -> Result<(), String> {
+        self.send_frame(frame)
+    }
+
+    fn stop(&self) {
+        self.stop();
+    }
+
+    fn is_running(&self) -> bool {
+        self.is_running()
     }
 }
 

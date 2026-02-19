@@ -25,6 +25,25 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
 
+#[cfg(target_os = "macos")]
+use crate::capture::CapturedFrame;
+
+/// Trait for frame output destinations (NDI, Syphon, etc.)
+#[cfg(target_os = "macos")]
+pub trait FrameOutput: Send + Sync {
+    fn send_frame(&self, frame: &CapturedFrame) -> std::result::Result<(), String>;
+    fn stop(&self);
+    fn is_running(&self) -> bool;
+}
+
+/// Holds active output handles for fan-out from the capture loop
+#[cfg(target_os = "macos")]
+#[derive(Default)]
+pub struct OutputState {
+    pub ndi_sender: Option<Arc<dyn FrameOutput>>,
+    pub syphon_server: Option<Arc<dyn FrameOutput>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PdfState {
     pub current_file: Option<String>,
@@ -112,6 +131,10 @@ pub struct AppState {
 
     /// WebSocket broadcast sender (for sending events from commands)
     pub broadcast_sender: Arc<Mutex<Option<broadcast::Sender<WebSocketEvent>>>>,
+
+    /// Active output handles (NDI, Syphon) for the capture fan-out
+    #[cfg(target_os = "macos")]
+    pub outputs: Arc<Mutex<OutputState>>,
 }
 
 // Manual Debug impl since lopdf::Document doesn't implement Debug
@@ -125,6 +148,7 @@ impl std::fmt::Debug for AppState {
             .field("integration", &self.integration)
             .field("annotations", &self.annotations)
             .field("broadcast_sender", &"<broadcast::Sender>")
+            .field("outputs", &"<OutputState>")
             .finish()
     }
 }
@@ -176,6 +200,8 @@ impl AppState {
             integration: Arc::new(Mutex::new(IntegrationState::default())),
             annotations: Arc::new(Mutex::new(HashMap::new())),
             broadcast_sender: Arc::new(Mutex::new(None)),
+            #[cfg(target_os = "macos")]
+            outputs: Arc::new(Mutex::new(OutputState::default())),
         }
     }
 

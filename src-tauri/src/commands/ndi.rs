@@ -16,11 +16,15 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use tracing::{debug, info, warn};
 
-// Import capture module only on macOS
 #[cfg(target_os = "macos")]
-use crate::capture::{find_streamslate_window, list_capturable_windows, CaptureConfig};
+use crate::capture::{
+    create_stream_config, create_window_filter, find_streamslate_window, list_capturable_windows,
+    CaptureConfig, FrameCallback, StreamHandler,
+};
 #[cfg(target_os = "macos")]
-use std::time::Duration;
+use screencapturekit::prelude::{SCStream, SCStreamOutputType};
+#[cfg(target_os = "macos")]
+use std::sync::Arc;
 
 /// Information about a capturable window
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -137,9 +141,33 @@ pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
         integration.ndi_active = true;
     }
 
+    // 2. Create and start NDI sender if feature enabled
+    #[cfg(feature = "ndi")]
+    {
+        use crate::ndi::NdiSender;
+
+        match NdiSender::new("StreamSlate") {
+            Ok(sender) => {
+                if let Err(e) = sender.start() {
+                    warn!("Failed to start NDI sender: {:?}", e);
+                } else {
+                    let mut outputs = state
+                        .outputs
+                        .lock()
+                        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+                    outputs.ndi_sender = Some(Arc::new(sender));
+                    info!("NDI sender started and stored in outputs");
+                }
+            }
+            Err(e) => {
+                warn!("Failed to create NDI sender: {:?}", e);
+            }
+        }
+    }
+
     info!("Starting native capture...");
 
-    // 2. Spawn capture thread
+    // 3. Spawn capture thread
     let state_arc = state.inner().clone();
     std::thread::spawn(move || {
         if let Err(e) = run_capture_loop(state_arc) {
@@ -166,37 +194,73 @@ pub async fn start_ndi_sender(state: State<'_, AppState>) -> Result<()> {
 /// Stop native capture and NDI output
 #[tauri::command]
 pub async fn stop_ndi_sender(state: State<'_, AppState>) -> Result<()> {
-    let mut integration = state
-        .integration
-        .lock()
-        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
-    if !integration.ndi_active {
-        return Ok(());
+    {
+        let mut integration = state
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        if !integration.ndi_active {
+            return Ok(());
+        }
+        integration.ndi_active = false;
+        integration.frames_captured = 0;
+        integration.frames_sent = 0;
     }
-    integration.ndi_active = false;
-    // Reset frame counters when stopping
-    integration.frames_captured = 0;
-    integration.frames_sent = 0;
+
+    // Stop and clear the NDI sender output
+    #[cfg(target_os = "macos")]
+    {
+        let mut outputs = state
+            .outputs
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        if let Some(ref sender) = outputs.ndi_sender {
+            sender.stop();
+        }
+        outputs.ndi_sender = None;
+    }
+
     info!("Signal sent to stop capture/NDI sender...");
     Ok(())
 }
 
-/// Start Syphon output - macOS + syphon feature implementation stub
+/// Start Syphon output - macOS + syphon feature
 #[tauri::command]
 #[cfg(all(target_os = "macos", feature = "syphon"))]
 pub async fn start_syphon_output(state: State<'_, AppState>) -> Result<()> {
-    let mut integration = state
-        .integration
-        .lock()
-        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
-
-    if integration.syphon_active {
-        return Ok(());
+    {
+        let integration = state
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        if integration.syphon_active {
+            return Ok(());
+        }
     }
 
-    integration.syphon_enabled = true;
-    integration.syphon_active = true;
-    info!("Syphon output scaffold enabled");
+    use crate::syphon::SyphonServer;
+
+    let server = SyphonServer::new("StreamSlate")
+        .map_err(|e| StreamSlateError::Other(format!("Syphon init: {e}")))?;
+
+    {
+        let mut outputs = state
+            .outputs
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        outputs.syphon_server = Some(Arc::new(server));
+    }
+
+    {
+        let mut integration = state
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        integration.syphon_enabled = true;
+        integration.syphon_active = true;
+    }
+
+    info!("Syphon output started");
     Ok(())
 }
 
@@ -217,11 +281,27 @@ pub async fn start_syphon_output(state: State<'_, AppState>) -> Result<()> {
 /// Stop Syphon output
 #[tauri::command]
 pub async fn stop_syphon_output(state: State<'_, AppState>) -> Result<()> {
-    let mut integration = state
-        .integration
-        .lock()
-        .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
-    integration.syphon_active = false;
+    {
+        let mut integration = state
+            .integration
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        integration.syphon_active = false;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let mut outputs = state
+            .outputs
+            .lock()
+            .map_err(|e| StreamSlateError::StateLock(e.to_string()))?;
+        if let Some(ref server) = outputs.syphon_server {
+            server.stop();
+        }
+        outputs.syphon_server = None;
+    }
+
+    info!("Syphon output stopped");
     Ok(())
 }
 
@@ -251,86 +331,123 @@ pub async fn send_video_frame(frame_data: Vec<u8>, width: u32, height: u32) -> R
 }
 
 /// Main capture loop using ScreenCaptureKit (macOS only)
+///
+/// Creates an SCStream targeting the StreamSlate window. Each captured frame
+/// is fanned out to whichever outputs are active (NDI, Syphon) via the
+/// `FrameOutput` handles stored in `state.outputs`.
 #[cfg(target_os = "macos")]
 fn run_capture_loop(state: AppState) -> std::result::Result<(), Box<dyn std::error::Error>> {
     info!("Native capture loop started");
 
-    // Create a tokio runtime for async SCK operations
-    let rt = tokio::runtime::Runtime::new()?;
-
-    rt.block_on(async {
-        use screencapturekit::prelude::SCShareableContent;
-
-        info!("Requesting shareable content (requires Screen Recording permission)...");
-
-        // Get available content
-        let content = match SCShareableContent::get() {
-            Ok(c) => c,
-            Err(e) => {
-                warn!("Failed to get shareable content: {:?}", e);
-                warn!("Hint: Grant Screen Recording permission in System Settings > Privacy & Security");
-                return Ok(());
+    // Find the StreamSlate window
+    let window = match find_streamslate_window() {
+        Some(w) => {
+            info!(
+                "Capturing StreamSlate window: {} (ID: {})",
+                w.title().unwrap_or_default(),
+                w.window_id()
+            );
+            w
+        }
+        None => {
+            // Fallback: list windows for debug, then bail
+            let windows = list_capturable_windows();
+            info!("Available windows ({}):", windows.len());
+            for (id, app, title) in windows.iter().take(5) {
+                debug!("  - [{}] {} : {}", id, app, title);
             }
-        };
-
-        let displays = content.displays();
-        if displays.is_empty() {
-            warn!("No displays found for capture");
+            warn!("StreamSlate window not found — cannot start capture");
+            let mut integration = state.integration.lock().unwrap();
+            integration.ndi_active = false;
             return Ok(());
         }
+    };
 
-        let main_display = displays.first().unwrap();
+    // Build stream configuration and content filter
+    let config = CaptureConfig::default();
+    let stream_config = create_stream_config(&config);
+    let filter = create_window_filter(&window);
 
-        info!(
-            "Primary display: ID {} ({}x{})",
-            main_display.display_id(),
-            main_display.width(),
-            main_display.height()
-        );
+    info!("Capture config: {:?}", config);
 
-        // List available windows for debugging
-        let windows = list_capturable_windows();
-        info!("Found {} capturable windows:", windows.len());
-        for (id, app, title) in windows.iter().take(5) {
-            debug!("  - [{}] {} : {}", id, app, title);
+    // Build the fan-out callback: each captured frame goes to all active outputs
+    let state_for_callback = state.clone();
+    let callback: FrameCallback = Arc::new(move |frame| {
+        // Skip empty frames (no pixel data)
+        if frame.data.is_empty() {
+            return;
         }
 
-        // Try to find our own window
-        if let Some(window) = find_streamslate_window() {
-            info!(
-                "Found StreamSlate window for capture: {} (ID: {})",
-                window.title().unwrap_or_default(),
-                window.window_id()
-            );
-        }
+        let _ = state_for_callback.increment_frames_captured();
 
-        // Capture configuration
-        let config = CaptureConfig::default();
-        info!("Capture config: {:?}", config);
+        // Fan out to all active outputs
+        let outputs = match state_for_callback.outputs.lock() {
+            Ok(o) => o,
+            Err(_) => return,
+        };
 
-        // Main loop: poll for stop signal
-        // Full stream capture implementation will be added in next iteration
-        loop {
-            // Check for stop signal
-            {
-                let integration = state.integration.lock().unwrap();
-                if !integration.ndi_active {
-                    break;
+        if let Some(ref ndi) = outputs.ndi_sender {
+            if ndi.is_running() {
+                if let Err(e) = ndi.send_frame(&frame) {
+                    debug!("NDI send_frame error: {}", e);
+                } else {
+                    let _ = state_for_callback.increment_frames_sent();
                 }
             }
-
-            // Placeholder for actual frame capture
-            // In the full implementation, we'd be receiving frames
-            // from an SCStream handler and forwarding to NDI
-            // For now, increment counter to show the loop is running
-            let _ = state.increment_frames_captured();
-
-            tokio::time::sleep(Duration::from_millis(33)).await; // ~30fps interval
         }
 
-        info!("Capture loop stopped");
-        Ok(())
-    })
+        if let Some(ref syphon) = outputs.syphon_server {
+            if syphon.is_running() {
+                if let Err(e) = syphon.send_frame(&frame) {
+                    debug!("Syphon send_frame error: {}", e);
+                } else {
+                    let _ = state_for_callback.increment_frames_sent();
+                }
+            }
+        }
+    });
+
+    // Create stream with handler and start capture
+    let handler = StreamHandler::with_callback(callback);
+    let mut stream = SCStream::new(&filter, &stream_config);
+    stream.add_output_handler(handler, SCStreamOutputType::Screen);
+    stream.start_capture()?;
+
+    info!("SCStream capture started");
+
+    // Poll for stop signal (frames arrive on SCK's dispatch queue)
+    loop {
+        let active = {
+            let integration = state.integration.lock().unwrap();
+            integration.ndi_active
+        };
+        if !active {
+            break;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(100));
+    }
+
+    // Stop stream
+    if let Err(e) = stream.stop_capture() {
+        warn!("Error stopping SCStream: {:?}", e);
+    }
+
+    // Stop all outputs
+    {
+        let mut outputs = state.outputs.lock().unwrap();
+        if let Some(ref sender) = outputs.ndi_sender {
+            sender.stop();
+        }
+        outputs.ndi_sender = None;
+        if let Some(ref server) = outputs.syphon_server {
+            server.stop();
+        }
+        outputs.syphon_server = None;
+    }
+
+    let _ = state.reset_frame_counters();
+    info!("Capture loop stopped");
+    Ok(())
 }
 
 #[cfg(test)]
