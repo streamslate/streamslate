@@ -151,7 +151,7 @@ export const NDIControls: React.FC = () => {
       )}
 
       {/* Display Selector */}
-      {displayTargets.length > 0 && (
+      {displayTargets?.length > 0 && (
         <div className="flex items-center gap-2">
           <label className="text-xs text-text-tertiary">Capture source:</label>
           <select

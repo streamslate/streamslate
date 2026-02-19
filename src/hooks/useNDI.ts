@@ -124,7 +124,7 @@ export const useNDI = () => {
   const listDisplays = useCallback(async () => {
     try {
       const displays = await invoke<DisplayTarget[]>("list_capture_displays");
-      setDisplayTargets(displays);
+      setDisplayTargets(displays ?? []);
       return displays;
     } catch (err) {
       console.error("Failed to list displays:", err);
