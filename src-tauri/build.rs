@@ -20,5 +20,21 @@ fn main() {
     #[cfg(target_os = "macos")]
     println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
 
+    // Compile Syphon Objective-C bridge when the syphon feature is enabled
+    #[cfg(target_os = "macos")]
+    if std::env::var("CARGO_FEATURE_SYPHON").is_ok() {
+        cc::Build::new()
+            .file("src/syphon/syphon_bridge.m")
+            .flag("-fobjc-arc")
+            .flag("-F/Library/Frameworks")
+            .include("/Library/Frameworks/Syphon.framework/Headers")
+            .compile("syphon_bridge");
+
+        println!("cargo:rustc-link-lib=framework=Metal");
+        println!("cargo:rustc-link-lib=framework=Foundation");
+        println!("cargo:rustc-link-search=framework=/Library/Frameworks");
+        println!("cargo:rustc-link-lib=framework=Syphon");
+    }
+
     tauri_build::build()
 }

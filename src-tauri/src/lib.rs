@@ -29,6 +29,10 @@ pub mod capture;
 #[cfg(feature = "ndi")]
 pub mod ndi;
 
+// Syphon output support (optional, macOS only, requires Syphon.framework)
+#[cfg(all(target_os = "macos", feature = "syphon"))]
+pub mod syphon;
+
 use commands::*;
 use state::AppState;
 use std::sync::Arc;
