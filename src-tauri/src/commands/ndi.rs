@@ -404,8 +404,9 @@ fn run_capture_loop(
             }
             None => {
                 warn!("Display {} not found — cannot start capture", id);
-                let mut integration = state.integration.lock().unwrap();
-                integration.ndi_active = false;
+                if let Ok(mut integration) = state.integration.lock() {
+                    integration.ndi_active = false;
+                }
                 return Ok(());
             }
         }
@@ -427,8 +428,9 @@ fn run_capture_loop(
                     debug!("  - [{}] {} : {}", wid, app, title);
                 }
                 warn!("StreamSlate window not found — cannot start capture");
-                let mut integration = state.integration.lock().unwrap();
-                integration.ndi_active = false;
+                if let Ok(mut integration) = state.integration.lock() {
+                    integration.ndi_active = false;
+                }
                 return Ok(());
             }
         }
@@ -483,10 +485,11 @@ fn run_capture_loop(
 
     // Poll for stop signal (frames arrive on SCK's dispatch queue)
     loop {
-        let active = {
-            let integration = state.integration.lock().unwrap();
-            integration.ndi_active
-        };
+        let active = state
+            .integration
+            .lock()
+            .map(|i| i.ndi_active)
+            .unwrap_or(false);
         if !active {
             break;
         }
@@ -499,8 +502,7 @@ fn run_capture_loop(
     }
 
     // Stop all outputs
-    {
-        let mut outputs = state.outputs.lock().unwrap();
+    if let Ok(mut outputs) = state.outputs.lock() {
         if let Some(ref sender) = outputs.ndi_sender {
             sender.stop();
         }
@@ -509,6 +511,8 @@ fn run_capture_loop(
             server.stop();
         }
         outputs.syphon_server = None;
+    } else {
+        warn!("Failed to lock outputs state during capture cleanup");
     }
 
     let _ = state.reset_frame_counters();

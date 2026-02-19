@@ -66,7 +66,10 @@ impl NdiSender {
         };
 
         {
-            let mut guard = self.pair.lock().unwrap();
+            let mut guard = self
+                .pair
+                .lock()
+                .expect("NdiSender internal lock poisoned in start()");
             *guard = Some(SenderPair { _ndi: ndi, sender });
         }
 
@@ -85,7 +88,10 @@ impl NdiSender {
         self.is_running.store(false, Ordering::SeqCst);
 
         {
-            let mut guard = self.pair.lock().unwrap();
+            let Ok(mut guard) = self.pair.lock() else {
+                warn!("NdiSender lock poisoned during stop — skipping cleanup");
+                return;
+            };
             // Drop sender before NDI (struct field order guarantees this)
             *guard = None;
         }
@@ -107,7 +113,10 @@ impl NdiSender {
             return Err("NDI sender is not running".to_string());
         }
 
-        let guard = self.pair.lock().unwrap();
+        let guard = self
+            .pair
+            .lock()
+            .map_err(|_| "NdiSender lock poisoned during send_frame".to_string())?;
         let pair = guard
             .as_ref()
             .ok_or_else(|| "NDI sender not initialized".to_string())?;

@@ -76,7 +76,7 @@ impl StreamHandler {
 
     /// Get the current frame count
     pub fn frame_count(&self) -> u64 {
-        *self.frame_count.lock().unwrap()
+        self.frame_count.lock().map(|c| *c).unwrap_or(0)
     }
 }
 
@@ -90,7 +90,9 @@ impl SCStreamOutputTrait for StreamHandler {
     fn did_output_sample_buffer(&self, sample: CMSampleBuffer, _output_type: SCStreamOutputType) {
         // Increment frame counter
         let count = {
-            let mut count = self.frame_count.lock().unwrap();
+            let Ok(mut count) = self.frame_count.lock() else {
+                return;
+            };
             *count += 1;
             *count
         };
