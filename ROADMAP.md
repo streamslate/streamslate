@@ -51,7 +51,7 @@ StreamSlate is production-ready. Core annotation, streaming integration, live co
 ### Future
 
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
-- [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
+- [x] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 - [x] Multi-monitor capture ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
 
 ## References
