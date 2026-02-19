@@ -9,9 +9,9 @@
 #   ./scripts/generate-update-key.sh
 #
 # After running:
-#   1. Copy the PRIVATE key and set it as CI/CD variable TAURI_SIGNING_PRIVATE_KEY
+#   1. Copy the PRIVATE key and set it as CI/CD variable TAURI_PRIVATE_KEY
 #      (GitLab: Settings > CI/CD > Variables, masked + protected)
-#   2. If you set a password, also set TAURI_SIGNING_PRIVATE_KEY_PASSWORD
+#   2. If you set a password, also set TAURI_KEY_PASSWORD
 #   3. Copy the PUBLIC key and update tauri.conf.json -> tauri.updater.pubkey
 #
 
@@ -23,7 +23,7 @@ cd "$ROOT_DIR"
 echo "Generating Tauri updater signing keypair..."
 echo ""
 echo "You will be prompted for an optional password."
-echo "If you set a password, you must also set TAURI_SIGNING_PRIVATE_KEY_PASSWORD in CI."
+echo "If you set a password, you must also set TAURI_KEY_PASSWORD in CI."
 echo ""
 
 npx @tauri-apps/cli signer generate -w "$ROOT_DIR/.tauri-update-key"
@@ -39,7 +39,7 @@ echo ""
 echo "Next steps:"
 echo ""
 echo "  1. Add the PRIVATE key as a CI/CD variable:"
-echo "     - Variable: TAURI_SIGNING_PRIVATE_KEY"
+echo "     - Variable: TAURI_PRIVATE_KEY"
 echo "     - Value: $(cat "$ROOT_DIR/.tauri-update-key")"
 echo "     - Flags: Masked, Protected"
 echo ""

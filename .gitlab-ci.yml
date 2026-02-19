@@ -14,8 +14,8 @@
 #   APPLE_TEAM_ID              - Apple Developer Team ID
 #
 # For Tauri Auto-Update Signing (build:macos job):
-#   TAURI_SIGNING_PRIVATE_KEY          - Minisign private key (from `tauri signer generate`)
-#   TAURI_SIGNING_PRIVATE_KEY_PASSWORD - Password for the private key (optional)
+#   TAURI_PRIVATE_KEY          - Minisign private key (from `tauri signer generate`)
+#   TAURI_KEY_PASSWORD         - Password for the private key (optional)
 #
 # For GitHub Release Publishing (release:github job):
 #   GH_TOKEN                   - GitHub personal access token with repo scope
@@ -201,7 +201,7 @@ build:macos:
     - set -a && source build.env && set +a
     - echo "Signing with identity $APPLE_SIGNING_IDENTITY"
     - if [ -n "$APPLE_API_KEY_BASE64" ]; then API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"; echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"; export APPLE_API_KEY_PATH="$API_KEY_PATH"; echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env; echo "Notarization API key ready"; else echo "Warning APPLE_API_KEY_BASE64 not set, notarization will be skipped"; fi
-    - if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then export TAURI_SIGNING_PRIVATE_KEY; export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_SIGNING_PRIVATE_KEY not set, update bundles will not be signed"; fi
+    - if [ -n "$TAURI_PRIVATE_KEY" ]; then export TAURI_PRIVATE_KEY; export TAURI_KEY_PASSWORD="${TAURI_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_PRIVATE_KEY not set, update bundles will not be signed"; fi
     - npm run tauri:build
   after_script:
     - if [ -f build.env ]; then source build.env; fi
