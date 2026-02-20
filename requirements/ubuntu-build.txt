@@ -1,6 +1,5 @@
-# Ubuntu build dependencies for Tauri v1.x
-# Install 4.1 packages (available on Debian 13+); symlinks in .gitlab-ci.yml
-# map them to the 4.0 names that Tauri v1 expects via pkg-config.
+# Ubuntu build dependencies for Tauri v2.x
+# Tauri v2 uses webkit2gtk-4.1 and libsoup-3.0 natively (no pkg-config symlinks needed).
 libwebkit2gtk-4.1-dev
 libjavascriptcoregtk-4.1-dev
 build-essential

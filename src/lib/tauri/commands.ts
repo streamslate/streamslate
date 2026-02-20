@@ -21,7 +21,7 @@
  * Provides type-safe interfaces to the Rust backend
  */
 
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 
 // Types
 export interface PdfInfo {

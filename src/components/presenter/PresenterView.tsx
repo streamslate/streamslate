@@ -218,7 +218,7 @@ export const PresenterView: React.FC = () => {
     };
 
     // Detect environment
-    if (window.__TAURI__) {
+    if ("__TAURI__" in window) {
       setupTauriListeners();
     } else {
       setupWebSocket();

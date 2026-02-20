@@ -26,7 +26,7 @@ import type {
   PDFPageProxy,
   RenderTask,
 } from "pdfjs-dist/types/src/display/api";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { logger } from "../logger";
 
 // Import PDF.js worker with Vite's ?url syntax

@@ -251,7 +251,7 @@ fn handle_toggle_presenter(state: &Arc<AppState>, app_handle: &AppHandle) -> Web
 // Helper functions to emit events to the frontend
 
 fn emit_page_changed(app_handle: &AppHandle, page: u32, total_pages: u32) {
-    use tauri::Manager;
+    use tauri::Emitter;
 
     #[derive(serde::Serialize, Clone)]
     struct PageChangedPayload {
@@ -259,39 +259,39 @@ fn emit_page_changed(app_handle: &AppHandle, page: u32, total_pages: u32) {
         total_pages: u32,
     }
 
-    if let Err(e) = app_handle.emit_all("page-changed", PageChangedPayload { page, total_pages }) {
+    if let Err(e) = app_handle.emit("page-changed", PageChangedPayload { page, total_pages }) {
         warn!(error = %e, "Failed to emit page-changed event");
     }
 }
 
 fn emit_zoom_changed(app_handle: &AppHandle, zoom: f64) {
-    use tauri::Manager;
+    use tauri::Emitter;
 
     #[derive(serde::Serialize, Clone)]
     struct ZoomChangedPayload {
         zoom: f64,
     }
 
-    if let Err(e) = app_handle.emit_all("zoom-changed", ZoomChangedPayload { zoom }) {
+    if let Err(e) = app_handle.emit("zoom-changed", ZoomChangedPayload { zoom }) {
         warn!(error = %e, "Failed to emit zoom-changed event");
     }
 }
 
 fn emit_presenter_changed(app_handle: &AppHandle, active: bool) {
-    use tauri::Manager;
+    use tauri::Emitter;
 
     #[derive(serde::Serialize, Clone)]
     struct PresenterChangedPayload {
         active: bool,
     }
 
-    if let Err(e) = app_handle.emit_all("presenter-changed", PresenterChangedPayload { active }) {
+    if let Err(e) = app_handle.emit("presenter-changed", PresenterChangedPayload { active }) {
         warn!(error = %e, "Failed to emit presenter-changed event");
     }
 }
 
 fn emit_annotation_added(app_handle: &AppHandle, page: u32, annotation: serde_json::Value) {
-    use tauri::Manager;
+    use tauri::Emitter;
 
     #[derive(serde::Serialize, Clone)]
     struct AnnotationAddedPayload {
@@ -299,7 +299,7 @@ fn emit_annotation_added(app_handle: &AppHandle, page: u32, annotation: serde_js
         annotation: serde_json::Value,
     }
 
-    if let Err(e) = app_handle.emit_all(
+    if let Err(e) = app_handle.emit(
         "annotation-added",
         AnnotationAddedPayload { page, annotation },
     ) {
@@ -308,9 +308,9 @@ fn emit_annotation_added(app_handle: &AppHandle, page: u32, annotation: serde_js
 }
 
 fn emit_annotations_cleared(app_handle: &AppHandle) {
-    use tauri::Manager;
+    use tauri::Emitter;
 
-    if let Err(e) = app_handle.emit_all("annotations-cleared", ()) {
+    if let Err(e) = app_handle.emit("annotations-cleared", ()) {
         warn!(error = %e, "Failed to emit annotations-cleared event");
     }
 }

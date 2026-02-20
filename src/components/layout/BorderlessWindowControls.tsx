@@ -17,7 +17,7 @@
  */
 
 import React, { useCallback, useState, useEffect } from "react";
-import { appWindow } from "@tauri-apps/api/window";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 interface BorderlessWindowControlsProps {
   transparentBg: boolean;
@@ -27,19 +27,20 @@ export const BorderlessWindowControls: React.FC<
   BorderlessWindowControlsProps
 > = ({ transparentBg }) => {
   const [isMaximized, setIsMaximized] = useState(false);
+  const appWindow = getCurrentWebviewWindow();
 
   // Check initial maximized state
   useEffect(() => {
     appWindow.isMaximized().then(setIsMaximized);
-  }, []);
+  }, [appWindow]);
 
   const handleClose = useCallback(async () => {
     await appWindow.close();
-  }, []);
+  }, [appWindow]);
 
   const handleMinimize = useCallback(async () => {
     await appWindow.minimize();
-  }, []);
+  }, [appWindow]);
 
   const handleMaximize = useCallback(async () => {
     if (isMaximized) {
@@ -49,7 +50,7 @@ export const BorderlessWindowControls: React.FC<
       await appWindow.maximize();
       setIsMaximized(true);
     }
-  }, [isMaximized]);
+  }, [appWindow, isMaximized]);
 
   return (
     <div
