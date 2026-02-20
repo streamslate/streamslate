@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.3.0](https://github.com/streamslate/streamslate/compare/v1.2.0...v1.3.0) (2026-02-20)
+
+### ✨ Features
+
+- **DEBT-008:** migrate Tauri v1 to v2 ([566ca08](https://github.com/streamslate/streamslate/commit/566ca08))
+  - Rust backend: `tauri` 1.8 → 2.x, plugin-based architecture (dialog, fs, shell, process, updater, http)
+  - Frontend: all 10 import files migrated to v2 module paths
+  - Config: v2 schema (`tauri.conf.json`), capabilities system replaces allowlist
+  - CI: removed webkit 4.0→4.1 symlink hacks, updated `tauri-action` to v0.5.17
+
+### 🐛 Bug Fixes
+
+- restore updater config and fix release-please jsonpath for Tauri v2 ([c0bded5](https://github.com/streamslate/streamslate/commit/c0bded5))
+- **ci:** prevent codesign keychain password prompt on macOS runner ([234f63e](https://github.com/streamslate/streamslate/commit/234f63e))
+- **backend:** replace unsafe `.unwrap()` on Mutex locks with proper error handling [DEBT-004] ([68cc19c](https://github.com/streamslate/streamslate/commit/68cc19c))
+
+### ♻️ Code Refactoring
+
+- **DEBT-009:** extract typed event dispatcher from integration store ([2222ac9](https://github.com/streamslate/streamslate/commit/2222ac9))
+- **DEBT-001,DEBT-011:** decompose AnnotationLayer and AnnotationTools ([0d90ade](https://github.com/streamslate/streamslate/commit/0d90ade))
+- **DEBT-005:** migrate read-heavy state fields from Mutex to RwLock ([7535181](https://github.com/streamslate/streamslate/commit/7535181))
+- **DEBT-003:** replace 55 console.log calls with structured logger ([354af56](https://github.com/streamslate/streamslate/commit/354af56))
+- **DEBT-010:** replace Mutex<Option<>> with OnceLock for broadcast_sender ([ffdd2be](https://github.com/streamslate/streamslate/commit/ffdd2be))
+
+### 🧪 Tests
+
+- **DEBT-002:** add Vitest unit test infrastructure with 86 initial tests ([7ed5090](https://github.com/streamslate/streamslate/commit/7ed5090))
+
+### 📦 Build System
+
+- **DEBT-007:** replace deprecated standard-version with release-please ([26193e1](https://github.com/streamslate/streamslate/commit/26193e1))
+
+### 👷 CI/CD
+
+- **DEBT-006:** upgrade Node.js from 18 (EOL) to 20 LTS in CI and release workflows ([da4494a](https://github.com/streamslate/streamslate/commit/da4494a))
+
 ## [1.2.0](https://github.com/streamslate/streamslate/compare/v1.1.1...v1.2.0) (2026-02-19)
 
 ### 👷 CI/CD
