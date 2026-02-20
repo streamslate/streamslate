@@ -25,6 +25,7 @@ dist-ssr
 
 # Tauri build files
 src-tauri/target/
+src-tauri/gen/
 
 # Environment files
 .env

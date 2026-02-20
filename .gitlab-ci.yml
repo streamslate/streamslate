@@ -87,12 +87,6 @@ default:
     - export RUSTUP_USE_CURL=1
     - apt-get install -y npm nodejs
     - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libsoup-3.0.so /usr/lib/x86_64-linux-gnu/libsoup-2.4.so || true
     - rustup component add rustfmt clippy
     - npm ci --prefer-offline --no-audit
 
@@ -106,12 +100,6 @@ default:
     - export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     - export RUSTUP_USE_CURL=1
     - grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs apt-get install -y
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/javascriptcoregtk-4.0.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.1.pc /usr/lib/x86_64-linux-gnu/pkgconfig/webkit2gtk-4.0.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-3.0.pc /usr/lib/x86_64-linux-gnu/pkgconfig/libsoup-2.4.pc || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1.so /usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.0.so || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.1.so /usr/lib/x86_64-linux-gnu/libjavascriptcoregtk-4.0.so || true
-    - ln -sf /usr/lib/x86_64-linux-gnu/libsoup-3.0.so /usr/lib/x86_64-linux-gnu/libsoup-2.4.so || true
     - rustup component add rustfmt clippy
 
 lint:linux:
@@ -201,7 +189,7 @@ build:macos:
     - set -a && source build.env && set +a
     - echo "Signing with identity $APPLE_SIGNING_IDENTITY"
     - if [ -n "$APPLE_API_KEY_BASE64" ]; then API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"; echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"; export APPLE_API_KEY_PATH="$API_KEY_PATH"; echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env; echo "Notarization API key ready"; else echo "Warning APPLE_API_KEY_BASE64 not set, notarization will be skipped"; fi
-    - if [ -n "$TAURI_PRIVATE_KEY" ]; then export TAURI_PRIVATE_KEY; export TAURI_KEY_PASSWORD="${TAURI_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_PRIVATE_KEY not set, update bundles will not be signed"; fi
+    - if [ -n "$TAURI_PRIVATE_KEY" ]; then export TAURI_SIGNING_PRIVATE_KEY="$TAURI_PRIVATE_KEY"; export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_PRIVATE_KEY not set, update bundles will not be signed"; fi
     - npm run tauri:build
   after_script:
     - if [ -f build.env ]; then source build.env; fi

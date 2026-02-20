@@ -21,7 +21,7 @@
 use crate::error::Result;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use tauri::{Manager, State, Window};
+use tauri::{Emitter, Manager, State, WebviewWindow};
 use tracing::{debug, info, instrument};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,14 +72,14 @@ pub struct PageChangedPayload {
 #[tauri::command]
 #[instrument(skip(window, state))]
 pub async fn open_presenter_mode(
-    window: Window,
+    window: WebviewWindow,
     state: State<'_, AppState>,
     config: Option<PresenterConfig>,
 ) -> Result<()> {
     let app_handle = window.app_handle();
 
     // Check if presenter window already exists
-    if let Some(presenter_window) = app_handle.get_window("presenter") {
+    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
         info!("Presenter window already exists, showing and emitting current state");
         let _ = presenter_window.show();
 
@@ -116,7 +116,7 @@ pub async fn open_presenter_mode(
 
 /// Helper to emit current PDF state to presenter window
 fn emit_current_state_to_presenter(
-    presenter_window: &Window,
+    presenter_window: &WebviewWindow,
     state: &State<'_, AppState>,
 ) -> Result<()> {
     let pdf_state = state.get_pdf_state()?;
@@ -156,12 +156,12 @@ fn emit_current_state_to_presenter(
 /// Close the presenter mode window
 #[tauri::command]
 #[instrument(skip(window, state))]
-pub async fn close_presenter_mode(window: Window, state: State<'_, AppState>) -> Result<()> {
+pub async fn close_presenter_mode(window: WebviewWindow, state: State<'_, AppState>) -> Result<()> {
     let app_handle = window.app_handle();
 
     info!("Closing presenter mode");
 
-    if let Some(presenter_window) = app_handle.get_window("presenter") {
+    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
         presenter_window.close().map_err(|e| {
             crate::error::StreamSlateError::Window(format!("Failed to close presenter window: {e}"))
         })?;
@@ -178,13 +178,13 @@ pub async fn close_presenter_mode(window: Window, state: State<'_, AppState>) ->
 /// Update presenter mode configuration
 #[tauri::command]
 #[instrument(skip(window))]
-pub async fn update_presenter_config(window: Window, config: PresenterConfig) -> Result<()> {
+pub async fn update_presenter_config(window: WebviewWindow, config: PresenterConfig) -> Result<()> {
     use crate::error::StreamSlateError;
     let app_handle = window.app_handle();
 
     debug!(?config, "Updating presenter config");
 
-    if let Some(presenter_window) = app_handle.get_window("presenter") {
+    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
         // Apply configuration changes
         presenter_window
             .set_always_on_top(config.always_on_top)
@@ -216,11 +216,11 @@ pub async fn update_presenter_config(window: Window, config: PresenterConfig) ->
 #[tauri::command]
 #[instrument(skip(window, state))]
 pub async fn get_presenter_state(
-    window: Window,
+    window: WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<PresenterState> {
     let app_handle = window.app_handle();
-    let is_active = app_handle.get_window("presenter").is_some();
+    let is_active = app_handle.get_webview_window("presenter").is_some();
 
     // Get PDF state for page info
     let pdf_state = state.get_pdf_state()?;
@@ -236,10 +236,13 @@ pub async fn get_presenter_state(
 /// Toggle presenter mode on/off
 #[tauri::command]
 #[instrument(skip(window, state))]
-pub async fn toggle_presenter_mode(window: Window, state: State<'_, AppState>) -> Result<bool> {
+pub async fn toggle_presenter_mode(
+    window: WebviewWindow,
+    state: State<'_, AppState>,
+) -> Result<bool> {
     let app_handle = window.app_handle();
 
-    if app_handle.get_window("presenter").is_some() {
+    if app_handle.get_webview_window("presenter").is_some() {
         close_presenter_mode(window, state).await?;
         Ok(false)
     } else {
@@ -252,7 +255,7 @@ pub async fn toggle_presenter_mode(window: Window, state: State<'_, AppState>) -
 #[tauri::command]
 #[instrument(skip(window, state))]
 pub async fn set_presenter_page(
-    window: Window,
+    window: WebviewWindow,
     state: State<'_, AppState>,
     page: u32,
 ) -> Result<()> {
@@ -267,7 +270,7 @@ pub async fn set_presenter_page(
     // Get total pages for the event payload
     let pdf_state = state.get_pdf_state()?;
 
-    if let Some(presenter_window) = app_handle.get_window("presenter") {
+    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
         // Emit event to update page in presenter window
         presenter_window
             .emit(

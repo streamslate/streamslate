@@ -105,22 +105,13 @@ describe("Core Workflow (Remote)", () => {
     cy.get('[data-testid="status-bar"]').contains("WebSocket Connected");
 
     // Ensure save dialog + fs write succeed in browser-only mode.
+    // Tauri v2 plugins use "plugin:<name>|<method>" command format.
     cy.window().then((win) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const w = win as any;
       w.__TAURI_MOCK_IPC__.handlers.unshift({
-        match: ({
-          cmd,
-          args,
-        }: {
-          cmd: string;
-          args: Record<string, unknown>;
-        }) =>
-          cmd === "tauri" &&
-          args.__tauriModule === "Dialog" &&
-          typeof args.message === "object" &&
-          args.message !== null &&
-          (args.message as { cmd?: unknown }).cmd === "saveDialog",
+        match: ({ cmd }: { cmd: string; args: Record<string, unknown> }) =>
+          cmd === "plugin:dialog|save",
         handle: () => "/tmp/streamslate-export.pdf",
       });
     });
@@ -196,6 +187,7 @@ describe("Core Workflow (Remote)", () => {
     cy.get("[data-testid='tab-files']").click();
     cy.contains("button", "Export with Annotations").click();
 
+    // Tauri v2: writeFile calls invoke("plugin:fs|write_file", ...)
     cy.window()
       .then((win) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -205,12 +197,7 @@ describe("Core Workflow (Remote)", () => {
           args: Record<string, unknown>;
         }>;
 
-        const wroteFile = calls.some((c) => {
-          const module = c.cmd === "tauri" ? c.args.__tauriModule : null;
-          const message = c.args.message as Record<string, unknown> | undefined;
-          return module === "Fs" && message?.cmd === "writeFile";
-        });
-        return wroteFile;
+        return calls.some((c) => c.cmd.startsWith("plugin:fs|"));
       })
       .should("eq", true);
   });

@@ -200,10 +200,8 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          # Install build requirements from file (uses 4.1 packages for Debian 13+ compat)
+          # Install build requirements (Tauri v2 uses webkit2gtk-4.1, libsoup-3.0 natively)
           grep -v '^#' requirements/ubuntu-build.txt | grep -v '^$' | xargs sudo apt-get install -y
-          # Also install 4.0 packages on Ubuntu 22.04 where they're available
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libayatana-appindicator3-dev librsvg2-dev || true
 
       - name: Install Visual Studio Build Tools (Windows only)
         if: matrix.platform == 'windows-latest'
@@ -233,7 +231,7 @@ jobs:
           node -e "console.log(require('./package.json').version)"
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.5.5
+        uses: tauri-apps/tauri-action@v0.5.17
         timeout-minutes: 60
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -244,8 +242,8 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           includeUpdaterJson: true
