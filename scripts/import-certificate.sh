@@ -32,8 +32,9 @@ security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 security set-keychain-settings "$KEYCHAIN_PATH"
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-# Set as default and prepend to search list so codesign finds it first
-security default-keychain -s "$KEYCHAIN_PATH"
+# Prepend to search list so codesign finds it first.
+# Do NOT set as default-keychain — the runner's login keychain must remain default
+# so that gitlab-ci-token storage survives after this temp keychain is deleted.
 security list-keychains -d user -s "$KEYCHAIN_PATH" $ORIGINAL_KEYCHAINS
 
 # Import certificate
