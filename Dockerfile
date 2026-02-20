@@ -28,15 +28,17 @@ COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.
 RUN npm run build
 
 # Rust builder stage
-# Pinned to 1.82 (Debian 12 bookworm) — provides webkit2gtk-4.0 packages that Tauri v1 requires.
-# Do NOT change to rust:latest without also updating package names to 4.1 + adding symlinks.
-FROM rust:1.82-slim AS rust-builder
+# Rust 1.85+ required — transitive deps (dlopen2) use edition 2024.
+# Debian bookworm ships webkit2gtk-4.1 packages that Tauri v2 needs.
+FROM rust:1.85-slim AS rust-builder
 
-# Install dependencies for Tauri
+# Install build dependencies for Tauri v2
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-dev \
-    libwebkit2gtk-4.0-dev \
+    libwebkit2gtk-4.1-dev \
+    libjavascriptcoregtk-4.1-dev \
+    libsoup-3.0-dev \
     libayatana-appindicator3-dev \
     librsvg2-dev \
     pkg-config \
@@ -77,10 +79,12 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
 # Final runtime stage
 FROM ubuntu:22.04
 
-# Install runtime dependencies
+# Install runtime dependencies for Tauri v2
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
-    libwebkit2gtk-4.0-37 \
+    libwebkit2gtk-4.1-0 \
+    libjavascriptcoregtk-4.1-0 \
+    libsoup-3.0-0 \
     libayatana-appindicator3-1 \
     librsvg2-2 \
     ca-certificates \
