@@ -4,7 +4,7 @@
  */
 
 import { PDFDocument, rgb, StandardFonts, type RGB } from "pdf-lib";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
 import { pointsToSmoothPath } from "../utils/geometry";

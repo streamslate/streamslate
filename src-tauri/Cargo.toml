@@ -12,13 +12,19 @@ rust-version = "1.70"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5.5", features = [] }
+tauri-build = { version = "2", features = [] }
 cc = "1.0"
 
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-tauri = { version = "1.8.2", features = [ "updater", "protocol-asset", "window-hide", "window-unminimize", "fs-all", "shell-open", "path-all", "window-unmaximize", "window-show", "window-start-dragging", "window-set-skip-taskbar", "window-set-always-on-top", "window-close", "http-all", "dialog-all", "window-maximize", "window-minimize", "window-set-decorations"] }
+tauri = { version = "2", features = ["tray-icon", "protocol-asset", "devtools"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-process = "2"
+tauri-plugin-updater = "2"
+tauri-plugin-http = "2"
 tokio = { version = "1.0", features = ["full"] }
 tokio-tungstenite = "0.20"
 futures-util = "0.3"
@@ -46,7 +52,7 @@ screencapturekit = "1.5.0"
 core-media-rs = "0.3"
 
 [features]
-# this feature is used for production builds or when `devPath` points to the filesystem
+# this feature is used for production builds or when `devUrl` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = [ "tauri/custom-protocol" ]
 

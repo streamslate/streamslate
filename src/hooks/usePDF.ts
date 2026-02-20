@@ -21,8 +21,8 @@
  */
 
 import { useCallback, useEffect, useRef } from "react";
-import { open, save } from "@tauri-apps/api/dialog";
-import { writeBinaryFile } from "@tauri-apps/api/fs";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import { PDFCommands, AnnotationCommands } from "../lib/tauri/commands";
 import { exportPDF } from "../lib/pdf/exporter";
 import type { AnnotationDTO } from "../lib/tauri/commands";
@@ -496,7 +496,7 @@ export const usePDF = () => {
 
         // Write to file
         setLoading(true, LoadingStage.RENDERING, 80, "Saving file...");
-        await writeBinaryFile(filePath, pdfBytes);
+        await writeFile(filePath, pdfBytes);
 
         setLoading(true, LoadingStage.COMPLETE, 100, "Export complete");
         setTimeout(() => setLoading(false), 1000);

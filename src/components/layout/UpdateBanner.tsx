@@ -2,16 +2,12 @@
  * This file is part of StreamSlate.
  * Copyright (C) 2025 StreamSlate Contributors
  *
- * Update notification banner component using Tauri's built-in updater.
+ * Update notification banner component using Tauri's updater plugin.
  */
 
 import { useEffect, useState } from "react";
-import {
-  checkUpdate,
-  installUpdate,
-  onUpdaterEvent,
-} from "@tauri-apps/api/updater";
-import { relaunch } from "@tauri-apps/api/process";
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
 import { logger } from "../../lib/logger";
 
 interface UpdateInfo {
@@ -30,13 +26,13 @@ export function UpdateBanner() {
     // Check for updates on mount
     const checkForUpdates = async () => {
       try {
-        const { shouldUpdate, manifest } = await checkUpdate();
-        if (shouldUpdate && manifest) {
+        const update = await check();
+        if (update) {
           setUpdateAvailable(true);
           setUpdateInfo({
-            version: manifest.version,
-            date: manifest.date,
-            body: manifest.body,
+            version: update.version,
+            date: update.date,
+            body: update.body,
           });
         }
       } catch (err) {
@@ -46,28 +42,17 @@ export function UpdateBanner() {
     };
 
     checkForUpdates();
-
-    // Listen for updater events
-    const unlisten = onUpdaterEvent(({ error, status }) => {
-      if (error) {
-        setError(error);
-        setIsInstalling(false);
-      }
-      logger.debug("Updater status:", status);
-    });
-
-    return () => {
-      unlisten.then((fn) => fn());
-    };
   }, []);
 
   const handleInstall = async () => {
     setIsInstalling(true);
     setError(null);
     try {
-      await installUpdate();
-      // Restart the app to apply the update
-      await relaunch();
+      const update = await check();
+      if (update) {
+        await update.downloadAndInstall();
+        await relaunch();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed");
       setIsInstalling(false);
