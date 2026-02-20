@@ -27,10 +27,13 @@ fi
 
 # Create new keychain
 security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+# Disable auto-lock entirely: omit -l (lock-on-sleep) so the keychain stays
+# unlocked for the full build regardless of runner idle time.
+security set-keychain-settings "$KEYCHAIN_PATH"
 security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-# Add keychain to search list (prepend so codesign finds it first)
+# Set as default and prepend to search list so codesign finds it first
+security default-keychain -s "$KEYCHAIN_PATH"
 security list-keychains -d user -s "$KEYCHAIN_PATH" $ORIGINAL_KEYCHAINS
 
 # Import certificate
@@ -57,7 +60,8 @@ security import AppleWWDRCAG3.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 security import DeveloperIDG2CA.cer -k "$KEYCHAIN_PATH" -T /usr/bin/codesign
 
 # Set partition list for codesign to avoid UI prompts
-security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+# Grant codesign/productbuild non-interactive access (suppresses UI password prompts)
+security set-key-partition-list -S apple-tool:,apple:,codesign:,productbuild: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
 # Extract and verify signing identity
 SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
