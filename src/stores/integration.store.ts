@@ -22,15 +22,12 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import {
-  NDIQuality,
-  IntegrationMessageType,
-  IntegrationSource,
-} from "../types/integration.types";
+import { NDIQuality, IntegrationSource } from "../types/integration.types";
 import {
   getWebSocketClient,
   resetWebSocketClient,
 } from "../lib/websocket/client";
+import { registerWebSocketHandlers } from "../lib/events/message-map";
 import type {
   WebSocketState,
   OBSIntegration,
@@ -152,34 +149,6 @@ const initialConfig: IntegrationConfig = {
 
 let websocketClient: ReturnType<typeof getWebSocketClient> | null = null;
 let websocketStateHandler: ((state: WebSocketState) => void) | null = null;
-const websocketMessageTypes = [
-  "CONNECTED",
-  "STATE",
-  "PAGE_CHANGED",
-  "ZOOM_CHANGED",
-  "PDF_OPENED",
-  "PDF_CLOSED",
-  "PRESENTER_CHANGED",
-  "ANNOTATIONS_UPDATED",
-  "ANNOTATIONS_CLEARED",
-  "PONG",
-  "ERROR",
-] as const;
-
-const createIntegrationEvent = (
-  type: IntegrationMessageType,
-  source: IntegrationSource,
-  data: unknown
-): IntegrationEvent => ({
-  id:
-    globalThis.crypto?.randomUUID?.() ||
-    `evt-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-  type,
-  source,
-  timestamp: new Date(),
-  data,
-  handled: false,
-});
 
 export const useIntegrationStore = create<IntegrationStore>()(
   devtools(
@@ -301,135 +270,19 @@ export const useIntegrationStore = create<IntegrationStore>()(
             },
           }));
 
-          for (const messageType of websocketMessageTypes) {
-            websocketClient.offMessage(messageType);
-          }
-
-          websocketClient.onMessage("CONNECTED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.CONNECTION_STATUS,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("STATE", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.CONNECTION_STATUS,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("PAGE_CHANGED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.PAGE_CHANGED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("ZOOM_CHANGED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.ZOOM_CHANGED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("PDF_OPENED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.PDF_OPENED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("PDF_CLOSED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.PDF_CLOSED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("PRESENTER_CHANGED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.PRESENTER_MODE_TOGGLED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("ANNOTATIONS_UPDATED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.ANNOTATIONS_UPDATED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("ANNOTATIONS_CLEARED", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.ANNOTATIONS_CLEARED,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("PONG", (payload) => {
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.PONG,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
-
-          websocketClient.onMessage("ERROR", (payload) => {
-            const message =
-              typeof payload === "object" &&
-              payload !== null &&
-              "message" in payload &&
-              typeof (payload as { message?: unknown }).message === "string"
-                ? (payload as { message: string }).message
-                : "WebSocket server error";
-
-            set((state) => ({
-              websocket: {
-                ...state.websocket,
-                connected: false,
-                lastError: message,
-              },
-            }));
-
-            get().addEvent(
-              createIntegrationEvent(
-                IntegrationMessageType.ERROR,
-                IntegrationSource.STREAMSLATE,
-                payload
-              )
-            );
-          });
+          registerWebSocketHandlers(
+            websocketClient,
+            (event) => get().addEvent(event),
+            (message) => {
+              set((state) => ({
+                websocket: {
+                  ...state.websocket,
+                  connected: false,
+                  lastError: message,
+                },
+              }));
+            }
+          );
 
           if (websocketClient.isConnected()) {
             set((state) => ({

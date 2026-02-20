@@ -30,12 +30,12 @@ import { useTheme } from "./hooks/useTheme";
 import { useViewModes } from "./hooks/useViewModes";
 import { StatusBar } from "./components/layout/StatusBar";
 import { UpdateBanner } from "./components/layout/UpdateBanner";
-import { IntegrationMessageType } from "./types/integration.types";
 import { usePDFStore } from "./stores/pdf.store";
 import {
-  dtoToAnnotation,
-  parseAnnotationDTO,
-} from "./lib/annotations/converters";
+  processUnhandledEvents,
+  getStatusMessage,
+} from "./lib/events/dispatcher";
+import type { EventActions } from "./lib/events/dispatcher";
 
 type SidebarPanel = "files" | "annotations" | "settings";
 
@@ -56,61 +56,6 @@ const getStoredPanel = (): SidebarPanel => {
     return value;
   }
   return "files";
-};
-
-const toRecord = (value: unknown): Record<string, unknown> | null => {
-  if (typeof value !== "object" || value === null) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
-
-const readNumber = (
-  payload: Record<string, unknown> | null,
-  keys: string[]
-): number | null => {
-  if (!payload) {
-    return null;
-  }
-  for (const key of keys) {
-    const value = payload[key];
-    if (typeof value === "number" && Number.isFinite(value)) {
-      return value;
-    }
-  }
-  return null;
-};
-
-const readBoolean = (
-  payload: Record<string, unknown> | null,
-  keys: string[]
-): boolean | null => {
-  if (!payload) {
-    return null;
-  }
-  for (const key of keys) {
-    const value = payload[key];
-    if (typeof value === "boolean") {
-      return value;
-    }
-  }
-  return null;
-};
-
-const readString = (
-  payload: Record<string, unknown> | null,
-  keys: string[]
-): string | null => {
-  if (!payload) {
-    return null;
-  }
-  for (const key of keys) {
-    const value = payload[key];
-    if (typeof value === "string" && value.length > 0) {
-      return value;
-    }
-  }
-  return null;
 };
 
 function App() {
@@ -162,193 +107,37 @@ function App() {
     localStorage.setItem(ACTIVE_PANEL_KEY, activePanel);
   }, [activePanel]);
 
+  // Build event actions once (stable references from stores/hooks)
+  const eventActions: EventActions = useMemo(
+    () => ({
+      setCurrentPage,
+      setZoom,
+      setPresenterMode,
+      setDocument,
+      setPageAnnotations,
+      clearAnnotations,
+      getCurrentDocument: () => pdfDocument,
+    }),
+    [
+      setCurrentPage,
+      setZoom,
+      setPresenterMode,
+      setDocument,
+      setPageAnnotations,
+      clearAnnotations,
+      pdfDocument,
+    ]
+  );
+
+  // Dispatch unhandled integration events
   useEffect(() => {
-    for (const event of integrationEvents) {
-      if (event.handled) {
-        continue;
-      }
+    processUnhandledEvents(integrationEvents, eventActions, markEventHandled);
+  }, [integrationEvents, eventActions, markEventHandled]);
 
-      const payload = toRecord(event.data);
-
-      if (event.type === IntegrationMessageType.PAGE_CHANGED) {
-        const page = readNumber(payload, ["page"]);
-        if (page !== null && page >= 1) {
-          setCurrentPage(Math.floor(page));
-        }
-      }
-
-      if (
-        event.type === IntegrationMessageType.ZOOM_CHANGED ||
-        event.type === IntegrationMessageType.CONNECTION_STATUS
-      ) {
-        const page = readNumber(payload, ["page"]);
-        if (page !== null && page >= 1) {
-          setCurrentPage(Math.floor(page));
-        }
-
-        const zoom = readNumber(payload, ["zoom"]);
-        if (zoom !== null && zoom > 0) {
-          setZoom(zoom);
-        }
-      }
-
-      if (
-        event.type === IntegrationMessageType.PRESENTER_MODE_TOGGLED ||
-        event.type === IntegrationMessageType.CONNECTION_STATUS
-      ) {
-        const presenterActive = readBoolean(payload, [
-          "active",
-          "presenter_active",
-        ]);
-        if (presenterActive !== null) {
-          setPresenterMode(presenterActive);
-        }
-      }
-
-      if (event.type === IntegrationMessageType.CONNECTION_STATUS) {
-        const isLoaded = readBoolean(payload, ["pdf_loaded"]);
-        const path = readString(payload, ["pdf_path"]);
-        const totalPages = readNumber(payload, ["total_pages", "totalPages"]);
-
-        if (isLoaded && path && totalPages !== null && totalPages > 0) {
-          const nextPageCount = Math.floor(totalPages);
-          const shouldSet =
-            pdfDocument === null ||
-            pdfDocument.path !== path ||
-            pdfDocument.pageCount !== nextPageCount;
-
-          if (shouldSet) {
-            setDocument({
-              id: globalThis.crypto?.randomUUID?.() ?? `pdf-${Date.now()}`,
-              path,
-              title: readString(payload, ["pdf_title"]) ?? undefined,
-              pageCount: nextPageCount,
-              fileSize: 0,
-              isLoaded: true,
-            });
-          }
-        }
-      }
-
-      if (event.type === IntegrationMessageType.PDF_OPENED) {
-        const path = readString(payload, ["path", "pdf_path"]);
-        const pageCount = readNumber(payload, ["page_count", "pageCount"]);
-        if (path && pageCount !== null && pageCount > 0) {
-          setDocument({
-            id: globalThis.crypto?.randomUUID?.() ?? `pdf-${Date.now()}`,
-            path,
-            title: readString(payload, ["title"]) ?? undefined,
-            pageCount: Math.floor(pageCount),
-            fileSize: 0,
-            isLoaded: true,
-          });
-          setCurrentPage(1);
-        }
-      }
-
-      if (event.type === IntegrationMessageType.PDF_CLOSED) {
-        setDocument(null);
-        clearAnnotations();
-        setCurrentPage(1);
-      }
-
-      if (event.type === IntegrationMessageType.ANNOTATIONS_UPDATED) {
-        const updates = payload?.annotations;
-        const record = updates ? toRecord(updates) : payload;
-        if (record) {
-          for (const [pageKey, items] of Object.entries(record)) {
-            const page = Number.parseInt(pageKey, 10);
-            if (!Number.isFinite(page) || page < 1) {
-              continue;
-            }
-
-            if (!Array.isArray(items)) {
-              continue;
-            }
-
-            const next = items
-              .map(parseAnnotationDTO)
-              .filter((dto): dto is NonNullable<typeof dto> => dto !== null)
-              .map(dtoToAnnotation)
-              .map((annotation) => ({ ...annotation, pageNumber: page }));
-
-            setPageAnnotations(page, next);
-          }
-        }
-      }
-
-      if (event.type === IntegrationMessageType.ANNOTATIONS_CLEARED) {
-        clearAnnotations();
-      }
-
-      markEventHandled(event.id);
-    }
-  }, [
-    integrationEvents,
-    markEventHandled,
-    pdfDocument,
-    clearAnnotations,
-    setCurrentPage,
-    setDocument,
-    setPageAnnotations,
-    setPresenterMode,
-    setZoom,
-  ]);
-
-  const statusMessage = useMemo(() => {
-    for (let index = integrationEvents.length - 1; index >= 0; index -= 1) {
-      const event = integrationEvents[index];
-      const payload = toRecord(event.data);
-
-      if (event.type === IntegrationMessageType.PAGE_CHANGED) {
-        const page = readNumber(payload, ["page"]);
-        if (page !== null && page >= 1) {
-          return `Remote page ${Math.floor(page)}`;
-        }
-      }
-
-      if (event.type === IntegrationMessageType.PRESENTER_MODE_TOGGLED) {
-        const presenterActive = readBoolean(payload, [
-          "active",
-          "presenter_active",
-        ]);
-        if (presenterActive !== null) {
-          return presenterActive
-            ? "Presenter mode enabled remotely"
-            : "Presenter mode disabled remotely";
-        }
-      }
-
-      if (event.type === IntegrationMessageType.ZOOM_CHANGED) {
-        const zoom = readNumber(payload, ["zoom"]);
-        if (zoom !== null && zoom > 0) {
-          return `Remote zoom ${Math.round(zoom * 100)}%`;
-        }
-      }
-
-      if (event.type === IntegrationMessageType.ANNOTATIONS_UPDATED) {
-        return "Remote annotations updated";
-      }
-
-      if (event.type === IntegrationMessageType.ANNOTATIONS_CLEARED) {
-        return "Remote annotations cleared";
-      }
-
-      if (event.type === IntegrationMessageType.PDF_OPENED) {
-        return "Remote PDF opened";
-      }
-
-      if (event.type === IntegrationMessageType.PDF_CLOSED) {
-        return "Remote PDF closed";
-      }
-
-      if (event.type === IntegrationMessageType.ERROR) {
-        const message = readString(payload, ["message"]);
-        return message ? `Remote error: ${message}` : "Remote error";
-      }
-    }
-    return "Ready";
-  }, [integrationEvents]);
+  const statusMessage = useMemo(
+    () => getStatusMessage(integrationEvents),
+    [integrationEvents]
+  );
 
   return (
     <div
