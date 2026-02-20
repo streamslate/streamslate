@@ -3,29 +3,20 @@
  * Copyright (C) 2025 StreamSlate Contributors
  *
  * Cypress support file for E2E tests.
- * Handles Tauri-specific exceptions when running in browser-only mode.
+ * Mocks Tauri v2 IPC internals for browser-only testing.
  */
 
-// Mock Tauri IPC for browser-only testing
-// When running outside of Tauri webview, __TAURI_IPC__ is not available
+// Mock Tauri v2 IPC for browser-only testing
+// Tauri v2 uses window.__TAURI_INTERNALS__ as the IPC bridge (v1 used __TAURI_IPC__)
 beforeEach(() => {
   cy.on("window:before:load", (win) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const tauriWindow = win as any;
 
-    // Mock __TAURI__ global if not present
-    if (!tauriWindow.__TAURI__) {
-      tauriWindow.__TAURI__ = {
-        invoke: () => Promise.resolve(),
-        convertFileSrc: (filePath: string) => filePath,
-        event: {
-          listen: () => Promise.resolve(() => {}),
-          emit: () => Promise.resolve(),
-        },
-      };
-    } else if (!tauriWindow.__TAURI__.convertFileSrc) {
-      tauriWindow.__TAURI__.convertFileSrc = (filePath: string) => filePath;
-    }
+    // Callback registry used by @tauri-apps/api/core transformCallback()
+    let callbackId = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+    const callbacks = new Map<number, Function>();
 
     if (!tauriWindow.__TAURI_MOCK_IPC__) {
       tauriWindow.__TAURI_MOCK_IPC__ = {
@@ -43,93 +34,91 @@ beforeEach(() => {
       };
     }
 
-    // Mock the Tauri IPC bridge if not present.
-    // This must call the callback/error functions created by @tauri-apps/api/tauri invoke().
-    if (!tauriWindow.__TAURI_IPC__) {
-      tauriWindow.__TAURI_IPC__ = (payload: {
-        cmd: string;
-        callback: number;
-        error: number;
-        [key: string]: unknown;
-      }) => {
-        const { cmd, callback, error, ...args } = payload;
+    // Mock __TAURI_INTERNALS__ — the v2 IPC bridge used by @tauri-apps/api/core
+    if (!tauriWindow.__TAURI_INTERNALS__) {
+      tauriWindow.__TAURI_INTERNALS__ = {
+        metadata: {
+          currentWindow: { label: "main", kind: "Webview" },
+          currentWebview: { label: "main", kind: "Webview" },
+          windows: [{ label: "main" }],
+          webviews: [{ label: "main" }],
+        },
 
-        tauriWindow.__TAURI_MOCK_IPC__.calls.push({
-          cmd,
-          args: args as Record<string, unknown>,
-        });
+        // invoke() is the core IPC mechanism in v2
+        invoke: (
+          cmd: string,
+          args?: Record<string, unknown>
+        ): Promise<unknown> => {
+          tauriWindow.__TAURI_MOCK_IPC__.calls.push({
+            cmd,
+            args: args ?? {},
+          });
 
-        const resolve = (value: unknown) => {
-          const fn = tauriWindow[`_${callback}`];
-          if (typeof fn === "function") {
-            fn(value);
-          }
-        };
-
-        const reject = (value: unknown) => {
-          const fn = tauriWindow[`_${error}`];
-          if (typeof fn === "function") {
-            fn(value);
-          }
-        };
-
-        try {
+          // Check custom handlers first
           const custom = tauriWindow.__TAURI_MOCK_IPC__.handlers.find(
             (h: {
-              match: (payload: {
+              match: (p: {
                 cmd: string;
                 args: Record<string, unknown>;
               }) => boolean;
-              handle: (payload: {
-                cmd: string;
-                args: Record<string, unknown>;
-              }) => unknown;
-            }) => h.match({ cmd, args })
+            }) => h.match({ cmd, args: args ?? {} })
           );
           if (custom) {
-            resolve(custom.handle({ cmd, args }));
-            return;
+            return Promise.resolve(custom.handle({ cmd, args: args ?? {} }));
           }
 
-          // Minimal defaults for APIs used in browser-only tests.
-          if (cmd === "tauri") {
-            const module = (args as Record<string, unknown>).__tauriModule;
-            const message =
-              (args as Record<string, unknown>).message &&
-              typeof (args as Record<string, unknown>).message === "object"
-                ? ((args as Record<string, unknown>).message as Record<
-                    string,
-                    unknown
-                  >)
-                : {};
-
-            if (module === "Dialog" && message.cmd === "openDialog") {
-              resolve(null);
-              return;
-            }
-            if (module === "Dialog" && message.cmd === "saveDialog") {
-              resolve(null);
-              return;
-            }
-            if (module === "Fs" && message.cmd === "writeFile") {
-              resolve(null);
-              return;
-            }
-            if (module === "Fs" && message.cmd === "readFile") {
-              resolve([]);
-              return;
-            }
-
-            resolve(null);
-            return;
+          // v2 plugin commands use "plugin:<name>|<method>" format
+          if (cmd.startsWith("plugin:event|")) {
+            // Event listen/unlisten — return a numeric listener ID
+            return Promise.resolve(callbackId++);
+          }
+          if (cmd.startsWith("plugin:dialog|")) {
+            return Promise.resolve(null);
+          }
+          if (cmd.startsWith("plugin:fs|")) {
+            return Promise.resolve(null);
+          }
+          if (cmd.startsWith("plugin:shell|")) {
+            return Promise.resolve(null);
+          }
+          if (cmd.startsWith("plugin:process|")) {
+            return Promise.resolve(null);
+          }
+          if (cmd.startsWith("plugin:updater|")) {
+            return Promise.resolve(null);
+          }
+          if (cmd.startsWith("plugin:http|")) {
+            return Promise.resolve(null);
           }
 
-          // Default for app-level commands: act like a no-op.
-          resolve(null);
-        } catch (e) {
-          reject(e instanceof Error ? e.message : e);
-        }
+          // Default for app-level commands: no-op
+          return Promise.resolve(null);
+        },
+
+        // transformCallback registers a JS function and returns a numeric ID
+        // so the Rust side can call it back via window.__TAURI_INTERNALS__._callbacks
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+        transformCallback: (fn?: Function, once?: boolean): number => {
+          const id = callbackId++;
+          if (fn) {
+            callbacks.set(id, (...args: unknown[]) => {
+              fn(...args);
+              if (once) callbacks.delete(id);
+            });
+          }
+          return id;
+        },
+
+        // convertFileSrc creates asset:// protocol URLs in v2
+        convertFileSrc: (filePath: string, _protocol?: string): string => {
+          return filePath;
+        },
       };
+    }
+
+    // Also set __TAURI__ for code that checks "in" operator (e.g. "__TAURI__" in window)
+    if (!tauriWindow.__TAURI__) {
+      tauriWindow.__TAURI__ = tauriWindow.__TAURI_INTERNALS__;
     }
   });
 });
@@ -140,7 +129,8 @@ Cypress.on("uncaught:exception", (err) => {
   // Ignore Tauri IPC errors - expected when running in browser-only mode
   if (
     err.message.includes("__TAURI_IPC__") ||
-    err.message.includes("__TAURI__")
+    err.message.includes("__TAURI__") ||
+    err.message.includes("__TAURI_INTERNALS__")
   ) {
     return false; // Prevent test failure
   }
