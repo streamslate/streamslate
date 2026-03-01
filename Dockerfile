@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 # Multi-stage build for StreamSlate
-FROM node:18-slim AS frontend-builder
+FROM node:20-slim AS frontend-builder
 
 # Install dependencies for building
 RUN apt-get update && apt-get install -y --no-install-recommends \

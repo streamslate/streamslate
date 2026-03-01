@@ -231,7 +231,7 @@ jobs:
           node -e "console.log(require('./package.json').version)"
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.5.17
+        uses: tauri-apps/tauri-action@v0.5.25
         timeout-minutes: 60
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -289,7 +289,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          platforms: linux/amd64,linux/arm64
+          # arm64 disabled: cargo fetch under QEMU emulation is unreliable.
+          # Re-enable when a native arm64 runner is available.
+          platforms: linux/amd64
 
   publish-release:
     needs: [create-release, build-tauri, docker-release]

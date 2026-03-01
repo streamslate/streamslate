@@ -128,7 +128,7 @@ jobs:
           node scripts/sync-versions.js
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.5.17
+        uses: tauri-apps/tauri-action@v0.5.25
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
