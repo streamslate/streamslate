@@ -1,7 +1,7 @@
 {
   "name": "streamslate",
   "private": true,
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "A desktop PDF-annotation app for live streamers and YouTubers",
   "type": "module",
   "scripts": {
