@@ -190,7 +190,11 @@ build:macos:
     - echo "Signing with identity $APPLE_SIGNING_IDENTITY"
     - if [ -n "$APPLE_API_KEY_BASE64" ]; then API_KEY_PATH="$PWD/AuthKey_${APPLE_API_KEY}.p8"; echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$API_KEY_PATH"; export APPLE_API_KEY_PATH="$API_KEY_PATH"; echo "APPLE_API_KEY_PATH=$API_KEY_PATH" >> build.env; echo "Notarization API key ready"; else echo "Warning APPLE_API_KEY_BASE64 not set, notarization will be skipped"; fi
     - if [ -n "$TAURI_PRIVATE_KEY" ]; then export TAURI_SIGNING_PRIVATE_KEY="$TAURI_PRIVATE_KEY"; export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${TAURI_KEY_PASSWORD:-}"; echo "Tauri updater signing key configured"; else echo "Warning TAURI_PRIVATE_KEY not set, update bundles will not be signed"; fi
-    - npm run tauri:build
+    # Tauri's bundled DMG flow still hard-codes HFS+, which fails on this
+    # runner's macOS 26.x host. Build the signed/notarized .app with Tauri,
+    # then package the DMG ourselves with APFS via hdiutil.
+    - npm run tauri:build -- --bundles app
+    - ./scripts/build-macos-dmg.sh
   after_script:
     - if [ -f build.env ]; then source build.env; fi
     - if [ -n "$KEYCHAIN_PATH" ]; then security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true; fi
