@@ -25,6 +25,12 @@ export const useTheme = () => {
     return true; // Default to dark mode
   });
 
+  const [invertPages, setInvertPages] = useState(() => {
+    const stored = localStorage.getItem("theme.invertPages");
+    if (stored) return stored === "true";
+    return true; // Default on — invert PDF pages in dark mode
+  });
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -35,7 +41,19 @@ export const useTheme = () => {
     }
   }, [darkMode]);
 
-  const toggleDarkMode = () => setDarkMode(!darkMode);
+  useEffect(() => {
+    localStorage.setItem("theme.invertPages", String(invertPages));
+  }, [invertPages]);
 
-  return { darkMode, setDarkMode, toggleDarkMode };
+  const toggleDarkMode = () => setDarkMode(!darkMode);
+  const toggleInvertPages = () => setInvertPages(!invertPages);
+
+  return {
+    darkMode,
+    setDarkMode,
+    toggleDarkMode,
+    invertPages,
+    setInvertPages,
+    toggleInvertPages,
+  };
 };

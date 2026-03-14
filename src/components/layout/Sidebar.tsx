@@ -144,9 +144,11 @@ interface SidebarProps {
   activePanel: Panel;
   isLoaded: boolean;
   darkMode: boolean;
+  invertPages: boolean;
   onSetActivePanel: (panel: Panel) => void;
   onOpenPDF: () => void;
   onSetDarkMode: (value: boolean) => void;
+  onSetInvertPages: (value: boolean) => void;
   onSetTransparentBg: (value: boolean) => void;
   onSetBorderlessMode: (value: boolean) => void;
   borderlessMode: boolean;
@@ -159,9 +161,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activePanel,
   isLoaded,
   darkMode,
+  invertPages,
   onSetActivePanel,
   onOpenPDF,
   onSetDarkMode,
+  onSetInvertPages,
   onSetTransparentBg,
   onSetBorderlessMode,
   borderlessMode,
@@ -658,6 +662,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       Dark Theme
                     </span>
                   </label>
+                  {darkMode && (
+                    <label className="flex items-center p-3 ml-4 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2 mr-3"
+                        checked={invertPages}
+                        onChange={(e) => onSetInvertPages(e.target.checked)}
+                      />
+                      <div className="flex-1">
+                        <span className="text-sm font-medium text-text-primary">
+                          Invert PDF Pages
+                        </span>
+                        <p className="text-xs text-text-tertiary mt-1">
+                          Dark background for PDF content (stream-friendly)
+                        </p>
+                      </div>
+                    </label>
+                  )}
                   <label className="flex items-center p-3 bg-bg-tertiary rounded-lg border border-border-primary hover:bg-surface-tertiary transition-all cursor-pointer group">
                     <input
                       type="checkbox"

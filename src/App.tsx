@@ -61,7 +61,8 @@ const getStoredPanel = (): SidebarPanel => {
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(getStoredSidebarOpen);
   const [activePanel, setActivePanel] = useState<SidebarPanel>(getStoredPanel);
-  const { darkMode, setDarkMode, toggleDarkMode } = useTheme();
+  const { darkMode, setDarkMode, toggleDarkMode, invertPages, setInvertPages } =
+    useTheme();
   const {
     presenterMode,
     setPresenterMode,
@@ -175,9 +176,11 @@ function App() {
           activePanel={activePanel}
           isLoaded={isLoaded}
           darkMode={darkMode}
+          invertPages={invertPages}
           onSetActivePanel={setActivePanel}
           onOpenPDF={openPDF}
           onSetDarkMode={setDarkMode}
+          onSetInvertPages={setInvertPages}
           onSetTransparentBg={setTransparentBg}
           onSetBorderlessMode={setBorderlessMode}
           borderlessMode={borderlessMode}

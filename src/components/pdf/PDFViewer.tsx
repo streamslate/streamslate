@@ -46,7 +46,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   className = "",
   transparentBg = false,
 }) => {
-  const { darkMode } = useTheme();
+  const { darkMode, invertPages } = useTheme();
   const {
     document,
     viewerState,
@@ -292,6 +292,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
                 onCanvasSizeChange={setCanvasSize}
                 transparentBg={transparentBg}
                 darkMode={darkMode}
+                invertPages={invertPages}
                 fitMode={viewerState.fitMode}
               />
 
@@ -384,6 +385,7 @@ interface PDFCanvasRendererProps {
   onCanvasSizeChange?: (size: { width: number; height: number }) => void;
   transparentBg?: boolean;
   darkMode?: boolean;
+  invertPages?: boolean;
   fitMode?: FitMode;
 }
 
@@ -395,6 +397,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   onCanvasSizeChange,
   transparentBg,
   darkMode = false,
+  invertPages = true,
   fitMode = FitMode.CUSTOM,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -582,7 +585,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           src={imageDataUrl}
           alt={`PDF page ${currentPage}`}
           className={`block mx-auto max-w-full h-auto ${
-            darkMode ? "pdf-dark-mode" : ""
+            darkMode && invertPages ? "pdf-dark-mode" : ""
           }`}
           style={{
             display: "block",

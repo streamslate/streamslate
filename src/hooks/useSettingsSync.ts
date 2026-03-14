@@ -18,6 +18,7 @@ export interface SettingsBundle {
     viewMode: {
       transparentBg: string | null;
       borderlessMode: string | null;
+      invertPages?: string | null;
     };
     annotationProfiles: string | null;
     annotationDocumentProfileMap: string | null;
@@ -30,6 +31,7 @@ const SETTINGS_KEYS = {
   activePanel: "layout.activePanel",
   transparentBg: "viewMode.transparentBg",
   borderlessMode: "viewMode.borderlessMode",
+  invertPages: "theme.invertPages",
   annotationProfiles: "streamslate.annotation-template-profiles.v1",
   annotationDocumentProfileMap:
     "streamslate.annotation-document-profile-map.v1",
@@ -48,6 +50,7 @@ function collectSettings(): SettingsBundle {
       viewMode: {
         transparentBg: localStorage.getItem(SETTINGS_KEYS.transparentBg),
         borderlessMode: localStorage.getItem(SETTINGS_KEYS.borderlessMode),
+        invertPages: localStorage.getItem(SETTINGS_KEYS.invertPages),
       },
       annotationProfiles: localStorage.getItem(
         SETTINGS_KEYS.annotationProfiles
@@ -79,6 +82,9 @@ function applySettings(bundle: SettingsBundle): void {
       SETTINGS_KEYS.borderlessMode,
       s.viewMode.borderlessMode
     );
+  }
+  if (s.viewMode.invertPages !== undefined && s.viewMode.invertPages !== null) {
+    localStorage.setItem(SETTINGS_KEYS.invertPages, s.viewMode.invertPages);
   }
   if (s.annotationProfiles !== null) {
     localStorage.setItem(
