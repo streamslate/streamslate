@@ -65,6 +65,8 @@ function App() {
   const {
     presenterMode,
     setPresenterMode,
+    togglePresenterMode,
+    exitPresenterMode,
     transparentBg,
     setTransparentBg,
     borderlessMode,
@@ -161,7 +163,7 @@ function App() {
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onOpenPDF={openPDF}
         onToggleDarkMode={toggleDarkMode}
-        onTogglePresenterMode={() => setPresenterMode(!presenterMode)}
+        onTogglePresenterMode={togglePresenterMode}
       />
 
       {/* Main Layout */}
@@ -194,12 +196,12 @@ function App() {
           />
 
           {presenterMode && (
-            <PresenterUI onExit={() => setPresenterMode(false)} />
+            <PresenterUI onExit={exitPresenterMode} />
           )}
           {borderlessMode && !presenterMode && (
             <BorderlessUI
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-              onEnterPresenterMode={() => setPresenterMode(true)}
+              onEnterPresenterMode={togglePresenterMode}
               onExitBorderlessMode={() => setBorderlessMode(false)}
             />
           )}

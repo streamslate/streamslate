@@ -16,7 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { PresenterCommands } from "../lib/tauri/commands";
+import { logger } from "../lib/logger";
 
 const TRANSPARENT_BG_KEY = "viewMode.transparentBg";
 const BORDERLESS_MODE_KEY = "viewMode.borderlessMode";
@@ -38,17 +40,52 @@ export const useViewModes = () => {
     getStoredFlag(BORDERLESS_MODE_KEY)
   );
 
+  /**
+   * Toggle presenter mode via Tauri commands.
+   * Use this for user-initiated actions (button clicks, keyboard shortcuts).
+   * For remote-control events (WebSocket), use setPresenterMode directly
+   * since the backend already manages the window state.
+   */
+  const togglePresenterMode = useCallback(async () => {
+    const newState = !presenterMode;
+    try {
+      if (newState) {
+        await PresenterCommands.openPresenterMode();
+      } else {
+        await PresenterCommands.closePresenterMode();
+      }
+      setPresenterMode(newState);
+    } catch (e) {
+      // Fallback for non-Tauri environments (dev server in browser)
+      logger.warn("Presenter mode Tauri command failed, toggling local state only:", e);
+      setPresenterMode(newState);
+    }
+  }, [presenterMode]);
+
+  /**
+   * Exit presenter mode via Tauri command.
+   * Convenience wrapper for the exit button / ESC key.
+   */
+  const exitPresenterMode = useCallback(async () => {
+    try {
+      await PresenterCommands.closePresenterMode();
+    } catch (e) {
+      logger.warn("Close presenter Tauri command failed:", e);
+    }
+    setPresenterMode(false);
+  }, []);
+
   // Handle ESC key to exit presenter mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && presenterMode) {
-        setPresenterMode(false);
+        exitPresenterMode();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [presenterMode]);
+  }, [presenterMode, exitPresenterMode]);
 
   useEffect(() => {
     localStorage.setItem(TRANSPARENT_BG_KEY, String(transparentBg));
@@ -61,6 +98,8 @@ export const useViewModes = () => {
   return {
     presenterMode,
     setPresenterMode,
+    togglePresenterMode,
+    exitPresenterMode,
     transparentBg,
     setTransparentBg,
     borderlessMode,

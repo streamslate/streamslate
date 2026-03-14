@@ -21,7 +21,7 @@
 use crate::error::Result;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use tauri::{Emitter, Manager, State, WebviewWindow};
+use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 use tracing::{debug, info, instrument};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -88,7 +88,7 @@ pub async fn open_presenter_mode(
         return Ok(());
     }
 
-    info!("Opening presenter mode");
+    info!("Opening presenter mode — creating presenter window");
 
     let default_config = PresenterConfig {
         always_on_top: true,
@@ -101,15 +101,35 @@ pub async fn open_presenter_mode(
         },
     };
 
-    let _config = config.unwrap_or(default_config);
+    let cfg = config.unwrap_or(default_config);
+
+    // Create the presenter window (it may have been destroyed by a previous close)
+    let presenter_window = WebviewWindowBuilder::new(
+        app_handle,
+        "presenter",
+        WebviewUrl::App("/presenter".into()),
+    )
+    .title("StreamSlate - Presenter Mode")
+    .inner_size(cfg.size.width as f64, cfg.size.height as f64)
+    .min_inner_size(400.0, 300.0)
+    .always_on_top(cfg.always_on_top)
+    .decorations(!cfg.borderless)
+    .skip_taskbar(true)
+    .visible(true)
+    .build()
+    .map_err(|e| {
+        crate::error::StreamSlateError::Window(format!(
+            "Failed to create presenter window: {e}"
+        ))
+    })?;
 
     // Update presenter state
     state.update_presenter_state(|presenter| {
         presenter.is_active = true;
     })?;
 
-    // The presenter window is defined in tauri.conf.json and will be shown by frontend
-    // When it loads /presenter route, it will receive events from main window
+    // Emit current PDF state so the presenter window syncs immediately
+    emit_current_state_to_presenter(&presenter_window, &state)?;
 
     Ok(())
 }
