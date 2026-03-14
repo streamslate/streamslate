@@ -12,7 +12,7 @@
 
 ## Current Goal
 
-Bring StreamSlate to professional grade by closing all feature truthfulness gaps and implementation mismatches. Every README claim must be backed by working code or explicitly moved to the future roadmap.
+**COMPLETE.** StreamSlate is at professional grade. All feature truthfulness gaps are closed, implementation mismatches resolved, and verification coverage expanded. Every README claim is backed by working code.
 
 ## Current Status
 
@@ -20,43 +20,40 @@ Bring StreamSlate to professional grade by closing all feature truthfulness gaps
 - CI: full cross-platform pipeline (macOS, Windows, Linux)
 - Codebase index: 593 chunks (lexical, current)
 - Feature reality audit: complete (2026-03-14)
+- **Professional grade remediation: M1–M6 complete (2026-03-14)**
 
-## Key Findings (2026-03-14 Audit)
+## Completed Milestones (2026-03-14)
 
-### Working as claimed: 22 features
-Core PDF viewing, 6 annotation types, templates/presets, WebSocket server, remote control, PDF export, settings export/import, auto-updater, NDI output, Syphon output, screen capture, multi-monitor capture, presenter view, cross-platform builds, borderless mode.
+| Milestone | Commit | Summary |
+|-----------|--------|---------|
+| M1+M2 | `d43be27` | Docs truthfulness + code cleanup |
+| M3 | `3e46b46` | Presenter mode wired to Tauri window commands |
+| M4 | `dd9216e` | PDF page inversion toggle (independent of dark mode) |
+| M5 | `bdff25f` | Output UI promoted from experimental to settings |
+| M6 | `cc9fe46` | Verification coverage: 180 → 211 tests (+31) |
 
-### Overclaimed (no implementation): 6 items
-1. **OBS integration** — `connectOBS()` returns `OBS_NOT_IMPLEMENTED`
-2. **Stream Deck plug-in** — PoC manifest only, no real SDK integration
-3. **WCAG contrast** — no contrast validation code
-4. **PDF page inversion** — dark mode is UI-only
-5. **Presenter token auth** — no token validation
-6. **Global hotkeys** — not implemented
+## Resolved Items
 
-### Partially implemented: 4 items
-1. **Presenter mode** — backend ready, frontend doesn't invoke Tauri commands
-2. **Underline annotation** — type defined, no rendering
-3. **Multi-monitor UI** — debug panel only
-4. **PresenterConfig** — accepted but unused
+- **Overclaimed features** → Removed from README, moved to Future in ROADMAP (OBS, Stream Deck, WCAG, token auth, hotkeys)
+- **PDF page inversion** → Implemented as independent toggle under dark mode
+- **Presenter mode** → Frontend now invokes Tauri open/close/toggle commands
+- **Multi-monitor UI** → Promoted from debug panel to Output settings section
+- **Unused annotation types** → Removed from enum (UNDERLINE, STRIKETHROUGH, STAMP, NOTE)
+- **OBS stub** → Isolated with clarifying comment, not exposed in UI
 
-## Priority Sequence
+## Remaining Future Work
 
-1. M1: Fix documentation claims (README, ROADMAP)
-2. M2: Code cleanup (remove stubs, clean types)
-3. M3: Wire presenter mode frontend → Tauri
-4. M4: Add PDF page inversion
-5. M5: Promote multi-monitor UI
-6. M6: Verification coverage
-7. M7-M9: Future scope (OBS, Stream Deck, text annotations)
+- M7: OBS WebSocket Client (optional)
+- M8: Stream Deck Plugin (optional)
+- M9: Underline/Strikethrough Annotations (optional)
 
-## Success Criteria
+## Success Criteria — ALL MET
 
-- [ ] Every ✅ in README backed by exercised code
-- [ ] No dead stubs referenced in user-facing docs
-- [ ] Presenter mode opens real window from UI toggle
-- [ ] Local quality commands pass
-- [ ] Feature-gated capabilities clearly labeled
+- [x] Every ✅ in README backed by exercised code
+- [x] No dead stubs referenced in user-facing docs
+- [x] Presenter mode opens real window from UI toggle
+- [x] Local quality commands pass (211 tests, lint, tsc clean)
+- [x] Feature-gated capabilities clearly labeled
 
 ## Sources
 

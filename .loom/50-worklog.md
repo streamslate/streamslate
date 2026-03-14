@@ -1,6 +1,31 @@
 # Worklog
 
-## 2026-03-14
+## 2026-03-14 (session 2): M1–M6 Execution — Professional Grade Complete
+
+- What changed:
+  - Executed all 6 milestones of the professional-grade remediation plan in a single RALPH loop:
+  - **M1+M2** (`d43be27`): Fixed README/ROADMAP overclaims, removed 4 unused annotation types from enum, isolated OBS stub.
+  - **M3** (`3e46b46`): Wired presenter mode to Tauri window commands. `useViewModes.togglePresenterMode()` now invokes `open_presenter_mode`/`close_presenter_mode`. Rust side recreates window via `WebviewWindowBuilder`. Graceful fallback for non-Tauri environments.
+  - **M4** (`dd9216e`): Added independent PDF page inversion toggle. `invertPages` state in `useTheme.ts`, nested toggle in Sidebar settings, wired through PDFViewer → PDFCanvasRenderer, included in settings sync.
+  - **M5** (`bdff25f`): Created `OutputControls.tsx` component, promoted capture/output UI from "Experimental" to "Output" section in Sidebar.
+  - **M6** (`cc9fe46`): Added 31 new tests — presenter toggle lifecycle (10), settings round-trip (12), annotation rendering for all 6 types (9). Manual verification checklist at `docs/manual-verification-checklist.md`. Test count: 180 → 211.
+  - Updated ROADMAP.md with "1.5 ✅ (Professional Grade)" section.
+  - Updated all `.loom` context docs to reflect completion.
+  - All acceptance criteria met: 211 tests pass, lint clean, tsc clean.
+- Why:
+  - User requested continuation of professional-grade remediation after feature audit.
+- What's next:
+  - Push to remote for CI validation.
+  - M7-M9 remain as optional future work (OBS, Stream Deck, text annotations).
+- Sources:
+  - Commits: `d43be27`, `3e46b46`, `dd9216e`, `bdff25f`, `cc9fe46`
+  - `src/hooks/useViewModes.ts:49-63` (togglePresenterMode)
+  - `src-tauri/src/commands/presenter.rs:80-105` (WebviewWindowBuilder)
+  - `src/hooks/useTheme.ts:28-46` (invertPages)
+  - `src/components/layout/OutputControls.tsx:1-155`
+  - `src/hooks/useViewModes.test.ts`, `src/hooks/useSettingsSync.test.ts`, `src/components/pdf/AnnotationLayer.test.tsx`
+
+## 2026-03-14 (session 1): Feature Reality Audit
 
 - What changed:
   - Ran `$plan-loom-core` context refresh for professional-grade assessment.

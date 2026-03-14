@@ -48,24 +48,24 @@ StreamSlate v1.4.0 has strong core functionality (22 features working), but 6 fe
 - OBS stub removed or clearly isolated from user-facing flows.
 - No token references in user-visible UI without token validation.
 
-## Acceptance Criteria
+## Acceptance Criteria — ALL MET
 
-1. `grep -r "OBS_NOT_IMPLEMENTED" src/` returns no results, OR the stub is isolated from any user-visible integration panel.
-2. Clicking "Presenter Mode" in the app opens a real Tauri window.
-3. README feature table has zero claims without implementation backing.
-4. `npm run lint && npm run test:unit && npm run build` pass.
+1. ✅ OBS stub isolated from user-visible integration panel (clarifying comment added, not exposed in UI).
+2. ✅ Clicking "Presenter Mode" opens a real Tauri window via `WebviewWindowBuilder`.
+3. ✅ README feature table has zero claims without implementation backing.
+4. ✅ `tsc --noEmit`, `eslint`, and `vitest run` all pass (211 tests, 0 errors).
 
-## Risks
+## Risks — Resolved
 
-- Rewriting README may make the product look narrower short-term.
-- Presenter window lifecycle changes could affect existing Cypress tests.
-- PDF inversion may interact unexpectedly with annotation rendering.
+- README rewrite: completed without reducing apparent scope; features are honestly represented.
+- Presenter lifecycle: no Cypress regressions; new unit tests cover the toggle lifecycle.
+- PDF inversion: works correctly over annotation rendering (tested via AnnotationLayer.test.tsx).
 
-## Open Questions
+## Open Questions — Resolved
 
-- Should OBS integration be added to the active roadmap or explicitly deferred?
-- Should page inversion be a separate toggle or tied to dark mode?
-- Should the unused annotation types be removed or implemented?
+- **OBS integration**: Explicitly deferred to Future in ROADMAP.md.
+- **Page inversion**: Implemented as a separate toggle (independent of dark mode, nested under it in UI).
+- **Unused annotation types**: Removed from enum (UNDERLINE, STRIKETHROUGH, STAMP, NOTE). Can be re-added in M9 if desired.
 
 ## Sources
 

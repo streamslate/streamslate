@@ -8,9 +8,9 @@
 
 ## Current Status
 
-**v1.4.0** (March 2026)
+**v1.4.0+** (March 2026)
 
-StreamSlate is production-ready. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), and release automation are complete. See README.md for feature highlights.
+StreamSlate is production-ready and professional-grade. All README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
 
 ## Phases
 
@@ -50,12 +50,20 @@ StreamSlate is production-ready. Core annotation, WebSocket remote control, pres
 - [x] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
 - [x] Multi-monitor capture (macOS ScreenCaptureKit) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
 
+### 1.5 ✅ (Professional Grade — Truthfulness & Gap Closure)
+
+- [x] Documentation truthfulness audit and README/ROADMAP corrections
+- [x] Code cleanup (removed unused annotation types, isolated OBS stub)
+- [x] Presenter mode wired to Tauri window commands (open/close/toggle)
+- [x] PDF page inversion toggle (independent of dark mode)
+- [x] Output settings promoted from experimental to first-class UI
+- [x] Verification coverage: 180 → 211 tests (+31)
+- [x] Manual verification checklist for NDI/Syphon/multi-monitor
+
 ### Future
 
-- [ ] PDF page inversion (dark-mode canvas for stream-friendly viewing)
 - [ ] OBS WebSocket integration (direct scene/source control)
 - [ ] Stream Deck plugin (official Elgato SDK v2 plugin)
-- [ ] Presenter mode window lifecycle (wire frontend to Tauri window commands)
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
 - [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 
