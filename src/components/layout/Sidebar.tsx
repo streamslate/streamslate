@@ -20,7 +20,7 @@ import React, { useMemo, useState } from "react";
 import { usePDF } from "../../hooks/usePDF";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
-import { NDIControls } from "../debug/NDIControls";
+import { OutputControls } from "./OutputControls";
 import { usePDFStore } from "../../stores/pdf.store";
 import { useSettingsSync } from "../../hooks/useSettingsSync";
 
@@ -782,12 +782,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     )}
                   </div>
 
-                  {/* Experimental Section */}
+                  {/* Output Section */}
                   <div className="pt-6 border-t border-border-secondary space-y-4">
                     <h4 className="text-sm font-semibold text-text-tertiary uppercase tracking-wider">
-                      Experimental (NDI / Syphon)
+                      Output
                     </h4>
-                    <NDIControls />
+                    <OutputControls />
                   </div>
                 </div>
               </div>
