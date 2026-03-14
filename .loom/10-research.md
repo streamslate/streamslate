@@ -1,145 +1,146 @@
-# Research Brief
+# Research Brief — Feature Reality Audit
 
 ## Problem
 
-StreamSlate's high-level release status is strong (`v1.0.x`), but the current codebase shows multiple UI consistency gaps and core wiring issues that can undermine confidence in day-to-day use.
-
-## Questions
-
-- Q1: Which code paths are currently mismatched between UI state and backend reality?
-- Q2: Which UI issues are structural (design-system drift) versus tactical bugs?
-- Q3: What is the current test/build baseline for safe refactoring?
-- Q4: What should be prioritized first to tighten UI and core features without destabilizing roadmap work?
-
-## Constraints
-
-- The working tree is already dirty with user-owned changes.
-- Some MCP servers are unavailable in this environment, so repo-local evidence is the primary source.
-- Cypress requires a running dev server (`http://localhost:1420`) to execute.
+StreamSlate v1.4.0 claims production-ready status across README, ROADMAP, and feature highlights, but several feature claims diverge from what the source code actually implements. This audit maps every claimed feature to implementation evidence and classifies gaps by severity.
 
 ## Method
 
-- Reviewed key frontend shell + hooks + stores:
-  - `src/App.tsx`
-  - `src/components/layout/*.tsx`
-  - `src/components/pdf/PDFViewer.tsx`
-  - `src/hooks/usePDF.ts`
-  - `src/hooks/useRemoteControl.ts`
-  - `src/hooks/useViewModes.ts`
-  - `src/stores/integration.store.ts`
-  - `src/lib/websocket/client.ts`
-- Reviewed backend WebSocket/command state paths:
-  - `src-tauri/src/lib.rs`
-  - `src-tauri/src/websocket/*.rs`
-  - `src-tauri/src/commands/*.rs`
-- Ran baseline checks:
-  - `npm run lint`
-  - `npm run build`
-  - `npm run dev -- --host 127.0.0.1 --port 1420`
-  - `npm run test:headless`
+- Read all feature claims in README.md, ROADMAP.md, and docs/.
+- For each claim, traced to Rust backend (`src-tauri/src/`) and React frontend (`src/`) source.
+- Used codebase index (593 chunks) plus full file reads for deep inspection.
+- Cross-checked CI workflow, package.json scripts, and Tauri config.
 
-## Findings
+---
 
-1. Integration wiring is partially real now, but not complete.
+## Feature Reality Matrix
 
-- `connectWebSocket` now uses `StreamSlateWebSocketClient` and state-change handlers.
-- `connectOBS` still uses timeout-based simulation placeholders.
+### Fully Implemented (Real, Working)
 
-2. A real WebSocket backend exists and is already running in Tauri.
+| # | Feature | Claim | Evidence |
+|---|---------|-------|----------|
+| 1 | PDF Viewing | Core viewer | `src/components/pdf/PDFViewer.tsx`, PDF.js renderer |
+| 2 | Highlight annotation | ✅ | `AnnotationLayer.tsx:235-237`, `presets.ts:127` |
+| 3 | Rectangle annotation | ✅ | `AnnotationLayer.tsx:244-254` |
+| 4 | Circle annotation | ✅ | `AnnotationLayer.tsx:256-265` |
+| 5 | Arrow annotation | ✅ | `AnnotationLayer.tsx:267-316` |
+| 6 | Free-draw (free-ink) | ✅ | `AnnotationLayer.tsx:377-411` |
+| 7 | Text annotation | ✅ | `AnnotationLayer.tsx:319-374`, `TextAnnotationEditor.tsx` |
+| 8 | Template/preset system | ✅ | `TemplatePacks.tsx:47-306`, `presets.ts:163-188` |
+| 9 | Dark mode (UI chrome) | ✅ | `useTheme.ts:22-41`, Tailwind dark class |
+| 10 | WebSocket server | ✅ | `server.rs:39-80`, binds `127.0.0.1:11451` |
+| 11 | Remote control (page/zoom/presenter/annotations) | ✅ | `protocol.rs:26-58`, 9 commands |
+| 12 | PDF export with annotations | ✅ | `exporter.ts:66-304`, 6 annotation types embedded via pdf-lib |
+| 13 | Settings export/import | ✅ | `useSettingsSync.ts:114-154`, JSON file download/upload |
+| 14 | Auto-updater | ✅ | `UpdateBanner.tsx:9-59`, `@tauri-apps/plugin-updater` |
+| 15 | NDI output | ✅ (feature-gated) | `ndi/sender.rs:27-153`, `grafton-ndi` crate, full send pipeline |
+| 16 | Syphon output | ✅ (macOS, feature-gated) | `syphon/server.rs:16-118`, `syphon_bridge.m:22-118`, Metal GPU |
+| 17 | Screen capture | ✅ (macOS) | `capture/mod.rs:54-182`, ScreenCaptureKit |
+| 18 | Multi-monitor capture | ✅ | `capture/mod.rs:186-286`, display enumeration + selection |
+| 19 | Presenter view (content sync) | ✅ | `PresenterView.tsx:108-218`, Tauri events + WS fallback |
+| 20 | Cross-platform builds | ✅ | CI: macOS, Windows, Linux in `.github/workflows/ci.yml` |
+| 21 | Borderless mode | ✅ | `useViewModes.ts:33`, `BorderlessUI.tsx` |
+| 22 | Page navigation + zoom | ✅ | `PageNavigation.tsx`, `ZoomControls.tsx` |
 
-- Tauri app startup launches a WebSocket server on port `11451`.
-- The server handles `NEXT_PAGE`, `GO_TO_PAGE`, `SET_ZOOM`, presenter toggle, annotation updates, and state queries.
+### Partially Implemented (Gap Between Claim and Code)
 
-3. WebSocket client integration is now active but event mapping remains minimal.
+| # | Feature | Claim | Reality | Severity |
+|---|---------|-------|---------|----------|
+| P1 | Presenter mode lifecycle | "Borderless window/Browser Source" ✅ | Backend commands exist (`presenter.rs:72-290`) but frontend **never invokes** them. `useViewModes.ts` toggles local state only—no Tauri window open/close. | HIGH |
+| P2 | Annotation: Underline | "underline" in feature list | `AnnotationType.UNDERLINE` defined in `pdf.types.ts:68` but no rendering case in `AnnotationLayer.tsx` and not in TOOLS array | MEDIUM |
+| P3 | Multi-monitor UI | "Pick any display" | Selection UI exists only in `NDIControls.tsx` (debug panel), not in main settings | MEDIUM |
+| P4 | PresenterConfig application | Config accepted by command | `open_presenter_mode` accepts `PresenterConfig` but ignores it (line 104 unused) | LOW |
 
-- Current store wiring handles connection state and server `ERROR` events.
-- Additional event mapping for richer telemetry/control flow is still open.
+### Overclaimed in Documentation (No Implementation)
 
-4. UI styling is inconsistent with design-token intent.
+| # | Feature | Claim Location | Reality | Severity |
+|---|---------|----------------|---------|----------|
+| O1 | OBS integration | README:31 "Global hotkeys + plug-in, WebSocket control ✅" | `integration.store.ts:343-355`: `connectOBS()` returns `OBS_NOT_IMPLEMENTED` error. No OBS WebSocket client. | **CRITICAL** |
+| O2 | Stream Deck plug-in | README:31, README:66 "official StreamSlate plug-in" | Only `docs/plugins/manifest.json` (schema) + `test_plugin.js` (PoC). No real SDK integration. | **CRITICAL** |
+| O3 | WCAG-contrast swatches | README:29 "WCAG-contrast color swatches ✅" | Zero WCAG validation code. Colors are hardcoded presets. | HIGH |
+| O4 | Page inversion | README:19 "true dark-mode page inversion" | Dark mode only toggles UI chrome. No PDF `filter: invert()` or canvas inversion. | HIGH |
+| O5 | Presenter token auth | README:47 `?token=YOUR_TOKEN` | `main.tsx:31` routes `/presenter` with no token validation. No auth code. | MEDIUM |
+| O6 | "Global hotkeys" | README:31 | No global hotkey registration found in source. WebSocket commands exist. | MEDIUM |
 
-- Several layout components use hardcoded `gray-*` classes instead of the tokenized `bg/surface/text` system.
-- Update banner uses hardcoded indigo/purple gradient styles that diverge from the rest of the shell.
+### Correctly Marked as Future
 
-5. There is at least one concrete UI defect in the PDF viewer class list.
+| Feature | Location | Status |
+|---------|----------|--------|
+| Mobile companion | ROADMAP:54 | `[ ]` — Correct |
+| Cloud sync for settings | ROADMAP:55 | `[ ]` — Correct |
 
-- Loading overlay includes `bg-[rgb(var(--color-bg-tertiary)))` (extra closing parenthesis), indicating a malformed utility class.
+---
 
-6. Current PDF render path favors compatibility but likely adds overhead.
+## Gap Classification
 
-- After rendering to canvas, each page is converted to PNG data URL (`toDataURL`) and displayed via `<img>` fallback.
-- This may increase CPU/memory pressure for frequent page/zoom updates.
+### P0 — Critical (Must Fix Before Professional Grade)
 
-7. View mode preferences are session-only.
+1. **OBS integration claim is false.** The code explicitly returns `OBS_NOT_IMPLEMENTED`. Either implement OBS WebSocket integration or remove the ✅ claim.
+2. **Stream Deck "official plug-in" doesn't exist.** Either build a real plugin or remove the claim.
+3. **Presenter mode frontend doesn't use backend.** The Tauri commands are ready but the React side only toggles CSS state.
 
-- `presenterMode`, `transparentBg`, and `borderlessMode` are initialized with local component state and not persisted.
+### P1 — High (Significant Truthfulness Gap)
 
-8. Build and lint are green after dependency install, but bundle warnings indicate optimization headroom.
+4. **"WCAG-contrast" is marketing copy with no code backing.** Remove claim or implement contrast validation.
+5. **"Page inversion" is not implemented.** Dark mode only affects UI chrome. Either add PDF inversion or reword.
+6. **README integration guide mentions features that don't work** (OBS scene control, Stream Deck actions).
 
-- Vite reports large chunks (>500kB), including the main app chunk and PDF worker.
+### P2 — Medium (Polish Gaps)
 
-9. E2E baseline is green but shallow.
+7. **Underline/strikethrough annotation types** defined but not rendered.
+8. **Multi-monitor selection** hidden in debug UI.
+9. **Presenter URL token** documented but not enforced.
+10. **NDI/Syphon require feature flags** — README should clarify these are opt-in at build time.
 
-- Cypress passes 13/13 tests, focused mainly on shell structure/toggles.
-- There is no automated E2E coverage for opening a PDF, creating annotations, autosave/export, or remote-control command handling.
+### P3 — Low (Nice to Have)
 
-10. README integration docs reference an API doc path that is missing.
+11. **Annotation types Stamp/Note** defined but not rendered (remove from enum or implement).
+12. **PresenterConfig** accepted but unused.
 
-- README references `docs/api.md`, but file is absent.
-
-## Options
-
-### Option A: Core Wiring First, UI Second
-
-- Complete transport-backed integration behavior (including remaining simulated OBS path).
-- Then do UI consistency pass.
-- Pros: fixes trustworthiness of status indicators and control plane first.
-- Cons: user-visible UI polish lands later.
-
-### Option B: UI Polish First, Core Wiring Second
-
-- Fix visual consistency, reduce design drift, ship immediate UX improvements.
-- Then wire core integration state.
-- Pros: immediate polish.
-- Cons: can mask foundational reliability gaps.
-
-### Option C: Dual-Track Hardening (Recommended)
-
-- Track 1: real integration state + transport correctness.
-- Track 2: design-token alignment + focused UI bug fixes.
-- Track 3: PDF workflow test coverage and performance checks.
-- Pros: balanced user-facing improvements + foundational correctness.
-- Cons: requires tighter sequencing and discipline.
+---
 
 ## Recommendation
 
-Adopt **Option C** with a strict sequence:
+Two-phase approach to professional grade:
 
-1. Complete transport-backed integration signals and remove remaining simulation in core status paths.
-2. Resolve UI drift and defects in shared shell components.
-3. Expand automated coverage for core PDF workflows before larger roadmap expansion.
+**Phase 1: Truthfulness Remediation (docs + minimal code)**
+- Rewrite README feature table to accurately reflect implementation
+- Remove or reword OBS, Stream Deck, WCAG, page inversion claims
+- Clarify NDI/Syphon as build-time feature flags
+- Remove token from presenter URL example
+- Clean up unused annotation types from enum
 
-## Assumptions
-
-- Near-term release target is a hardening release (`v1.0.x`) rather than a feature-heavy minor.
-- Existing roadmap items (`NDI`, `Syphon`, presets/templates) remain valid but should follow core hardening.
+**Phase 2: Implementation Gaps (code changes)**
+- Wire presenter mode frontend to Tauri commands
+- Add PDF page inversion (CSS filter on canvas)
+- Implement underline annotation rendering
+- Move multi-monitor selection to main settings UI
+- Consider minimal OBS WebSocket client or remove from roadmap
 
 ## Sources
 
-- `src/stores/integration.store.ts:214`
-- `src/stores/integration.store.ts:329`
-- `src/stores/integration.store.ts:249`
-- `src-tauri/src/lib.rs:102`
-- `src-tauri/src/websocket/server.rs:44`
-- `src-tauri/src/websocket/handlers.rs:23`
-- `src/lib/websocket/client.ts:29`
-- `src/components/layout/BorderlessUI.tsx:33`
-- `src/components/layout/UpdateBanner.tsx:85`
-- `src/components/pdf/PDFViewer.tsx:551`
-- `src/components/pdf/PDFViewer.tsx:454`
-- `src/hooks/useViewModes.ts:22`
-- Command: `npm run build`
-- Command: `npm run lint`
-- Command: `npm run test:headless`
-- `README.md:64`
-- Command: `if [ -f docs/api.md ]; then echo "docs/api.md exists"; else echo "docs/api.md missing"; fi`
-- `ROADMAP.md:38`
+- `README.md:19,29,31,35,47,66`
+- `ROADMAP.md:47-50`
+- `src-tauri/src/commands/ndi.rs:95-521`
+- `src-tauri/src/commands/presenter.rs:72-290`
+- `src-tauri/src/ndi/sender.rs:27-153`
+- `src-tauri/src/syphon/server.rs:16-118`
+- `src-tauri/src/syphon/syphon_bridge.m:22-118`
+- `src-tauri/src/websocket/server.rs:39-80`
+- `src-tauri/src/websocket/protocol.rs:26-58`
+- `src-tauri/src/websocket/handlers.rs:45-95`
+- `src-tauri/src/capture/mod.rs:54-286`
+- `src-tauri/Cargo.toml:47,62,65`
+- `src/stores/integration.store.ts:343-355`
+- `src/hooks/useViewModes.ts:32-69`
+- `src/hooks/useSettingsSync.ts:38-154`
+- `src/hooks/useNDI.ts:125-165`
+- `src/components/pdf/AnnotationLayer.tsx:235-416`
+- `src/components/presenter/PresenterView.tsx:108-218`
+- `src/components/layout/UpdateBanner.tsx:9-59`
+- `src/components/debug/NDIControls.tsx:104-176`
+- `src/lib/annotations/presets.ts:66-200`
+- `src/lib/pdf/exporter.ts:66-304`
+- `src/types/pdf.types.ts:65-76`
+- `docs/plugins/manifest.json:1-51`
+- `docs/plugins/test_plugin.js:1-89`

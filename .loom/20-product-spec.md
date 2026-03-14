@@ -1,102 +1,76 @@
-# Product Spec
+# Product Spec — Professional Grade Remediation
+
+## Initiative
+
+Close all feature truthfulness gaps and bring StreamSlate to a state where every public claim is backed by working code.
 
 ## Summary
 
-Define and execute a near-term hardening initiative focused on tightening StreamSlate's UI consistency and core feature reliability, while preserving post-1.0 roadmap momentum.
-
-## Release Target
-
-- Primary target: next `v1.0.x` hardening release.
-- Follow-on: use this baseline to de-risk `v1.1` roadmap execution.
+StreamSlate v1.4.0 has strong core functionality (22 features working), but 6 features are overclaimed in README/ROADMAP with no backing implementation, and 4 features are partially implemented with gaps between what the code does and what the docs say. This initiative fixes the mismatch through documentation corrections and targeted code changes.
 
 ## Goals
 
-1. Make integration/presenter status truthful and transport-backed.
-2. Make the app shell visually and behaviorally consistent across normal, borderless, and presenter workflows.
-3. Harden core PDF workflows (open, navigate, annotate, autosave, export, presenter sync).
-4. Expand automated validation beyond shell-level smoke checks.
+1. Eliminate all false ✅ claims in README.
+2. Wire presenter mode frontend to existing Tauri backend commands.
+3. Add PDF page inversion to back the "dark-first" claim.
+4. Promote multi-monitor selection from debug UI to main settings.
+5. Improve verification coverage for shipped features.
+6. Explicitly scope OBS/Stream Deck/text annotations as future work.
 
 ## Non-Goals
 
-- Delivering full NDI/Syphon roadmap scope in this initiative.
-- Shipping cloud sync, mobile companion, or multi-monitor redesign.
-- Large-scale visual redesign that breaks current product identity.
-
-## Users / Stakeholders
-
-- Primary: creators/educators presenting annotated PDFs live.
-- Secondary: users controlling StreamSlate through local WebSocket/automation.
-- Internal: maintainers responsible for release quality and regression prevention.
+- Building OBS WebSocket integration in this slice.
+- Building a real Stream Deck plugin in this slice.
+- Cloud-backed settings sync.
+- Mobile companion.
+- New annotation types beyond fixing existing stubs.
 
 ## Functional Requirements
 
-### FR1: Real Integration State
+### FR1: Documentation Truthfulness
+- Every feature marked ✅ must have a corresponding working code path.
+- Feature-gated capabilities (NDI/Syphon) must be clearly labeled as build-time opt-in.
+- Integration guide must describe only implemented behaviors.
 
-- WebSocket connection status shown in the UI must reflect real transport state.
-- Connection errors must surface actionable status (`lastError`) instead of optimistic simulated state.
-- Presenter and page/zoom remote events must remain synchronized with local state.
+### FR2: Presenter Mode Lifecycle
+- Toggling presenter mode from the UI must invoke Tauri window open/close commands.
+- Page, zoom, and annotation changes must sync between main and presenter windows.
 
-### FR2: UI Consistency and Defect Cleanup
+### FR3: PDF Page Inversion
+- A user toggle enables CSS-based page inversion on the PDF canvas.
+- Annotations remain readable over inverted content.
 
-- Shared shell components must use theme tokens consistently.
-- Remove hardcoded style drift in borderless/presenter/update surfaces where feasible.
-- Fix known class defects affecting rendering/loading visuals.
+### FR4: Output Settings UI
+- Display selection, capture source, and NDI/Syphon controls are accessible from main settings (not just debug panel).
 
-### FR3: Core Workflow Reliability
-
-- PDF loading/closing and annotation autosave must remain stable under repeated operations.
-- Export flow must preserve user annotations and complete without silent failure.
-- View-mode settings behavior must be explicit (persisted or intentionally session-scoped with clear UX).
-
-### FR4: Validation and Documentation
-
-- Add automated checks for core workflow regressions, not just shell rendering.
-- Ensure documentation paths referenced in README actually exist or are updated.
-
-## Non-Functional Requirements
-
-- No regressions in current passing lint/build/test baseline.
-- No uncaught runtime exceptions in common flows under normal usage.
-- Maintain acceptable responsiveness for page navigation and zoom in presenter workflows.
-
-## UX Principles
-
-- Status must be trustworthy over decorative.
-- Streaming-critical controls should be legible, minimal, and predictable.
-- Styling should follow one consistent token system across all shell variants.
+### FR5: Code Hygiene
+- Unused annotation types removed from enum or implemented.
+- OBS stub removed or clearly isolated from user-facing flows.
+- No token references in user-visible UI without token validation.
 
 ## Acceptance Criteria
 
-1. Integration indicators are backed by real connection events and fail correctly when server is down.
-2. Identified UI inconsistencies and malformed class usage are resolved in targeted shell components.
-3. Cypress or equivalent automated tests cover at least one end-to-end PDF workflow including annotation and export path checks.
-4. `npm run lint` and `npm run build` pass after changes.
-5. README references are reconciled with existing docs paths.
+1. `grep -r "OBS_NOT_IMPLEMENTED" src/` returns no results, OR the stub is isolated from any user-visible integration panel.
+2. Clicking "Presenter Mode" in the app opens a real Tauri window.
+3. README feature table has zero claims without implementation backing.
+4. `npm run lint && npm run test:unit && npm run build` pass.
 
 ## Risks
 
-- Wiring real transport state may expose hidden race conditions currently masked by simulated status.
-- UI refactor across shared shell components can introduce subtle mode-specific regressions.
-- Expanding E2E coverage may require additional deterministic test fixtures.
+- Rewriting README may make the product look narrower short-term.
+- Presenter window lifecycle changes could affect existing Cypress tests.
+- PDF inversion may interact unexpectedly with annotation rendering.
 
 ## Open Questions
 
-- Should external WebSocket access (`allowExternalConnections`) be part of this hardening cycle?
-- Do we persist view mode toggles now, or keep session-only behavior for simplicity?
-- Is bundle-size reduction in scope for this cycle, or tracked separately?
+- Should OBS integration be added to the active roadmap or explicitly deferred?
+- Should page inversion be a separate toggle or tied to dark mode?
+- Should the unused annotation types be removed or implemented?
 
 ## Sources
 
-- `src/stores/integration.store.ts:214`
-- `src-tauri/src/websocket/server.rs:44`
-- `src/hooks/useRemoteControl.ts:33`
-- `src/components/layout/BorderlessUI.tsx:33`
-- `src/components/layout/UpdateBanner.tsx:85`
-- `src/components/pdf/PDFViewer.tsx:551`
-- `src/components/pdf/PDFViewer.tsx:454`
-- `src/hooks/useViewModes.ts:22`
-- `README.md:64`
-- `ROADMAP.md:38`
-- Command: `npm run lint`
-- Command: `npm run build`
-- Command: `npm run test:headless`
+- `.loom/10-research.md` (feature reality audit)
+- `README.md:19,29,31,35,47,65-66`
+- `src/stores/integration.store.ts:343-355`
+- `src-tauri/src/commands/presenter.rs:72-290`
+- `src/hooks/useViewModes.ts:32-69`

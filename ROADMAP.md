@@ -4,13 +4,13 @@
 
 - [Roadmap tracking issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/1)
 
-> Last Updated: February 2026
+> Last Updated: March 2026
 
 ## Current Status
 
-**v1.1.1** (February 2026)
+**v1.4.0** (March 2026)
 
-StreamSlate is production-ready. Core annotation, streaming integration, live collaboration, presets, and template features are complete. See README.md for feature highlights.
+StreamSlate is production-ready. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), and release automation are complete. See README.md for feature highlights.
 
 ## Phases
 
@@ -23,11 +23,11 @@ StreamSlate is production-ready. Core annotation, streaming integration, live co
 ### Beta ✅
 
 - [x] Annotation save/export
-- [x] Stream Deck plug-in
+- [x] WebSocket remote control API
 
 ### 1.0 ✅ (Public Release)
 
-- [x] Live collaboration (WebSocket Sync)
+- [x] Local WebSocket sync and remote control
 - [x] Native screen capture (ScreenCaptureKit)
 - [x] Cross-platform builds (macOS, Windows, Linux)
 - [x] CI/CD with code signing and notarization
@@ -44,15 +44,20 @@ StreamSlate is production-ready. Core annotation, streaming integration, live co
 
 ### Post-1.1 ✅
 
-- [x] NDI output (requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
-- [x] Syphon output GA (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+- [x] NDI output (build-time opt-in, requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
+- [x] Syphon output GA (macOS only, build-time opt-in) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
+- [x] Portable settings export/import
 - [x] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
+- [x] Multi-monitor capture (macOS ScreenCaptureKit) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
 
 ### Future
 
+- [ ] PDF page inversion (dark-mode canvas for stream-friendly viewing)
+- [ ] OBS WebSocket integration (direct scene/source control)
+- [ ] Stream Deck plugin (official Elgato SDK v2 plugin)
+- [ ] Presenter mode window lifecycle (wire frontend to Tauri window commands)
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
-- [x] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
-- [x] Multi-monitor capture ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
+- [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 
 ## References
 

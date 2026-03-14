@@ -31,14 +31,10 @@ function getAnnotationTypeLabel(type: AnnotationType): string {
   const labels: Record<AnnotationType, string> = {
     [AnnotationType.TEXT]: "Text",
     [AnnotationType.HIGHLIGHT]: "Highlight",
-    [AnnotationType.UNDERLINE]: "Underline",
-    [AnnotationType.STRIKETHROUGH]: "Strikethrough",
     [AnnotationType.ARROW]: "Arrow",
     [AnnotationType.RECTANGLE]: "Rectangle",
     [AnnotationType.CIRCLE]: "Circle",
     [AnnotationType.FREE_DRAW]: "Drawing",
-    [AnnotationType.STAMP]: "Stamp",
-    [AnnotationType.NOTE]: "Note",
   };
   return labels[type] || type;
 }
@@ -107,7 +103,6 @@ function getAnnotationIcon(type: AnnotationType): React.ReactElement {
         </svg>
       );
     case AnnotationType.TEXT:
-    case AnnotationType.NOTE:
       return (
         <svg
           className="w-4 h-4"

@@ -340,6 +340,8 @@ export const useIntegrationStore = create<IntegrationStore>()(
         }));
       },
 
+      // OBS WebSocket integration is planned but not yet implemented.
+      // This stub exists to satisfy the store interface; no UI exposes it.
       connectOBS: async () => {
         set((state) => ({
           obs: { ...state.obs, connected: false, version: null },

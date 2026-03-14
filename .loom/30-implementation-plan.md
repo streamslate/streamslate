@@ -1,147 +1,165 @@
-# Implementation Plan
+# Implementation Plan — Professional Grade
 
-## Scope
+## Objective
 
-Execute a focused hardening cycle for UI consistency and core workflow reliability, using the current green baseline as a guardrail.
+Close all feature truthfulness gaps and implementation mismatches to bring StreamSlate to professional grade: every claim in README is backed by working code, and every shipped feature has appropriate validation coverage.
 
-## Baseline (Verified)
+## Baseline
 
-- `npm run lint` passes.
-- `npm run build` passes (with chunk-size warnings).
-- `npm run test:headless` passes when dev server is running on `http://127.0.0.1:1420`.
+- Repo version: `1.4.0`
+- CI: typecheck, format, lint, unit tests, Rust tests, Cypress, frontend build, Tauri build (macOS/Windows/Linux)
+- Codebase index: 593 chunks (lexical)
+- M0 (local validation): complete
+- M1 (docs truthfulness): partially complete — README/ROADMAP modified but not committed
 
-## Current Status
+## Phase 1: Truthfulness Remediation
 
-- `M1` is **complete** (v1.1.0):
-  - WebSocket connection state moved from simulated to real client-backed state.
-  - Event mapping expanded for page/zoom/presenter/annotation/integration events.
-  - All simulated/placeholder patterns removed from integration store.
-- `M2` is **complete** (v1.1.0):
-  - Shell components aligned with design tokens.
-  - PDF viewer overlay class fixed. Update banner and borderless/presenter UI normalized.
-- `M3` is **complete** (v1.1.0):
-  - 7 E2E specs (1105 lines): annotations-edit, app, integration-websocket, pdf-viewer, settings, sidebar, workflow.
-  - Covers annotation creation/editing, WebSocket integration, remote control workflow.
-- `M4` is **in progress**:
-  - docs/api.md created.
-  - ROADMAP.md and README.md reconciliation in progress (2026-02-18).
+### M1: Fix Documentation Claims (docs-only)
 
-## Milestones
+Status: in progress (working copy has partial fixes)
 
-1. `M1`: Replace simulated integration state with real transport state.
-2. `M2`: UI shell consistency + known defect cleanup.
-3. `M3`: Core workflow coverage and reliability checks.
-4. `M4`: Docs reconciliation and release readiness handoff.
+**README.md changes needed:**
 
-## Detailed Plan
+| Line | Current Claim | Fix |
+|------|--------------|-----|
+| 29 | "WCAG-contrast color swatches" | → "Dark-optimized color palette" |
+| 19 | "true dark-mode page inversion" | → "dark-first UI with dark chrome and stream-optimized palettes" |
+| 31 | "OBS / Stream Deck: Global hotkeys + plug-in, WebSocket control ✅" | → "WebSocket API: Remote page, zoom, presenter, and annotation control via `ws://127.0.0.1:11451` ✅" |
+| 35 | NDI/Syphon ✅ | → Add "(build-time opt-in, requires NDI SDK / Syphon.framework)" |
+| 47 | `?token=YOUR_TOKEN` | → Remove token parameter |
+| 65-66 | OBS/Stream Deck integration steps | → Rewrite as WebSocket API integration guide |
 
-### M1: Real Integration State
+**ROADMAP.md changes needed:**
 
-- Complete `connectWebSocket` integration using `StreamSlateWebSocketClient` wiring (initial conversion already done).
-- Handle `onStateChange` and propagate real `connected`, `lastError`, and `connectionTime`.
-- Register/dispose message handlers for page/zoom/presenter/annotation events cleanly.
-- Validate behavior when backend server is unavailable.
+| Item | Fix |
+|------|-----|
+| Post-1.1 items all marked ✅ | Verify each against implementation; NDI/Syphon correct but should note feature-gate |
+| No mention of OBS/Stream Deck gap | Add explicit "Future" items for OBS WebSocket client and Stream Deck plugin |
 
-Target files:
+**Other docs:**
+- `docs/release-readiness-1.0.md` → Already updated in working copy
+- Remove or archive `docs/plugins/manifest.json` and `test_plugin.js` (or clearly label as "example/schema")
 
-- `src/stores/integration.store.ts`
-- `src/lib/websocket/client.ts`
-- `src/App.tsx`
-- `src/hooks/useRemoteControl.ts`
+Deliverables:
+- [ ] Corrected README.md feature table
+- [ ] Corrected README.md integration guide
+- [ ] Corrected ROADMAP.md with explicit future items
+- [ ] Plugin docs labeled as API schema/PoC
 
-### M2: UI Consistency and Defect Cleanup
+### M2: Code Cleanup (minimal code changes)
 
-- Normalize shell components to use design tokens instead of hardcoded gray classes where practical.
-- Fix malformed class in PDF viewer overlay.
-- Align update banner styling with app theme direction.
-- Audit mode overlays (`BorderlessUI`, `PresenterUI`, `BorderlessWindowControls`) for consistency.
+Status: not started
 
-Target files:
+- Remove unused annotation types from `AnnotationType` enum (`UNDERLINE`, `STRIKETHROUGH`, `STAMP`, `NOTE`) or implement them
+- Remove `connectOBS()` stub from integration store (or clearly mark as future)
+- Remove token reference from any user-facing code/comments
 
-- `src/components/layout/BorderlessUI.tsx`
-- `src/components/layout/PresenterUI.tsx`
-- `src/components/layout/BorderlessWindowControls.tsx`
-- `src/components/layout/UpdateBanner.tsx`
-- `src/components/pdf/PDFViewer.tsx`
-- `src/styles/globals.css`
+Deliverables:
+- [ ] Clean `pdf.types.ts` enum
+- [ ] Clean integration store OBS stub
+- [ ] No dead-code references to unimplemented features
 
-### M3: Core Workflow Tests and Reliability
+## Phase 2: Implementation Gap Closure
 
-- Add/extend tests for:
-  - PDF load and navigation state updates.
-  - Annotation creation + persistence path.
-  - Export flow success/failure states.
-  - Remote-control command effects.
-- Keep existing smoke coverage intact.
+### M3: Presenter Mode Wiring
 
-Target files:
+Status: not started
 
-- `cypress/e2e/pdf-viewer.cy.ts`
-- `cypress/e2e/settings.cy.ts`
-- `cypress/e2e/sidebar.cy.ts`
-- potential new spec: `cypress/e2e/workflow.cy.ts`
+The Tauri backend has complete presenter commands (`open_presenter_mode`, `close_presenter_mode`, `toggle_presenter_mode`, `update_presenter_config`, `set_presenter_page`, `get_presenter_state`) but the frontend `useViewModes.ts` only manages local state.
 
-### M4: Docs + Handoff
+Tasks:
+- [ ] Wire `useViewModes` presenter toggle to invoke Tauri `toggle_presenter_mode` command
+- [ ] On presenter mode enter: invoke `open_presenter_mode` to show the Tauri window
+- [ ] On presenter mode exit: invoke `close_presenter_mode`
+- [ ] Verify page sync works end-to-end between main and presenter windows
+- [ ] Add unit test for presenter mode toggle lifecycle
 
-- Reconcile README references and integration documentation reality.
-- Capture remaining roadmap-delayed items as explicit follow-ups.
-- Update `.loom/40-decisions.md` and `.loom/50-worklog.md` after each milestone.
+### M4: PDF Page Inversion
 
-Target files:
+Status: not started
 
-- `README.md`
-- `.loom/40-decisions.md`
-- `.loom/50-worklog.md`
+Add a "dark page" mode that inverts the PDF canvas for stream-friendly dark backgrounds.
+
+Tasks:
+- [ ] Add CSS `filter: invert(1) hue-rotate(180deg)` to PDF canvas container when dark mode + inversion enabled
+- [ ] Add toggle in settings/toolbar for "Invert PDF pages"
+- [ ] Ensure annotations render correctly over inverted canvas
+- [ ] Add unit test for inversion toggle
+
+### M5: Multi-Monitor UI Promotion
+
+Status: not started
+
+Move display selection from debug-only `NDIControls.tsx` into a proper settings panel.
+
+Tasks:
+- [ ] Create "Output" settings section accessible from main UI
+- [ ] Display enumeration with primary display indicator
+- [ ] Capture source selection (window vs display)
+- [ ] NDI/Syphon enable/disable controls with status
+- [ ] Frame rate and resolution display
+
+### M6: Verification Coverage
+
+Status: partially started (PresenterView.test.tsx, UpdateBanner.test.tsx exist as untracked files)
+
+Tasks:
+- [ ] Add test for presenter mode toggle lifecycle (frontend → Tauri command invocation)
+- [ ] Add test for settings export/import round-trip
+- [ ] Add test for annotation type rendering (each of the 6 working types)
+- [ ] Add test for WebSocket command handling (at least page nav + state)
+- [ ] Document manual verification checklist for NDI/Syphon/multi-monitor
+
+## Phase 3: Professional Polish (Future)
+
+### M7: OBS WebSocket Client (Optional)
+
+If OBS integration is desired:
+- Implement OBS WebSocket v5 client in Rust or frontend
+- Scene switching, source control, streaming/recording state
+- This is a significant feature — scope separately
+
+### M8: Stream Deck Plugin (Optional)
+
+If Stream Deck support is desired:
+- Build proper Elgato Stream Deck SDK v2 plugin
+- Package with property inspectors and action images
+- This is a standalone deliverable — scope separately
+
+### M9: Underline/Strikethrough Annotations (Optional)
+
+If text-level annotations are desired:
+- Implement `UNDERLINE` and `STRIKETHROUGH` rendering in AnnotationLayer
+- Add to TOOLS array in presets.ts
+- Add to PDF export in exporter.ts
 
 ## Execution Order
 
-1. Implement `M1` first (status truthfulness is foundation).
-2. Implement `M2` second (high-visibility polish with lower core risk).
-3. Implement `M3` in parallel where possible, finalizing before merge.
-4. Close `M4` before release candidate cut.
-
-## Test Plan
-
-- Local:
-  - `npm run lint`
-  - `npm run build`
-  - `npm run dev -- --host 127.0.0.1 --port 1420`
-  - `npm run test:headless`
-- Manual smoke:
-  - open/close PDF repeatedly
-  - page/zoom remote commands
-  - annotation add/remove + export
-  - presenter toggle and borderless mode transitions
-
-## Rollout / Backout
-
-- Rollout: ship as `v1.0.x` hardening release once M1-M4 acceptance criteria are met.
-- Backout:
-  - if real integration wiring destabilizes the app, gate with fallback path and disable new wiring before release.
-  - isolate UI token refactors into small commits to allow selective rollback.
+1. **M1** — Docs truthfulness (immediate, low risk)
+2. **M2** — Code cleanup (immediate, low risk)
+3. **M3** — Presenter mode wiring (short, medium risk)
+4. **M4** — PDF page inversion (short, low risk)
+5. **M5** — Multi-monitor UI (medium, low risk)
+6. **M6** — Verification coverage (parallel with M3-M5)
+7. **M7-M9** — Future scope (backlog)
 
 ## Acceptance Gate
 
-- All baseline checks remain green after changes.
-- New tests for core workflow pass in CI/headless local run.
-- No known simulated-state placeholders remain in targeted integration status paths.
-
-## Dependencies and Risks
-
-- Requires stable local WebSocket startup from Tauri backend.
-- Requires deterministic fixture strategy for PDF/annotation E2E tests.
-- Bundle-size warning mitigation is optional unless perf regressions are observed.
+- [ ] Every ✅ in README is backed by working, exercised code
+- [ ] No `OBS_NOT_IMPLEMENTED` stub referenced in user-facing docs
+- [ ] Presenter mode opens real Tauri window from frontend toggle
+- [ ] Local quality commands pass (`lint`, `test:unit`, `build`, `release:preflight`)
+- [ ] Feature-gated capabilities (NDI/Syphon) clearly labeled
+- [ ] Integration guide describes only implemented behaviors
 
 ## Sources
 
-- `src/stores/integration.store.ts:214`
-- `src/lib/websocket/client.ts:29`
-- `src-tauri/src/lib.rs:102`
-- `src-tauri/src/websocket/handlers.rs:23`
-- `src/components/pdf/PDFViewer.tsx:551`
-- `src/components/layout/BorderlessUI.tsx:33`
-- `src/components/layout/UpdateBanner.tsx:85`
-- Command: `npm run lint`
-- Command: `npm run build`
-- Command: `npm run dev -- --host 127.0.0.1 --port 1420`
-- Command: `npm run test:headless`
+- `.loom/10-research.md` (feature reality audit)
+- `README.md:19,29,31,35,47,65-66`
+- `ROADMAP.md:47-56`
+- `src-tauri/src/commands/presenter.rs:72-290`
+- `src/hooks/useViewModes.ts:32-69`
+- `src/stores/integration.store.ts:343-355`
+- `src/types/pdf.types.ts:65-76`
+- `src/components/pdf/AnnotationLayer.tsx:243-416`
+- `src/components/debug/NDIControls.tsx:104-176`

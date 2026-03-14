@@ -1,67 +1,67 @@
 # MCP Inventory
 
-## Why
+## Runtime Mode Detection
 
-This inventory captures MCP capability and health for the current planning effort so execution choices are evidence-based.
+Loom-mode is active.
 
-## Calls Made
-
-1. `list_mcp_resources()`
-2. `list_mcp_resource_templates()`
-3. `list_mcp_resources(server="loom")`
-4. `list_mcp_resource_templates(server="loom")`
-5. `read_mcp_resource(server="loom", uri="loom://servers")`
-6. `read_mcp_resource(server="loom", uri="loom://health")`
-7. `read_mcp_resource(server="loom", uri="loom://config")`
+- `list_mcp_resources()` returned top-level loom resources including `loom://config`, `loom://servers`, `loom://tools/index`, and `loom://health`.
+- `list_mcp_resource_templates()` returned loom paged templates including `loom://tools/page/{page}` and `loom://tools/server/{server}/page/{page}`.
 
 ## Snapshot
 
-- Active Loom profile: `full`
-- Registered servers: `42`
-- Registered tools: `369`
-- Server-specific listing calls for `loom` timed out in this environment; global listing succeeded.
+- Active profile: `full`
+- Registered servers: `45`
+- Registered tools: `468`
+- Tool pagination: `5` pages at `100` tools/page
+- Daemon status: `running`, `drainReady=true`
+- Currently running local processes called out by loom config: `morph_embeddings`, `agent_context`, `github`, `sequentialthinking`, `codebase_memory`, `devbox`, `time`
 
-## Resources and Templates
+## Health
 
-### Server: `loom`
+Core planning/execution services used for this repo are healthy:
 
-- Resources:
-  - `loom://servers`
-  - `loom://tools`
-  - `loom://health`
-  - `loom://config`
-- Resource templates:
-  - `loom://servers`
-  - `loom://tools`
-  - `loom://health`
-  - `loom://config`
+- `codebase_memory`
+- `agent_context`
+- `devbox`
+- `browserkit`
+- `git`
+- `github`
 
-## Planning-Relevant Tooling
+Some monitors show timeout noise on unrelated services, but loom still reports them healthy; none block this planning pass.
 
-- `git`, `git_worktree`: branch/diff/change tracking.
-- `codebase_memory`: code navigation when scoping refactors.
-- `browserkit`: UI screenshot validation during polish passes.
-- `devbox`: isolated build/test execution when host environment drifts.
-- `agent_context`: preserve decisions/tasks across sessions.
+## Codebase Index Readiness
 
-## Health and Constraints
+- `codebase_stats(repo_id="streamslate")` initially returned `0` chunks, so the previous index state was stale or absent.
+- Rebuilt a lexical index with `embeddings=false`.
+- Current index status:
+  - `repo_id=streamslate`
+  - `total_chunks: 593`
+  - `typescript: 385`
+  - `rust: 180`
+  - `javascript: 28`
+  - chunk types include `225` functions, `128` classes, `115` methods, and `93` modules
 
-- `loom://health` reports unavailable servers: `confluence`, `context7`, `postgres`.
-- Most execution-critical servers for this task (`git`, `codebase_memory`, `browserkit`, `devbox`) are healthy.
-- `list_mcp_resources(server="loom")` and `list_mcp_resource_templates(server="loom")` timed out; fall back to global listing + direct resource reads.
+## Best Tools For Next Steps
 
-## Best Tool For Job (UI + Core Tightening)
+- Repo truth and line-accurate sourcing: `exec_command` with `rg`, `nl`, and targeted reads
+- Code navigation: `codebase_memory` lexical index
+- Local validation without host dependency drift: `devbox`
+- Browser/UI verification when execution starts: `browserkit`
 
-- Ground truth on current app behavior: local file reads + local commands (`npm`, `rg`, `git`).
-- UI validation during implementation: `browserkit` screenshots + Cypress.
-- Context continuity: `agent_context` session/task tracking.
+## Constraints
+
+- Local Node dependencies are currently absent (`node_modules/` missing), so host-shell `npm run lint` and `npm run test:unit` are not meaningful until install is restored.
+- `quality` MCP exists, but current repo work is JS/TS/Rust-heavy; direct repo commands or `devbox` are the better fit here.
 
 ## Sources
 
 - MCP: `list_mcp_resources()`
 - MCP: `list_mcp_resource_templates()`
-- MCP: `list_mcp_resources(server="loom")` (timeout observed)
-- MCP: `list_mcp_resource_templates(server="loom")` (timeout observed)
-- MCP: `read_mcp_resource(server="loom", uri="loom://servers")`
-- MCP: `read_mcp_resource(server="loom", uri="loom://health")`
 - MCP: `read_mcp_resource(server="loom", uri="loom://config")`
+- MCP: `read_mcp_resource(server="loom", uri="loom://servers")`
+- MCP: `read_mcp_resource(server="loom", uri="loom://tools/index")`
+- MCP: `read_mcp_resource(server="loom", uri="loom://health")`
+- MCP: `mcp__loom__codebase_memory__codebase_index_start(repo_id="streamslate", root="/Users/cblevins/workspace/services/streamslate", full_refresh=true, embeddings=false)`
+- MCP: `mcp__loom__codebase_memory__codebase_index_poll(job_id="03491e1b24ff9a86")`
+- MCP: `mcp__loom__codebase_memory__codebase_stats(repo_id="streamslate")`
+- Command: `ls -la node_modules 2>/dev/null || echo 'node_modules: missing'`

@@ -1,4 +1,4 @@
-# StreamSlate v1.0.0 Release Readiness
+# StreamSlate Release Readiness
 
 ## Quick Check
 
@@ -8,71 +8,78 @@ Run:
 npm run release:preflight
 ```
 
-Release gate (fails on unresolved publish blockers):
+Strict gate:
 
 ```bash
 npm run release:preflight:strict
 ```
 
-This command:
+The preflight script:
 
 - verifies required CLI tools are installed
 - loads `ai.env` for `BUTLER_API_KEY` when needed
 - checks version alignment across `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json`
-- checks tag/release visibility expectations for `v<version>`
-- checks itch.io project/channel visibility
+- checks the expected `v<version>` tag and release assets
+- validates `latest.json`
+- checks itch.io channel status
 
-## Current Status (2026-02-11)
+## Current Baseline (2026-03-11)
 
-Validated:
+Validated with `npm run release:preflight`:
 
 - toolchain present (`git`, `node`, `npm`, `cargo`, `gh`, `butler`)
-- local version alignment at `1.0.0`
-- local auth path for butler works when `ai.env` is loaded
+- `BUTLER_API_KEY` available for itch.io checks
+- local version alignment at `1.4.0`
+- local tag `v1.4.0` exists and matches repo version files
+- GitHub release `v1.4.0` exists with desktop binaries, updater bundle/signature, and `latest.json`
+- `latest.json` reports version `1.4.0` with `9` configured platforms
+- itch.io channels `macos`, `windows`, and `linux` all report `v1.4.0`
 
-Remaining release blockers:
+Non-blocking note:
 
-- create/push `v1.0.0` git tag if not present locally/remotely
-- ensure GitHub release for `v1.0.0` is visible and published
-- publish at least one artifact per itch.io channel:
-  - `caedus90/streamslate:macos`
-  - `caedus90/streamslate:windows`
-  - `caedus90/streamslate:linux`
+- the preflight script warns if the working tree has local changes
 
-## Manual Completion Checklist
+## Standard Release Flow
 
-1. Confirm version alignment:
+1. Align versions:
 
 ```bash
 npm run sync-versions
 git diff -- package.json src-tauri/Cargo.toml src-tauri/tauri.conf.json
 ```
 
-2. Tag and push release tag:
+2. Ensure the release tag exists and points at the intended commit:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
-git push github v1.0.0
+VERSION="$(node -p "require('./package.json').version")"
+git tag "v${VERSION}"
+git push origin "v${VERSION}"
+git push github "v${VERSION}"
 ```
 
-3. Verify/create GitHub release:
+3. Confirm the GitHub release is present:
 
 ```bash
-gh release view v1.0.0 --repo streamslate/streamslate || gh release create v1.0.0 --repo streamslate/streamslate --generate-notes
+VERSION="$(node -p "require('./package.json').version")"
+gh release view "v${VERSION}" --repo streamslate/streamslate
 ```
 
-4. Ensure itch.io channels are populated (via CI job or manual push):
+4. Confirm itch.io channels are populated:
 
 ```bash
-# Examples (paths are placeholders)
-butler push /path/to/StreamSlate.dmg caedus90/streamslate:macos --userversion v1.0.0
-butler push /path/to/StreamSlateSetup.exe caedus90/streamslate:windows --userversion v1.0.0
-butler push /path/to/StreamSlate.AppImage caedus90/streamslate:linux --userversion v1.0.0
+butler status caedus90/streamslate
 ```
 
 5. Re-run preflight:
 
 ```bash
 npm run release:preflight
+```
+
+## Strict Gate Use
+
+Use strict mode when you want warnings like a missing tag or incomplete release assets to fail the check:
+
+```bash
+npm run release:preflight:strict
 ```

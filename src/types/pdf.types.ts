@@ -65,14 +65,10 @@ export interface Annotation {
 export enum AnnotationType {
   TEXT = "text",
   HIGHLIGHT = "highlight",
-  UNDERLINE = "underline",
-  STRIKETHROUGH = "strikethrough",
   ARROW = "arrow",
   RECTANGLE = "rectangle",
   CIRCLE = "circle",
   FREE_DRAW = "free_draw",
-  STAMP = "stamp",
-  NOTE = "note",
 }
 
 export interface ViewerState {
