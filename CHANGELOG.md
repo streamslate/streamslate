@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.0](https://github.com/streamslate/streamslate/compare/v1.4.0...v1.5.0) (2026-03-14)
+
+
+### Features
+
+* add independent PDF page inversion toggle (M4) ([dd9216e](https://github.com/streamslate/streamslate/commit/dd9216eb88a4e267bbac1e5061777499b29e56bd))
+* **presenter:** wire frontend presenter toggle to Tauri window commands ([3e46b46](https://github.com/streamslate/streamslate/commit/3e46b46c73b292f4dac5ea4053ff55759f35987c))
+* promote capture/output UI from experimental to settings (M5) ([bdff25f](https://github.com/streamslate/streamslate/commit/bdff25f4f4f0bec73af12cbc31f4274f3f20dd12))
+
+
+### Bug Fixes
+
+* **ci:** replace macOS dmg packaging with APFS ([9b507c5](https://github.com/streamslate/streamslate/commit/9b507c53c169ab85f5d3bab1109368895c5f15e2))
+* **ci:** use setup-butler action for reliable itch.io uploads ([7fff49b](https://github.com/streamslate/streamslate/commit/7fff49b959776399b8b8d93b7ab22b62e8998e5d))
+* **release:** prevent component prefix in release-please tags ([bfd0bd2](https://github.com/streamslate/streamslate/commit/bfd0bd2d2d507713a620a6f33e369caf5369de10))
+
+
+### Documentation
+
+* fix feature truthfulness gaps and clean unused code stubs ([d43be27](https://github.com/streamslate/streamslate/commit/d43be2722c88c0612265911ce89e2e9c725e7aca))
+* update ROADMAP and loom context for M1-M6 completion ([4b6e669](https://github.com/streamslate/streamslate/commit/4b6e6695bb93f283d47cc08754cb75c1c2426bed))
+
+
+### Styles
+
+* fix formatting for CI (prettier + rustfmt) ([1989050](https://github.com/streamslate/streamslate/commit/198905049ecb02671ceae0f288f7babcc8646dc5))
+
+
+### Tests
+
+* add verification coverage for M3-M5 features (M6) ([cc9fe46](https://github.com/streamslate/streamslate/commit/cc9fe46b746156793ea7390923360f92737fc207))
+
+
+### Miscellaneous
+
+* **release:** bump version to 1.5.0 ([4c31de3](https://github.com/streamslate/streamslate/commit/4c31de39546ecd878073be4ac632f22eddb7ce98))
+* remove accidentally committed reconciliation files ([61d4208](https://github.com/streamslate/streamslate/commit/61d4208113c0e982c95a6d5522effebe6a6805e0))
+
 ## [1.5.0](https://github.com/streamslate/streamslate/compare/streamslate-v1.4.0...streamslate-v1.5.0) (2026-03-14)
 
 ### Features
