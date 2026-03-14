@@ -145,8 +145,8 @@ export const OutputControls: React.FC = () => {
       )}
 
       <p className="text-xs text-text-tertiary">
-        Capture a display or the StreamSlate window for NDI/Syphon video
-        output. NDI requires the NDI SDK; Syphon is macOS-only.
+        Capture a display or the StreamSlate window for NDI/Syphon video output.
+        NDI requires the NDI SDK; Syphon is macOS-only.
       </p>
     </div>
   );

@@ -45,8 +45,9 @@ interface RenderHandle {
 }
 
 const mounted: RenderHandle[] = [];
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
-  .IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 async function renderHook(): Promise<RenderHandle> {
   const container = document.createElement("div");
@@ -55,7 +56,13 @@ async function renderHook(): Promise<RenderHandle> {
   const ref = { current: null as unknown as ViewModesReturn };
 
   await act(async () => {
-    root.render(React.createElement(TestComponent, { ref: (r: ViewModesReturn) => { ref.current = r; } }));
+    root.render(
+      React.createElement(TestComponent, {
+        ref: (r: ViewModesReturn) => {
+          ref.current = r;
+        },
+      })
+    );
   });
 
   const handle: RenderHandle = { container, root, result: ref };

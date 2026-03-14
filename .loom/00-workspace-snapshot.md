@@ -7,6 +7,7 @@
 - Python: `3.12.11`
 
 ## Git
+
 ```
 ## main...origin/main
  M .loom/00-index.md
@@ -49,6 +50,7 @@
 ```
 
 ### Remotes
+
 ```
 github	https://github.com/streamslate/streamslate.git (fetch)
 github	https://github.com/streamslate/streamslate.git (push)
@@ -61,6 +63,7 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 ```
 
 ### HEAD
+
 ```
 9b507c5 fix(ci): replace macOS dmg packaging with APFS
 ```
@@ -68,6 +71,7 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 ## Top-Level Layout
 
 ### Directories
+
 - `.claude/`
 - `.git/`
 - `.github/`
@@ -89,6 +93,7 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 - `src-tauri/`
 
 ### Files
+
 - `.dockerignore`
 - `.DS_Store`
 - `.env.example`
@@ -128,6 +133,7 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 - `vitest.config.ts`
 
 ## Key Files Detected
+
 - `README.md`
 - `package.json`
 - `package-lock.json`
@@ -136,6 +142,7 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 - `Dockerfile`
 
 ## Tracked / Indexed Files (sample)
+
 - `.dockerignore`
 - `.env.example`
 - `.eslintrc.cjs`
@@ -326,7 +333,9 @@ origin	https://oauth2:glpat-vFFCVHmo_LOPh6lq1tk3p286MQp1OjEH.01.0w0ycoylq@gitlab
 - `vitest.config.ts`
 
 ## AGENTS.md Files
+
 - None found
 
 ## Notes
+
 - Add MCP inventory via the plan-loom-core workflow (see `.loom/00-mcp-inventory.md`).

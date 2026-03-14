@@ -17,56 +17,56 @@ StreamSlate v1.4.0 claims production-ready status across README, ROADMAP, and fe
 
 ### Fully Implemented (Real, Working)
 
-| # | Feature | Claim | Evidence |
-|---|---------|-------|----------|
-| 1 | PDF Viewing | Core viewer | `src/components/pdf/PDFViewer.tsx`, PDF.js renderer |
-| 2 | Highlight annotation | ✅ | `AnnotationLayer.tsx:235-237`, `presets.ts:127` |
-| 3 | Rectangle annotation | ✅ | `AnnotationLayer.tsx:244-254` |
-| 4 | Circle annotation | ✅ | `AnnotationLayer.tsx:256-265` |
-| 5 | Arrow annotation | ✅ | `AnnotationLayer.tsx:267-316` |
-| 6 | Free-draw (free-ink) | ✅ | `AnnotationLayer.tsx:377-411` |
-| 7 | Text annotation | ✅ | `AnnotationLayer.tsx:319-374`, `TextAnnotationEditor.tsx` |
-| 8 | Template/preset system | ✅ | `TemplatePacks.tsx:47-306`, `presets.ts:163-188` |
-| 9 | Dark mode (UI chrome) | ✅ | `useTheme.ts:22-41`, Tailwind dark class |
-| 10 | WebSocket server | ✅ | `server.rs:39-80`, binds `127.0.0.1:11451` |
-| 11 | Remote control (page/zoom/presenter/annotations) | ✅ | `protocol.rs:26-58`, 9 commands |
-| 12 | PDF export with annotations | ✅ | `exporter.ts:66-304`, 6 annotation types embedded via pdf-lib |
-| 13 | Settings export/import | ✅ | `useSettingsSync.ts:114-154`, JSON file download/upload |
-| 14 | Auto-updater | ✅ | `UpdateBanner.tsx:9-59`, `@tauri-apps/plugin-updater` |
-| 15 | NDI output | ✅ (feature-gated) | `ndi/sender.rs:27-153`, `grafton-ndi` crate, full send pipeline |
-| 16 | Syphon output | ✅ (macOS, feature-gated) | `syphon/server.rs:16-118`, `syphon_bridge.m:22-118`, Metal GPU |
-| 17 | Screen capture | ✅ (macOS) | `capture/mod.rs:54-182`, ScreenCaptureKit |
-| 18 | Multi-monitor capture | ✅ | `capture/mod.rs:186-286`, display enumeration + selection |
-| 19 | Presenter view (content sync) | ✅ | `PresenterView.tsx:108-218`, Tauri events + WS fallback |
-| 20 | Cross-platform builds | ✅ | CI: macOS, Windows, Linux in `.github/workflows/ci.yml` |
-| 21 | Borderless mode | ✅ | `useViewModes.ts:33`, `BorderlessUI.tsx` |
-| 22 | Page navigation + zoom | ✅ | `PageNavigation.tsx`, `ZoomControls.tsx` |
+| #   | Feature                                          | Claim                     | Evidence                                                        |
+| --- | ------------------------------------------------ | ------------------------- | --------------------------------------------------------------- |
+| 1   | PDF Viewing                                      | Core viewer               | `src/components/pdf/PDFViewer.tsx`, PDF.js renderer             |
+| 2   | Highlight annotation                             | ✅                        | `AnnotationLayer.tsx:235-237`, `presets.ts:127`                 |
+| 3   | Rectangle annotation                             | ✅                        | `AnnotationLayer.tsx:244-254`                                   |
+| 4   | Circle annotation                                | ✅                        | `AnnotationLayer.tsx:256-265`                                   |
+| 5   | Arrow annotation                                 | ✅                        | `AnnotationLayer.tsx:267-316`                                   |
+| 6   | Free-draw (free-ink)                             | ✅                        | `AnnotationLayer.tsx:377-411`                                   |
+| 7   | Text annotation                                  | ✅                        | `AnnotationLayer.tsx:319-374`, `TextAnnotationEditor.tsx`       |
+| 8   | Template/preset system                           | ✅                        | `TemplatePacks.tsx:47-306`, `presets.ts:163-188`                |
+| 9   | Dark mode (UI chrome)                            | ✅                        | `useTheme.ts:22-41`, Tailwind dark class                        |
+| 10  | WebSocket server                                 | ✅                        | `server.rs:39-80`, binds `127.0.0.1:11451`                      |
+| 11  | Remote control (page/zoom/presenter/annotations) | ✅                        | `protocol.rs:26-58`, 9 commands                                 |
+| 12  | PDF export with annotations                      | ✅                        | `exporter.ts:66-304`, 6 annotation types embedded via pdf-lib   |
+| 13  | Settings export/import                           | ✅                        | `useSettingsSync.ts:114-154`, JSON file download/upload         |
+| 14  | Auto-updater                                     | ✅                        | `UpdateBanner.tsx:9-59`, `@tauri-apps/plugin-updater`           |
+| 15  | NDI output                                       | ✅ (feature-gated)        | `ndi/sender.rs:27-153`, `grafton-ndi` crate, full send pipeline |
+| 16  | Syphon output                                    | ✅ (macOS, feature-gated) | `syphon/server.rs:16-118`, `syphon_bridge.m:22-118`, Metal GPU  |
+| 17  | Screen capture                                   | ✅ (macOS)                | `capture/mod.rs:54-182`, ScreenCaptureKit                       |
+| 18  | Multi-monitor capture                            | ✅                        | `capture/mod.rs:186-286`, display enumeration + selection       |
+| 19  | Presenter view (content sync)                    | ✅                        | `PresenterView.tsx:108-218`, Tauri events + WS fallback         |
+| 20  | Cross-platform builds                            | ✅                        | CI: macOS, Windows, Linux in `.github/workflows/ci.yml`         |
+| 21  | Borderless mode                                  | ✅                        | `useViewModes.ts:33`, `BorderlessUI.tsx`                        |
+| 22  | Page navigation + zoom                           | ✅                        | `PageNavigation.tsx`, `ZoomControls.tsx`                        |
 
 ### Partially Implemented (Gap Between Claim and Code)
 
-| # | Feature | Claim | Reality | Severity |
-|---|---------|-------|---------|----------|
-| P1 | Presenter mode lifecycle | "Borderless window/Browser Source" ✅ | Backend commands exist (`presenter.rs:72-290`) but frontend **never invokes** them. `useViewModes.ts` toggles local state only—no Tauri window open/close. | HIGH |
-| P2 | Annotation: Underline | "underline" in feature list | `AnnotationType.UNDERLINE` defined in `pdf.types.ts:68` but no rendering case in `AnnotationLayer.tsx` and not in TOOLS array | MEDIUM |
-| P3 | Multi-monitor UI | "Pick any display" | Selection UI exists only in `NDIControls.tsx` (debug panel), not in main settings | MEDIUM |
-| P4 | PresenterConfig application | Config accepted by command | `open_presenter_mode` accepts `PresenterConfig` but ignores it (line 104 unused) | LOW |
+| #   | Feature                     | Claim                                 | Reality                                                                                                                                                    | Severity |
+| --- | --------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| P1  | Presenter mode lifecycle    | "Borderless window/Browser Source" ✅ | Backend commands exist (`presenter.rs:72-290`) but frontend **never invokes** them. `useViewModes.ts` toggles local state only—no Tauri window open/close. | HIGH     |
+| P2  | Annotation: Underline       | "underline" in feature list           | `AnnotationType.UNDERLINE` defined in `pdf.types.ts:68` but no rendering case in `AnnotationLayer.tsx` and not in TOOLS array                              | MEDIUM   |
+| P3  | Multi-monitor UI            | "Pick any display"                    | Selection UI exists only in `NDIControls.tsx` (debug panel), not in main settings                                                                          | MEDIUM   |
+| P4  | PresenterConfig application | Config accepted by command            | `open_presenter_mode` accepts `PresenterConfig` but ignores it (line 104 unused)                                                                           | LOW      |
 
 ### Overclaimed in Documentation (No Implementation)
 
-| # | Feature | Claim Location | Reality | Severity |
-|---|---------|----------------|---------|----------|
-| O1 | OBS integration | README:31 "Global hotkeys + plug-in, WebSocket control ✅" | `integration.store.ts:343-355`: `connectOBS()` returns `OBS_NOT_IMPLEMENTED` error. No OBS WebSocket client. | **CRITICAL** |
-| O2 | Stream Deck plug-in | README:31, README:66 "official StreamSlate plug-in" | Only `docs/plugins/manifest.json` (schema) + `test_plugin.js` (PoC). No real SDK integration. | **CRITICAL** |
-| O3 | WCAG-contrast swatches | README:29 "WCAG-contrast color swatches ✅" | Zero WCAG validation code. Colors are hardcoded presets. | HIGH |
-| O4 | Page inversion | README:19 "true dark-mode page inversion" | Dark mode only toggles UI chrome. No PDF `filter: invert()` or canvas inversion. | HIGH |
-| O5 | Presenter token auth | README:47 `?token=YOUR_TOKEN` | `main.tsx:31` routes `/presenter` with no token validation. No auth code. | MEDIUM |
-| O6 | "Global hotkeys" | README:31 | No global hotkey registration found in source. WebSocket commands exist. | MEDIUM |
+| #   | Feature                | Claim Location                                             | Reality                                                                                                      | Severity     |
+| --- | ---------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
+| O1  | OBS integration        | README:31 "Global hotkeys + plug-in, WebSocket control ✅" | `integration.store.ts:343-355`: `connectOBS()` returns `OBS_NOT_IMPLEMENTED` error. No OBS WebSocket client. | **CRITICAL** |
+| O2  | Stream Deck plug-in    | README:31, README:66 "official StreamSlate plug-in"        | Only `docs/plugins/manifest.json` (schema) + `test_plugin.js` (PoC). No real SDK integration.                | **CRITICAL** |
+| O3  | WCAG-contrast swatches | README:29 "WCAG-contrast color swatches ✅"                | Zero WCAG validation code. Colors are hardcoded presets.                                                     | HIGH         |
+| O4  | Page inversion         | README:19 "true dark-mode page inversion"                  | Dark mode only toggles UI chrome. No PDF `filter: invert()` or canvas inversion.                             | HIGH         |
+| O5  | Presenter token auth   | README:47 `?token=YOUR_TOKEN`                              | `main.tsx:31` routes `/presenter` with no token validation. No auth code.                                    | MEDIUM       |
+| O6  | "Global hotkeys"       | README:31                                                  | No global hotkey registration found in source. WebSocket commands exist.                                     | MEDIUM       |
 
 ### Correctly Marked as Future
 
-| Feature | Location | Status |
-|---------|----------|--------|
-| Mobile companion | ROADMAP:54 | `[ ]` — Correct |
+| Feature                 | Location   | Status          |
+| ----------------------- | ---------- | --------------- |
+| Mobile companion        | ROADMAP:54 | `[ ]` — Correct |
 | Cloud sync for settings | ROADMAP:55 | `[ ]` — Correct |
 
 ---
@@ -104,6 +104,7 @@ StreamSlate v1.4.0 claims production-ready status across README, ROADMAP, and fe
 Two-phase approach to professional grade:
 
 **Phase 1: Truthfulness Remediation (docs + minimal code)**
+
 - Rewrite README feature table to accurately reflect implementation
 - Remove or reword OBS, Stream Deck, WCAG, page inversion claims
 - Clarify NDI/Syphon as build-time feature flags
@@ -111,6 +112,7 @@ Two-phase approach to professional grade:
 - Clean up unused annotation types from enum
 
 **Phase 2: Implementation Gaps (code changes)**
+
 - Wire presenter mode frontend to Tauri commands
 - Add PDF page inversion (CSS filter on canvas)
 - Implement underline annotation rendering

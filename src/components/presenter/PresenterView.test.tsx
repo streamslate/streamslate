@@ -34,8 +34,9 @@ interface RenderHandle {
 }
 
 const mounted: RenderHandle[] = [];
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
-  .IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -94,7 +95,9 @@ describe("PresenterView", () => {
     const { container } = await render(<PresenterView />);
 
     expect(container.textContent).toContain("Presenter Mode");
-    expect(container.textContent).toContain("Waiting for PDF from main window...");
+    expect(container.textContent).toContain(
+      "Waiting for PDF from main window..."
+    );
     expect(MockWebSocket.instances).toHaveLength(1);
     expect(MockWebSocket.instances[0]?.url).toBe("ws://127.0.0.1:11451");
     expect(listenMock).not.toHaveBeenCalled();

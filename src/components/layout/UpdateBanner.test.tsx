@@ -29,8 +29,9 @@ interface RenderHandle {
 }
 
 const mounted: RenderHandle[] = [];
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
-  .IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 async function render(element: React.ReactElement): Promise<RenderHandle> {
   const container = document.createElement("div");

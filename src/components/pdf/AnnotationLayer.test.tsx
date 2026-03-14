@@ -14,8 +14,9 @@ interface RenderHandle {
 }
 
 const mounted: RenderHandle[] = [];
-(globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean })
-  .IS_REACT_ACT_ENVIRONMENT = true;
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 async function render(element: React.ReactElement): Promise<RenderHandle> {
   const container = document.createElement("div");
@@ -242,7 +243,10 @@ describe("AnnotationLayer rendering", () => {
     // Each type should produce at least one element
     for (const type of Object.values(AnnotationType)) {
       const el = svg!.querySelector(`[data-annotation-type="${type}"]`);
-      expect(el, `Expected element for annotation type: ${type}`).not.toBeNull();
+      expect(
+        el,
+        `Expected element for annotation type: ${type}`
+      ).not.toBeNull();
     }
   });
 });

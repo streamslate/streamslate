@@ -198,9 +198,7 @@ function App() {
             statusMessage={statusMessage}
           />
 
-          {presenterMode && (
-            <PresenterUI onExit={exitPresenterMode} />
-          )}
+          {presenterMode && <PresenterUI onExit={exitPresenterMode} />}
           {borderlessMode && !presenterMode && (
             <BorderlessUI
               onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}

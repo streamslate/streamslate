@@ -28,22 +28,27 @@ StreamSlate v1.4.0 has strong core functionality (22 features working), but 6 fe
 ## Functional Requirements
 
 ### FR1: Documentation Truthfulness
+
 - Every feature marked ✅ must have a corresponding working code path.
 - Feature-gated capabilities (NDI/Syphon) must be clearly labeled as build-time opt-in.
 - Integration guide must describe only implemented behaviors.
 
 ### FR2: Presenter Mode Lifecycle
+
 - Toggling presenter mode from the UI must invoke Tauri window open/close commands.
 - Page, zoom, and annotation changes must sync between main and presenter windows.
 
 ### FR3: PDF Page Inversion
+
 - A user toggle enables CSS-based page inversion on the PDF canvas.
 - Annotations remain readable over inverted content.
 
 ### FR4: Output Settings UI
+
 - Display selection, capture source, and NDI/Syphon controls are accessible from main settings (not just debug panel).
 
 ### FR5: Code Hygiene
+
 - Unused annotation types removed from enum or implemented.
 - OBS stub removed or clearly isolated from user-facing flows.
 - No token references in user-visible UI without token validation.

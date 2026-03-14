@@ -40,7 +40,9 @@ function seedLocalStorage(): void {
   );
 }
 
-function makeBundle(overrides: Partial<SettingsBundle["settings"]> = {}): SettingsBundle {
+function makeBundle(
+  overrides: Partial<SettingsBundle["settings"]> = {}
+): SettingsBundle {
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -114,13 +116,22 @@ describe("applySettings (via import simulation)", () => {
     if (s.layout.activePanel !== null)
       localStorage.setItem(SETTINGS_KEYS.activePanel, s.layout.activePanel);
     if (s.viewMode.transparentBg !== null)
-      localStorage.setItem(SETTINGS_KEYS.transparentBg, s.viewMode.transparentBg);
+      localStorage.setItem(
+        SETTINGS_KEYS.transparentBg,
+        s.viewMode.transparentBg
+      );
     if (s.viewMode.borderlessMode !== null)
-      localStorage.setItem(SETTINGS_KEYS.borderlessMode, s.viewMode.borderlessMode);
+      localStorage.setItem(
+        SETTINGS_KEYS.borderlessMode,
+        s.viewMode.borderlessMode
+      );
     if (s.viewMode.invertPages !== undefined && s.viewMode.invertPages !== null)
       localStorage.setItem(SETTINGS_KEYS.invertPages, s.viewMode.invertPages);
     if (s.annotationProfiles !== null)
-      localStorage.setItem(SETTINGS_KEYS.annotationProfiles, s.annotationProfiles);
+      localStorage.setItem(
+        SETTINGS_KEYS.annotationProfiles,
+        s.annotationProfiles
+      );
     if (s.annotationDocumentProfileMap !== null)
       localStorage.setItem(
         SETTINGS_KEYS.annotationDocumentProfileMap,
@@ -137,9 +148,9 @@ describe("applySettings (via import simulation)", () => {
     expect(localStorage.getItem(SETTINGS_KEYS.annotationProfiles)).toBe(
       JSON.stringify([{ id: "p2", name: "Imported" }])
     );
-    expect(localStorage.getItem(SETTINGS_KEYS.annotationDocumentProfileMap)).toBe(
-      JSON.stringify({ "/other.pdf": "p2" })
-    );
+    expect(
+      localStorage.getItem(SETTINGS_KEYS.annotationDocumentProfileMap)
+    ).toBe(JSON.stringify({ "/other.pdf": "p2" }));
   });
 
   it("skips null values without overwriting existing settings", () => {

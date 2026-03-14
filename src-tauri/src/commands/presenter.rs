@@ -118,9 +118,7 @@ pub async fn open_presenter_mode(
     .visible(true)
     .build()
     .map_err(|e| {
-        crate::error::StreamSlateError::Window(format!(
-            "Failed to create presenter window: {e}"
-        ))
+        crate::error::StreamSlateError::Window(format!("Failed to create presenter window: {e}"))
     })?;
 
     // Update presenter state

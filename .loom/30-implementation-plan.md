@@ -76,6 +76,7 @@ Commit: `cc9fe46` (2026-03-14)
 ### M7: OBS WebSocket Client (Optional)
 
 If OBS integration is desired:
+
 - Implement OBS WebSocket v5 client in Rust or frontend
 - Scene switching, source control, streaming/recording state
 - This is a significant feature — scope separately
@@ -83,6 +84,7 @@ If OBS integration is desired:
 ### M8: Stream Deck Plugin (Optional)
 
 If Stream Deck support is desired:
+
 - Build proper Elgato Stream Deck SDK v2 plugin
 - Package with property inspectors and action images
 - This is a standalone deliverable — scope separately
@@ -90,6 +92,7 @@ If Stream Deck support is desired:
 ### M9: Underline/Strikethrough Annotations (Optional)
 
 If text-level annotations are desired:
+
 - Implement `UNDERLINE` and `STRIKETHROUGH` rendering in AnnotationLayer
 - Add to TOOLS array in presets.ts
 - Add to PDF export in exporter.ts

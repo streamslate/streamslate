@@ -74,7 +74,7 @@
     - `npm run test:unit`
     - `npm run build`
     - `npm run release:preflight`
-    all passed locally.
+      all passed locally.
   - Added component smoke coverage for:
     - `src/components/presenter/PresenterView.tsx`
     - `src/components/layout/UpdateBanner.tsx`
@@ -187,7 +187,6 @@
   - MCP: `mcp__loom__codebase_memory__codebase_index_poll(job_id="a8b6f45486bc6c16")`
   - MCP: `mcp__loom__codebase_memory__codebase_index_poll(job_id="5098c2be84b0fc03")`
   - MCP: `mcp__loom__codebase_memory__codebase_stats(repo_id="streamslate")`
-
 
 ## 2026-02-18
 

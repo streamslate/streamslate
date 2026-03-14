@@ -24,13 +24,13 @@
 
 ## Completed Milestones (2026-03-14)
 
-| Milestone | Commit | Summary |
-|-----------|--------|---------|
-| M1+M2 | `d43be27` | Docs truthfulness + code cleanup |
-| M3 | `3e46b46` | Presenter mode wired to Tauri window commands |
-| M4 | `dd9216e` | PDF page inversion toggle (independent of dark mode) |
-| M5 | `bdff25f` | Output UI promoted from experimental to settings |
-| M6 | `cc9fe46` | Verification coverage: 180 → 211 tests (+31) |
+| Milestone | Commit    | Summary                                              |
+| --------- | --------- | ---------------------------------------------------- |
+| M1+M2     | `d43be27` | Docs truthfulness + code cleanup                     |
+| M3        | `3e46b46` | Presenter mode wired to Tauri window commands        |
+| M4        | `dd9216e` | PDF page inversion toggle (independent of dark mode) |
+| M5        | `bdff25f` | Output UI promoted from experimental to settings     |
+| M6        | `cc9fe46` | Verification coverage: 180 → 211 tests (+31)         |
 
 ## Resolved Items
 

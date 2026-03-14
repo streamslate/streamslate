@@ -93,7 +93,6 @@
   - MCP: `mcp__loom__codebase_memory__codebase_index_poll(job_id="5098c2be84b0fc03")`
   - MCP: `mcp__loom__codebase_memory__codebase_stats(repo_id="streamslate")`
 
-
 ## 2026-02-12: Prioritize Core Truthfulness Before Net-New Features
 
 - Decision:

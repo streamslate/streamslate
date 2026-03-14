@@ -57,7 +57,10 @@ export const useViewModes = () => {
       setPresenterMode(newState);
     } catch (e) {
       // Fallback for non-Tauri environments (dev server in browser)
-      logger.warn("Presenter mode Tauri command failed, toggling local state only:", e);
+      logger.warn(
+        "Presenter mode Tauri command failed, toggling local state only:",
+        e
+      );
       setPresenterMode(newState);
     }
   }, [presenterMode]);
