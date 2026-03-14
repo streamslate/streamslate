@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.0](https://github.com/streamslate/streamslate/compare/streamslate-v1.4.0...streamslate-v1.5.0) (2026-03-14)
+
+### Features
+
+- add independent PDF page inversion toggle ([dd9216e](https://github.com/streamslate/streamslate/commit/dd9216e))
+- promote capture/output UI from experimental to settings ([bdff25f](https://github.com/streamslate/streamslate/commit/bdff25f))
+- **presenter:** wire frontend presenter toggle to Tauri window commands ([3e46b46](https://github.com/streamslate/streamslate/commit/3e46b46))
+
+### Bug Fixes
+
+- **ci:** replace macOS dmg packaging with APFS ([9b507c5](https://github.com/streamslate/streamslate/commit/9b507c5))
+- **ci:** use setup-butler action for reliable itch.io uploads ([7fff49b](https://github.com/streamslate/streamslate/commit/7fff49b))
+- **release:** prevent component prefix in release-please tags ([bfd0bd2](https://github.com/streamslate/streamslate/commit/bfd0bd2))
+
+### Tests
+
+- add verification coverage for M3-M5 features ([cc9fe46](https://github.com/streamslate/streamslate/commit/cc9fe46))
+
+### Documentation
+
+- fix feature truthfulness gaps and clean unused code stubs ([d43be27](https://github.com/streamslate/streamslate/commit/d43be27))
+- update ROADMAP and loom context for M1-M6 completion ([4b6e669](https://github.com/streamslate/streamslate/commit/4b6e669))
+
 ## [1.4.0](https://github.com/streamslate/streamslate/compare/streamslate-v1.3.0...streamslate-v1.4.0) (2026-03-01)
 
 ### Features
