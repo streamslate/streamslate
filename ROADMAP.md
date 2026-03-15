@@ -62,8 +62,8 @@ StreamSlate is production-ready and professional-grade. All README feature claim
 
 ### Future
 
-- [ ] OBS WebSocket integration (direct scene/source control)
-- [ ] Stream Deck plugin (official Elgato SDK v2 plugin)
+- [ ] OBS WebSocket integration (direct scene/source control) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/11))
+- [ ] Stream Deck plugin (official Elgato SDK v2 plugin) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
 - [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 

@@ -4,6 +4,8 @@ Features that require manual testing because they depend on native hardware,
 platform-specific APIs, or multi-window behavior that cannot be automated in
 the unit test environment.
 
+Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14)
+
 ## NDI Output (Feature-gated)
 
 **Prerequisites:** Build with `--features ndi`, NDI SDK installed.

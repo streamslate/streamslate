@@ -1,5 +1,7 @@
 # StreamSlate Release Readiness
 
+Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14)
+
 ## Quick Check
 
 Run:
