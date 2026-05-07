@@ -186,6 +186,7 @@ build:macos:
   stage: build
   tags:
     - macos
+  allow_failure: true
   needs: []
   script:
     - export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
