@@ -1,6 +1,6 @@
 include:
-  - project: 'services/tech-radar'
-    file: '/ci/radar.yml'
+  - project: "services/tech-radar"
+    file: "/ci/radar.yml"
 
 # StreamSlate GitLab CI/CD Configuration
 #
