@@ -188,6 +188,8 @@ build:macos:
     - macos
   needs: []
   script:
+    - export PATH="$HOME/.cargo/bin:/opt/homebrew/bin:$PATH"
+    - command -v cargo
     - npm ci
     - ./scripts/import-certificate.sh
     - set -a && source build.env && set +a
