@@ -55,6 +55,11 @@ const SUPPORTED_EVENTS: &[&str] = &[
 
 const SUPPORTED_FEATURES: &[&str] = &["presenter", "annotations", "pdf_state", "websocket_control"];
 
+/// Return whether a command name is part of the current protocol.
+pub fn is_supported_command_type(command_type: &str) -> bool {
+    SUPPORTED_COMMANDS.contains(&command_type)
+}
+
 /// Commands that clients can send to StreamSlate
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
@@ -93,6 +98,72 @@ pub enum WebSocketCommand {
     GetCapabilities,
 }
 
+impl WebSocketCommand {
+    /// Return the wire-level command name.
+    pub fn type_name(&self) -> &'static str {
+        match self {
+            Self::NextPage => "NEXT_PAGE",
+            Self::PreviousPage => "PREVIOUS_PAGE",
+            Self::GoToPage { .. } => "GO_TO_PAGE",
+            Self::GetState => "GET_STATE",
+            Self::SetZoom { .. } => "SET_ZOOM",
+            Self::TogglePresenter => "TOGGLE_PRESENTER",
+            Self::Ping => "PING",
+            Self::AddAnnotation { .. } => "ADD_ANNOTATION",
+            Self::ClearAnnotations => "CLEAR_ANNOTATIONS",
+            Self::GetCapabilities => "GET_CAPABILITIES",
+        }
+    }
+}
+
+/// Optional V2 metadata accepted on incoming commands and echoed on direct responses.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct WebSocketMessageMetadata {
+    /// Optional client-advertised protocol version.
+    #[serde(
+        rename = "protocolVersion",
+        default,
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub protocol_version: Option<String>,
+
+    /// Optional client request identifier.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub request_id: Option<String>,
+}
+
+impl WebSocketMessageMetadata {
+    fn is_v2(&self) -> bool {
+        self.protocol_version.as_deref() == Some(PROTOCOL_VERSION) || self.request_id.is_some()
+    }
+
+    fn for_response(&self, event: &WebSocketEvent) -> Self {
+        let protocol_version = if self.is_v2() && !matches!(event, WebSocketEvent::Capabilities(_))
+        {
+            Some(PROTOCOL_VERSION.to_string())
+        } else {
+            None
+        };
+
+        Self {
+            protocol_version,
+            request_id: self.request_id.clone(),
+        }
+    }
+}
+
+/// Incoming WebSocket command with optional V2 metadata preserved.
+#[derive(Debug, Clone, Deserialize)]
+pub struct WebSocketRequest {
+    /// Optional V2 command metadata.
+    #[serde(flatten)]
+    pub metadata: WebSocketMessageMetadata,
+
+    /// Backwards-compatible V1 command payload.
+    #[serde(flatten)]
+    pub command: WebSocketCommand,
+}
+
 /// Capability discovery payload for the WebSocket control protocol.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebSocketCapabilities {
@@ -108,6 +179,18 @@ pub struct WebSocketCapabilities {
 
     /// High-level feature areas exposed through the protocol.
     pub features: Vec<String>,
+}
+
+/// Stable V2 error codes for machine-readable runtime failures.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum WebSocketErrorCode {
+    InvalidCommand,
+    InvalidPayload,
+    PdfNotLoaded,
+    PageOutOfRange,
+    UnsupportedCommand,
+    InternalError,
 }
 
 /// Events that StreamSlate sends to clients
@@ -145,7 +228,15 @@ pub enum WebSocketEvent {
     PresenterChanged { active: bool },
 
     /// Error response
-    Error { message: String },
+    Error {
+        message: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        code: Option<WebSocketErrorCode>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        recoverable: Option<bool>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        details: Option<serde_json::Value>,
+    },
 
     /// Pong response to ping
     Pong,
@@ -166,6 +257,16 @@ pub enum WebSocketEvent {
     Capabilities(WebSocketCapabilities),
 }
 
+/// Direct response serializer that echoes request metadata without changing broadcasts.
+#[derive(Debug, Serialize)]
+pub struct WebSocketDirectResponse<'a> {
+    #[serde(flatten)]
+    event: &'a WebSocketEvent,
+
+    #[serde(flatten)]
+    metadata: WebSocketMessageMetadata,
+}
+
 impl WebSocketEvent {
     /// Create a connected event
     pub fn connected() -> Self {
@@ -178,6 +279,24 @@ impl WebSocketEvent {
     pub fn error(message: impl Into<String>) -> Self {
         Self::Error {
             message: message.into(),
+            code: None,
+            recoverable: None,
+            details: None,
+        }
+    }
+
+    /// Create a classified V2 error event.
+    pub fn classified_error(
+        code: WebSocketErrorCode,
+        message: impl Into<String>,
+        recoverable: bool,
+        details: Option<serde_json::Value>,
+    ) -> Self {
+        Self::Error {
+            message: message.into(),
+            code: Some(code),
+            recoverable: Some(recoverable),
+            details,
         }
     }
 
@@ -198,6 +317,17 @@ impl WebSocketEvent {
                 .map(|feature| (*feature).to_string())
                 .collect(),
         })
+    }
+
+    /// Wrap this event as a direct response to a command request.
+    pub fn direct_response<'a>(
+        &'a self,
+        metadata: &WebSocketMessageMetadata,
+    ) -> WebSocketDirectResponse<'a> {
+        WebSocketDirectResponse {
+            event: self,
+            metadata: metadata.for_response(self),
+        }
     }
 }
 
@@ -229,6 +359,29 @@ mod tests {
         let json = r#"{"type": "NEXT_PAGE"}"#;
         let cmd: WebSocketCommand = serde_json::from_str(json).unwrap();
         assert!(matches!(cmd, WebSocketCommand::NextPage));
+    }
+
+    #[test]
+    fn test_v1_request_deserialization() {
+        let json = r#"{"type": "NEXT_PAGE"}"#;
+        let request: WebSocketRequest = serde_json::from_str(json).unwrap();
+
+        assert!(matches!(request.command, WebSocketCommand::NextPage));
+        assert!(request.metadata.protocol_version.is_none());
+        assert!(request.metadata.request_id.is_none());
+    }
+
+    #[test]
+    fn test_v2_request_deserialization_preserves_metadata() {
+        let json = r#"{"type": "GO_TO_PAGE", "page": 5, "protocolVersion": "2.0", "request_id": "obs-42"}"#;
+        let request: WebSocketRequest = serde_json::from_str(json).unwrap();
+
+        assert!(matches!(
+            request.command,
+            WebSocketCommand::GoToPage { page: 5 }
+        ));
+        assert_eq!(request.metadata.protocol_version.as_deref(), Some("2.0"));
+        assert_eq!(request.metadata.request_id.as_deref(), Some("obs-42"));
     }
 
     #[test]
@@ -280,6 +433,101 @@ mod tests {
         assert_eq!(
             json["features"],
             serde_json::json!(["presenter", "annotations", "pdf_state", "websocket_control"])
+        );
+    }
+
+    #[test]
+    fn test_direct_response_echoes_request_id() {
+        let metadata = WebSocketMessageMetadata {
+            protocol_version: Some(PROTOCOL_VERSION.to_string()),
+            request_id: Some("obs-42".to_string()),
+        };
+        let event = WebSocketEvent::PageChanged {
+            page: 3,
+            total_pages: 10,
+        };
+
+        let json = serde_json::to_value(event.direct_response(&metadata)).unwrap();
+
+        assert_eq!(json["type"], "PAGE_CHANGED");
+        assert_eq!(json["protocolVersion"], PROTOCOL_VERSION);
+        assert_eq!(json["request_id"], "obs-42");
+        assert_eq!(json["page"], 3);
+        assert_eq!(json["total_pages"], 10);
+    }
+
+    #[test]
+    fn test_direct_capabilities_response_echoes_request_id_without_duplicate_version() {
+        let metadata = WebSocketMessageMetadata {
+            protocol_version: Some(PROTOCOL_VERSION.to_string()),
+            request_id: Some("deck-hello".to_string()),
+        };
+        let event = WebSocketEvent::capabilities();
+
+        let json = serde_json::to_string(&event.direct_response(&metadata)).unwrap();
+
+        assert_eq!(json.matches("protocolVersion").count(), 1);
+        let value: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(value["type"], "CAPABILITIES");
+        assert_eq!(value["protocolVersion"], PROTOCOL_VERSION);
+        assert_eq!(value["request_id"], "deck-hello");
+    }
+
+    #[test]
+    fn test_rich_v2_error_serialization_shape() {
+        let metadata = WebSocketMessageMetadata {
+            protocol_version: Some(PROTOCOL_VERSION.to_string()),
+            request_id: Some("cmd-go-to-page-invalid".to_string()),
+        };
+        let event = WebSocketEvent::classified_error(
+            WebSocketErrorCode::PageOutOfRange,
+            "Page 99 is out of range (1-12)",
+            true,
+            Some(serde_json::json!({
+                "command": "GO_TO_PAGE",
+                "requested_page": 99,
+                "total_pages": 12
+            })),
+        );
+
+        let json = serde_json::to_value(event.direct_response(&metadata)).unwrap();
+
+        assert_eq!(json["type"], "ERROR");
+        assert_eq!(json["protocolVersion"], PROTOCOL_VERSION);
+        assert_eq!(json["request_id"], "cmd-go-to-page-invalid");
+        assert_eq!(json["code"], "PAGE_OUT_OF_RANGE");
+        assert_eq!(json["message"], "Page 99 is out of range (1-12)");
+        assert_eq!(json["recoverable"], true);
+        assert_eq!(json["details"]["command"], "GO_TO_PAGE");
+        assert_eq!(json["details"]["requested_page"], 99);
+        assert_eq!(json["details"]["total_pages"], 12);
+    }
+
+    #[test]
+    fn test_message_only_error_remains_valid() {
+        let event: WebSocketEvent =
+            serde_json::from_str(r#"{"type": "ERROR", "message": "No PDF is currently open"}"#)
+                .unwrap();
+
+        match event {
+            WebSocketEvent::Error {
+                message,
+                code,
+                recoverable,
+                details,
+            } => {
+                assert_eq!(message, "No PDF is currently open");
+                assert!(code.is_none());
+                assert!(recoverable.is_none());
+                assert!(details.is_none());
+            }
+            _ => panic!("expected error event"),
+        }
+
+        let json = serde_json::to_value(WebSocketEvent::error("plain error")).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({"type": "ERROR", "message": "plain error"})
         );
     }
 }

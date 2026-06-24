@@ -20,11 +20,21 @@
  * Type definitions for streaming integrations (OBS, Stream Deck, NDI, etc.)
  */
 
+export interface WebSocketCapabilities {
+  protocolVersion: string;
+  supported_commands: string[];
+  supported_events: string[];
+  features: string[];
+}
+
 export interface WebSocketState {
   connected: boolean;
   port: number;
   lastError: string | null;
   connectionTime: Date | null;
+  capabilities: WebSocketCapabilities | null;
+  capabilityNegotiated: boolean;
+  legacyFallback: boolean;
 }
 
 export interface IntegrationMessage {

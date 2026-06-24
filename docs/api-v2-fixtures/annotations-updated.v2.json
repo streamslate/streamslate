@@ -1,0 +1,15 @@
+{
+  "type": "ANNOTATIONS_UPDATED",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-add-annotation",
+  "annotations": {
+    "3": [
+      {
+        "id": "ann-highlight-1",
+        "type": "highlight",
+        "color": "#facc15",
+        "text": "Key moment"
+      }
+    ]
+  }
+}

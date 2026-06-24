@@ -85,6 +85,9 @@ const initialWebSocketState: WebSocketState = {
   port: 11451,
   lastError: null,
   connectionTime: null,
+  capabilities: null,
+  capabilityNegotiated: false,
+  legacyFallback: false,
 };
 
 const initialOBSState: OBSIntegration = {
@@ -285,12 +288,16 @@ export const useIntegrationStore = create<IntegrationStore>()(
           );
 
           if (websocketClient.isConnected()) {
+            const connectedClientState = websocketClient.getState();
             set((state) => ({
               websocket: {
                 ...state.websocket,
                 connected: true,
                 lastError: null,
                 connectionTime: state.websocket.connectionTime ?? new Date(),
+                capabilities: connectedClientState.capabilities,
+                capabilityNegotiated: connectedClientState.capabilityNegotiated,
+                legacyFallback: connectedClientState.legacyFallback,
               },
             }));
             return;
@@ -336,6 +343,9 @@ export const useIntegrationStore = create<IntegrationStore>()(
             connected: false,
             lastError: null,
             connectionTime: null,
+            capabilities: null,
+            capabilityNegotiated: false,
+            legacyFallback: false,
           },
         }));
       },

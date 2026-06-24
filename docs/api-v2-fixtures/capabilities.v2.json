@@ -1,0 +1,32 @@
+{
+  "type": "CAPABILITIES",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-get-capabilities",
+  "supported_commands": [
+    "NEXT_PAGE",
+    "PREVIOUS_PAGE",
+    "GO_TO_PAGE",
+    "GET_STATE",
+    "SET_ZOOM",
+    "TOGGLE_PRESENTER",
+    "PING",
+    "ADD_ANNOTATION",
+    "CLEAR_ANNOTATIONS",
+    "GET_CAPABILITIES"
+  ],
+  "supported_events": [
+    "STATE",
+    "PAGE_CHANGED",
+    "PDF_OPENED",
+    "PDF_CLOSED",
+    "ZOOM_CHANGED",
+    "PRESENTER_CHANGED",
+    "ERROR",
+    "PONG",
+    "CONNECTED",
+    "ANNOTATIONS_UPDATED",
+    "ANNOTATIONS_CLEARED",
+    "CAPABILITIES"
+  ],
+  "features": ["presenter", "annotations", "pdf_state", "websocket_control"]
+}
