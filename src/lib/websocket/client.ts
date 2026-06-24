@@ -243,6 +243,7 @@ export class StreamSlateWebSocketClient {
           legacyFallback: false,
           lastError: null,
         });
+        this.dispatchMessage(messageType, message);
       } else {
         logger.debug("Invalid CAPABILITIES payload:", message);
       }
@@ -263,6 +264,13 @@ export class StreamSlateWebSocketClient {
       return;
     }
 
+    this.dispatchMessage(messageType, message);
+  }
+
+  private dispatchMessage(
+    messageType: string,
+    message: { data?: unknown; [key: string]: unknown }
+  ): void {
     const handler = this.messageHandlers.get(messageType);
     if (handler) {
       handler(message.data ?? message);
