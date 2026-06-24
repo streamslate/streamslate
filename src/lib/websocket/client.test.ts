@@ -60,7 +60,19 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
   it("sends GET_CAPABILITIES after connect and stores CAPABILITIES", async () => {
     const client = new StreamSlateWebSocketClient(12345);
     const states: ReturnType<typeof client.getState>[] = [];
+    let stateSeenByHandler: ReturnType<typeof client.getState> | null = null;
+    const capabilitiesHandler = vi.fn((payload: unknown) => {
+      stateSeenByHandler = client.getState();
+      expect(payload).toMatchObject({
+        type: "CAPABILITIES",
+        protocolVersion: "2.0",
+        supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
+        supported_events: ["STATE", "CAPABILITIES"],
+        features: ["pdf_state", "websocket_control"],
+      });
+    });
     client.onStateChange((state) => states.push(state));
+    client.onMessage("CAPABILITIES", capabilitiesHandler);
 
     const connectPromise = client.connect();
     const socket = MockWebSocket.instances[0];
@@ -76,14 +88,16 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
     });
     expect(typeof command.request_id).toBe("string");
 
-    socket.receive({
+    const capabilitiesMessage = {
       type: "CAPABILITIES",
       protocolVersion: "2.0",
       request_id: command.request_id,
       supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
       supported_events: ["STATE", "CAPABILITIES"],
       features: ["pdf_state", "websocket_control"],
-    });
+    };
+
+    socket.receive(capabilitiesMessage);
 
     expect(client.getState()).toMatchObject({
       connected: true,
@@ -99,6 +113,18 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
     expect(states[states.length - 1]?.capabilities?.features).toContain(
       "websocket_control"
     );
+    expect(capabilitiesHandler).toHaveBeenCalledTimes(1);
+    expect(capabilitiesHandler).toHaveBeenCalledWith(capabilitiesMessage);
+    expect(stateSeenByHandler).toMatchObject({
+      capabilityNegotiated: true,
+      legacyFallback: false,
+      capabilities: {
+        protocolVersion: "2.0",
+        supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
+        supported_events: ["STATE", "CAPABILITIES"],
+        features: ["pdf_state", "websocket_control"],
+      },
+    });
   });
 
   it("marks legacy fallback when GET_CAPABILITIES is unsupported", async () => {
