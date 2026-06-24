@@ -138,3 +138,37 @@ within their owned files.
 - `cargo test`
 - `npm run release:preflight`
 - `git diff --check origin/main...HEAD`
+
+## Integration Results
+
+Slice commits:
+
+- Slice 1 Docs And Fixture Contract Refresh:
+  `aafd9ad981c1c046ef492d71a1c68c5e99e5d9cc`
+- Slice 2 Rust Protocol Fixture Conformance:
+  `51830fb8ac6c3a787b447cb56a4c0beb5280a2a4`
+- Slice 3 TypeScript Fixture And Event Conformance:
+  `4ed3b80dd8f0c2ae9f73b423208feeb95acbcff2`
+
+Combined validation:
+
+- `node -e` JSON parse check for `docs/api-v2-fixtures/*.json`: passed
+- `cargo test websocket::protocol`: 15 passed
+- `npm run test:unit -- src/lib/websocket/client.test.ts src/lib/events/dispatcher.test.ts`:
+  50 passed
+- `npm run build`: passed
+- `npm run lint`: passed
+- `npm run format:check`: passed
+- `git diff --check origin/main...HEAD`: passed
+- `NODE_OPTIONS="--localstorage-file=.node-localstorage" npm run test:unit`:
+  229 passed
+- `cargo test`: 27 passed, 2 ignored
+- `npm run release:preflight`: passed
+
+Notes:
+
+- Plain `npm run test:unit` on Node 26 still requires a localStorage backing
+  file; without `--localstorage-file`, existing localStorage-dependent tests
+  fail before exercising this wave's changes.
+- `npm install` produced lockfile churn in this worktree; it was restored before
+  integration.
