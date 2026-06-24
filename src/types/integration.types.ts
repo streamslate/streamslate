@@ -88,6 +88,7 @@ export enum IntegrationMessageType {
   // System
   PING = "ping",
   PONG = "pong",
+  CAPABILITIES = "capabilities",
   ERROR = "error",
   CONNECTION_STATUS = "connection_status",
 }

@@ -30,6 +30,7 @@ export const WS_MESSAGE_MAP: ReadonlyArray<
 > = [
   ["CONNECTED", IntegrationMessageType.CONNECTION_STATUS],
   ["STATE", IntegrationMessageType.CONNECTION_STATUS],
+  ["CAPABILITIES", IntegrationMessageType.CAPABILITIES],
   ["PAGE_CHANGED", IntegrationMessageType.PAGE_CHANGED],
   ["ZOOM_CHANGED", IntegrationMessageType.ZOOM_CHANGED],
   ["PDF_OPENED", IntegrationMessageType.PDF_OPENED],
