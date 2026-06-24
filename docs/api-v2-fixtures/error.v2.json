@@ -1,0 +1,13 @@
+{
+  "type": "ERROR",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-go-to-page-invalid",
+  "code": "PAGE_OUT_OF_RANGE",
+  "message": "Page 99 is outside the loaded document range.",
+  "command": "GO_TO_PAGE",
+  "recoverable": true,
+  "details": {
+    "requested_page": 99,
+    "total_pages": 12
+  }
+}
