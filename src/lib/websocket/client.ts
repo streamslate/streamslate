@@ -23,9 +23,38 @@
 
 import type {
   IntegrationMessage,
+  WebSocketCapabilities,
   WebSocketState,
 } from "../../types/integration.types";
 import { logger } from "../logger";
+
+const PROTOCOL_VERSION = "2.0";
+const CAPABILITIES_COMMAND = "GET_CAPABILITIES";
+const CAPABILITIES_EVENT = "CAPABILITIES";
+const ERROR_EVENT = "ERROR";
+
+const createInitialState = (port: number): WebSocketState => ({
+  connected: false,
+  port,
+  lastError: null,
+  connectionTime: null,
+  capabilities: null,
+  capabilityNegotiated: false,
+  legacyFallback: false,
+});
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+const readStringArray = (
+  record: Record<string, unknown>,
+  key: string
+): string[] | null => {
+  const value = record[key];
+  return Array.isArray(value) && value.every((item) => typeof item === "string")
+    ? value
+    : null;
+};
 
 export class StreamSlateWebSocketClient {
   private ws: WebSocket | null = null;
@@ -34,8 +63,12 @@ export class StreamSlateWebSocketClient {
   private reconnectDelay = 1000;
   private messageHandlers = new Map<string, (data: unknown) => void>();
   private stateChangeHandlers: ((state: WebSocketState) => void)[] = [];
+  private state: WebSocketState;
+  private capabilitiesRequestId: string | null = null;
 
-  constructor(private port: number = 11451) {}
+  constructor(private port: number = 11451) {
+    this.state = createInitialState(port);
+  }
 
   /**
    * Connect to the WebSocket server
@@ -48,12 +81,16 @@ export class StreamSlateWebSocketClient {
         this.ws.onopen = () => {
           logger.debug("WebSocket connected");
           this.reconnectAttempts = 0;
-          this.notifyStateChange({
+          this.updateState({
             connected: true,
             port: this.port,
             lastError: null,
             connectionTime: new Date(),
+            capabilities: null,
+            capabilityNegotiated: false,
+            legacyFallback: false,
           });
+          this.requestCapabilities();
           resolve();
         };
 
@@ -72,11 +109,15 @@ export class StreamSlateWebSocketClient {
 
         this.ws.onclose = (event) => {
           logger.debug("WebSocket disconnected:", event.code, event.reason);
-          this.notifyStateChange({
+          this.capabilitiesRequestId = null;
+          this.updateState({
             connected: false,
             port: this.port,
             lastError: `Connection closed: ${event.reason}`,
             connectionTime: null,
+            capabilities: null,
+            capabilityNegotiated: false,
+            legacyFallback: false,
           });
 
           if (
@@ -89,11 +130,15 @@ export class StreamSlateWebSocketClient {
 
         this.ws.onerror = (error) => {
           logger.error("WebSocket error:", error);
-          this.notifyStateChange({
+          this.capabilitiesRequestId = null;
+          this.updateState({
             connected: false,
             port: this.port,
             lastError: "Connection error",
             connectionTime: null,
+            capabilities: null,
+            capabilityNegotiated: false,
+            legacyFallback: false,
           });
           reject(error);
         };
@@ -111,6 +156,14 @@ export class StreamSlateWebSocketClient {
       this.ws.close(1000, "User disconnected");
       this.ws = null;
     }
+    this.capabilitiesRequestId = null;
+    this.updateState({
+      connected: false,
+      connectionTime: null,
+      capabilities: null,
+      capabilityNegotiated: false,
+      legacyFallback: false,
+    });
   }
 
   /**
@@ -159,13 +212,7 @@ export class StreamSlateWebSocketClient {
    * Get current connection state
    */
   getState(): WebSocketState {
-    return {
-      connected: this.ws?.readyState === WebSocket.OPEN || false,
-      port: this.port,
-      lastError: null,
-      connectionTime:
-        this.ws?.readyState === WebSocket.OPEN ? new Date() : null,
-    };
+    return { ...this.state };
   }
 
   /**
@@ -186,6 +233,36 @@ export class StreamSlateWebSocketClient {
       return;
     }
 
+    if (messageType === CAPABILITIES_EVENT) {
+      const capabilities = this.readCapabilities(message);
+      if (capabilities) {
+        this.capabilitiesRequestId = null;
+        this.updateState({
+          capabilities,
+          capabilityNegotiated: true,
+          legacyFallback: false,
+          lastError: null,
+        });
+      } else {
+        logger.debug("Invalid CAPABILITIES payload:", message);
+      }
+      return;
+    }
+
+    if (
+      messageType === ERROR_EVENT &&
+      this.isUnsupportedCapabilities(message)
+    ) {
+      this.capabilitiesRequestId = null;
+      this.updateState({
+        capabilities: null,
+        capabilityNegotiated: true,
+        legacyFallback: true,
+        lastError: null,
+      });
+      return;
+    }
+
     const handler = this.messageHandlers.get(messageType);
     if (handler) {
       handler(message.data ?? message);
@@ -194,8 +271,88 @@ export class StreamSlateWebSocketClient {
     }
   }
 
-  private notifyStateChange(state: WebSocketState): void {
-    this.stateChangeHandlers.forEach((handler) => handler(state));
+  private updateState(state: Partial<WebSocketState>): void {
+    this.state = { ...this.state, ...state, port: this.port };
+    this.stateChangeHandlers.forEach((handler) => handler({ ...this.state }));
+  }
+
+  private requestCapabilities(): void {
+    this.capabilitiesRequestId =
+      globalThis.crypto?.randomUUID?.() ??
+      `capabilities-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+    this.sendJson({
+      type: CAPABILITIES_COMMAND,
+      protocolVersion: PROTOCOL_VERSION,
+      request_id: this.capabilitiesRequestId,
+    });
+  }
+
+  private sendJson(message: Record<string, unknown>): void {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    } else {
+      logger.warn("WebSocket not connected, cannot send message");
+    }
+  }
+
+  private readCapabilities(
+    message: Record<string, unknown>
+  ): WebSocketCapabilities | null {
+    const payload = isRecord(message.data) ? message.data : message;
+    if (!isRecord(payload)) {
+      return null;
+    }
+
+    const protocolVersion = payload.protocolVersion;
+    const supportedCommands = readStringArray(payload, "supported_commands");
+    const supportedEvents = readStringArray(payload, "supported_events");
+    const features = readStringArray(payload, "features");
+
+    if (
+      typeof protocolVersion !== "string" ||
+      !supportedCommands ||
+      !supportedEvents ||
+      !features
+    ) {
+      return null;
+    }
+
+    return {
+      protocolVersion,
+      supported_commands: supportedCommands,
+      supported_events: supportedEvents,
+      features,
+    };
+  }
+
+  private isUnsupportedCapabilities(message: Record<string, unknown>): boolean {
+    if (!this.capabilitiesRequestId) {
+      return false;
+    }
+
+    const payload = isRecord(message.data) ? message.data : message;
+    const requestId = payload.request_id;
+    const code = typeof payload.code === "string" ? payload.code : "";
+    const command = typeof payload.command === "string" ? payload.command : "";
+    const details = isRecord(payload.details) ? payload.details : {};
+    const detailsCommand =
+      typeof details.command === "string" ? details.command : "";
+    const messageText =
+      typeof payload.message === "string" ? payload.message.toLowerCase() : "";
+
+    return (
+      requestId === this.capabilitiesRequestId ||
+      code === "UNSUPPORTED_COMMAND" ||
+      command === CAPABILITIES_COMMAND ||
+      detailsCommand === CAPABILITIES_COMMAND ||
+      ((messageText.includes("unsupported") ||
+        messageText.includes("unknown") ||
+        messageText.includes("unrecognized") ||
+        messageText.includes("invalid command")) &&
+        (messageText.includes("capabilities") ||
+          messageText.includes(CAPABILITIES_COMMAND.toLowerCase())))
+    );
   }
 
   private attemptReconnect(): void {
