@@ -28,10 +28,5 @@
     "ANNOTATIONS_CLEARED",
     "CAPABILITIES"
   ],
-  "features": [
-    "presenter",
-    "annotations",
-    "pdf_state",
-    "websocket_control"
-  ]
+  "features": ["presenter", "annotations", "pdf_state", "websocket_control"]
 }
