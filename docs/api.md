@@ -1,11 +1,12 @@
 # StreamSlate Local API
 
-StreamSlate exposes a local WebSocket control API for integrations such as Stream Deck and automation tools.
+StreamSlate exposes a local WebSocket control API for same-machine automation
+tools.
 
 This page documents the currently implemented local API. The V2 contract is
-being defined for future local-control integrations; see
-[API V2 Contract](api-v2-contract.md) for the compatibility target and planned
-schema additions.
+defined for local-control clients; see [API V2 Contract](api-v2-contract.md)
+and the concrete [`api-v2-fixtures/`](api-v2-fixtures/) examples for the S1
+runtime and fixture behavior.
 
 ## Endpoint
 
@@ -29,6 +30,7 @@ Commands are sent as JSON objects with a `type` field in `SCREAMING_SNAKE_CASE`.
 - `PING`
 - `ADD_ANNOTATION`
 - `CLEAR_ANNOTATIONS`
+- `GET_CAPABILITIES`
 
 These names are implemented by the Rust WebSocket protocol in
 `src-tauri/src/websocket/protocol.rs`.
@@ -118,24 +120,27 @@ State snapshot:
 ## V2 Contract Additions
 
 The V2 local-control contract keeps the current command and event names stable
-and adds version/capability discovery. These additions are contract work unless
-the runtime advertises them with `protocolVersion: "2.0"` or a
-`CAPABILITIES` event.
+and adds optional command metadata plus capability discovery. S1 runtimes accept
+commands with or without `protocolVersion` and `request_id`, so existing v1
+clients can keep sending minimal command objects.
 
-Planned V2 discovery command:
+V2 discovery command:
 
 ```json
 {
-  "type": "GET_CAPABILITIES"
+  "type": "GET_CAPABILITIES",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-get-capabilities"
 }
 ```
 
-Planned V2 capabilities response:
+V2 capabilities response:
 
 ```json
 {
   "type": "CAPABILITIES",
   "protocolVersion": "2.0",
+  "request_id": "cmd-get-capabilities",
   "supported_commands": [
     "NEXT_PAGE",
     "PREVIOUS_PAGE",
@@ -179,10 +184,16 @@ envelope:
 V2 implementations may add fields such as `code`, `request_id`, `details`, and
 `recoverable`, but clients must continue to handle the `message`-only v1 shape.
 
+Fixture coverage for the V2 additions is checked in under
+[`api-v2-fixtures/`](api-v2-fixtures/), including v1 downgrade examples,
+loaded/empty state, capabilities discovery, and annotation updates with string
+page keys.
+
 ## Notes
 
 - Authentication is not currently enforced on this local endpoint.
 - Clients should handle `ERROR` events and reconnect logic.
 - Event/command names are defined in `src-tauri/src/websocket/protocol.rs`.
 - V2 does not make OBS, Stream Deck, mobile, or cloud sync features shipped
-  product behavior. It defines a stable local contract those agents can target.
+  product behavior. It defines a stable loopback-only local contract for future
+  agents to negotiate against.

@@ -1,0 +1,11 @@
+{
+  "type": "STATE",
+  "protocolVersion": "2.0",
+  "page": 0,
+  "total_pages": 0,
+  "zoom": 1,
+  "pdf_loaded": false,
+  "pdf_path": null,
+  "pdf_title": null,
+  "presenter_active": false
+}

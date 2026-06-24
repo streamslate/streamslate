@@ -1,0 +1,12 @@
+{
+  "type": "STATE",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-get-state",
+  "page": 3,
+  "total_pages": 12,
+  "zoom": 1.25,
+  "pdf_loaded": true,
+  "pdf_path": "/Users/example/slides/streamslate-demo.pdf",
+  "pdf_title": "StreamSlate Demo",
+  "presenter_active": false
+}

@@ -1,8 +1,9 @@
 # StreamSlate API V2 Contract
 
 This document defines the V2 local-control contract for implementation handoff.
-It is a compatibility target for future OBS, Stream Deck, sync, mobile, and test
-agents. It does not claim those integrations are shipped.
+It is a compatibility target for local automation and future integration agents.
+It does not claim OBS, Stream Deck, sync, mobile, or cloud integrations are
+shipped.
 
 Current runtime behavior is documented in [Local API](api.md). V2
 implementations must preserve the v1 command and event names while adding
@@ -16,8 +17,13 @@ version and capability discovery.
 - Binding: loopback-only unless a future pairing flow changes the trust model
 - Compatibility baseline: current v1 clients that send only `type` and command
   parameters continue to work
-- Discovery: clients use `GET_CAPABILITIES` when available and fall back to v1
-  behavior if the runtime returns `ERROR` or closes the connection
+- S1 runtime behavior: accepts optional `protocolVersion: "2.0"` and
+  `request_id` metadata on commands, supports `GET_CAPABILITIES`, and may echo
+  `request_id` on direct V2 responses where runtime support is present
+- Discovery: clients use `GET_CAPABILITIES` and fall back to v1 behavior if an
+  older runtime returns `ERROR` or closes the connection
+- Fixtures: concrete JSON examples live in
+  [`api-v2-fixtures/`](api-v2-fixtures/)
 
 ## Transport
 
@@ -276,9 +282,9 @@ Expected direct response:
 
 ### GET_CAPABILITIES
 
-Return protocol and feature discovery metadata. This command is planned for V2
-and is not part of the current v1 runtime unless a `CAPABILITIES` event is
-advertised.
+Return protocol and feature discovery metadata. In S1 runtimes this is
+loopback-only local-control discovery; it is not a remote pairing, cloud sync,
+OBS, Stream Deck, or mobile feature.
 
 ```json
 {
@@ -288,8 +294,8 @@ advertised.
 }
 ```
 
-Expected direct response: `CAPABILITIES` or v1-compatible `ERROR` if the
-runtime does not implement the command.
+Expected direct response: `CAPABILITIES` on S1 runtimes, or v1-compatible
+`ERROR` when an older runtime does not implement the command.
 
 ## Events
 
@@ -516,10 +522,11 @@ V2 is additive.
 
 ## Fixture Expectations
 
-Future implementation and test slices should add JSON fixtures that prove the
-contract without requiring the Tauri app to run.
+The S1 contract fixtures are checked in under
+[`docs/api-v2-fixtures/`](api-v2-fixtures/). They prove the public JSON shapes
+without requiring the Tauri app to run.
 
-Required fixture groups:
+Fixture groups:
 
 | Fixture                            | Purpose                                      |
 | ---------------------------------- | -------------------------------------------- |
@@ -533,7 +540,7 @@ Required fixture groups:
 | `command.get-capabilities.v2.json` | V2 discovery command shape.                  |
 | `annotations-updated.v2.json`      | Annotation map with string page keys.        |
 
-Fixture checks should verify:
+Fixture checks verify:
 
 - JSON parses without comments.
 - `type` names match the documented command and event names.
@@ -545,9 +552,11 @@ Fixture checks should verify:
 
 ## Implementation Notes For Integration Agents
 
-OBS and Stream Deck agents should start with `GET_CAPABILITIES`, then bind only
-to commands listed in `supported_commands`. They should keep their first supported
-feature set to local WebSocket control and avoid cloud or mobile assumptions.
+Integration agents should start with `GET_CAPABILITIES`, then bind only to
+commands listed in `supported_commands`. They should keep their first supported
+feature set to local WebSocket control and avoid OBS, Stream Deck, cloud, or
+mobile assumptions unless a future contract explicitly advertises those
+capabilities.
 
 Sync and mobile agents should treat loopback-only transport as a hard boundary.
 Remote pairing, authentication, or relay behavior requires a future contract

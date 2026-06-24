@@ -1,0 +1,5 @@
+{
+  "type": "GET_CAPABILITIES",
+  "protocolVersion": "2.0",
+  "request_id": "cmd-get-capabilities"
+}
