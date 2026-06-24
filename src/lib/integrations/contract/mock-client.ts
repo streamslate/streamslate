@@ -1,7 +1,6 @@
 import {
   localControlCapabilities,
   localControlProtocolVersion,
-  type AddAnnotationPayload,
   type LocalControlCommand,
   type LocalControlEvent,
   type LocalControlEventName,
@@ -16,7 +15,6 @@ export interface LocalControlMockClientOptions {
 
 export class LocalControlMockClient {
   private state: LocalControlStateSnapshot;
-  private eventCount = 1;
 
   constructor(options: LocalControlMockClientOptions = {}) {
     this.state = { ...(options.state ?? loadedPdfStateFixture) };
@@ -27,60 +25,52 @@ export class LocalControlMockClient {
   }
 
   process(command: LocalControlCommand): LocalControlEvent {
-    switch (command.command) {
+    switch (command.type) {
       case "NEXT_PAGE":
         return this.moveToPage(command, this.state.page + 1);
       case "PREVIOUS_PAGE":
         return this.moveToPage(command, this.state.page - 1);
       case "GO_TO_PAGE":
-        return this.moveToPage(command, command.payload?.page);
+        return this.moveToPage(command, command.page);
       case "GET_STATE":
-        return this.event("STATE", this.getState(), command.id);
+        return this.event("STATE", this.getState(), command.request_id);
       case "SET_ZOOM":
-        if (!command.payload || typeof command.payload.zoom !== "number") {
+        if (typeof command.zoom !== "number") {
           return this.invalidPayload(command, "SET_ZOOM requires zoom.");
         }
-        this.state = { ...this.state, zoom: command.payload.zoom };
+        this.state = { ...this.state, zoom: command.zoom };
         return this.event(
           "ZOOM_CHANGED",
           { zoom: this.state.zoom },
-          command.id
+          command.request_id
         );
       case "TOGGLE_PRESENTER": {
-        const requested = command.payload?.active;
-        const presenterActive =
-          typeof requested === "boolean"
-            ? requested
-            : !this.state.presenter_active;
-        this.state = { ...this.state, presenter_active: presenterActive };
-        return this.event(
-          "PRESENTER_CHANGED",
-          { presenter_active: presenterActive },
-          command.id
-        );
+        const active = !this.state.presenter_active;
+        this.state = { ...this.state, presenter_active: active };
+        return this.event("PRESENTER_CHANGED", { active }, command.request_id);
       }
       case "PING":
-        return this.event(
-          "PONG",
-          { nonce: command.payload?.nonce, ok: true },
-          command.id
-        );
+        return this.event("PONG", {}, command.request_id);
       case "ADD_ANNOTATION":
-        if (!isAddAnnotationPayload(command.payload)) {
+        if (!isAddAnnotationPayload(command)) {
           return this.invalidPayload(
             command,
-            "ADD_ANNOTATION requires an annotation."
+            "ADD_ANNOTATION requires a page and annotation."
           );
         }
-        return this.event("ANNOTATION_ADDED", command.payload, command.id);
-      case "CLEAR_ANNOTATIONS":
         return this.event(
-          "ANNOTATIONS_CLEARED",
-          { page: command.payload?.page, cleared: true },
-          command.id
+          "ANNOTATIONS_UPDATED",
+          { annotations: {} },
+          command.request_id
         );
+      case "CLEAR_ANNOTATIONS":
+        return this.event("ANNOTATIONS_CLEARED", {}, command.request_id);
       case "GET_CAPABILITIES":
-        return this.event("CAPABILITIES", localControlCapabilities, command.id);
+        return this.event(
+          "CAPABILITIES",
+          localControlCapabilities,
+          command.request_id
+        );
     }
   }
 
@@ -98,9 +88,9 @@ export class LocalControlMockClient {
         {
           code: "PDF_NOT_LOADED",
           message: "No PDF is currently loaded.",
-          command: command.command,
+          command: command.type,
         },
-        command.id
+        command.request_id
       );
     }
 
@@ -115,13 +105,13 @@ export class LocalControlMockClient {
         {
           code: "PAGE_OUT_OF_RANGE",
           message: `Page ${String(page)} is outside the loaded document range.`,
-          command: command.command,
+          command: command.type,
           details: {
             requested_page: page,
             total_pages: this.state.total_pages,
           },
         },
-        command.id
+        command.request_id
       );
     }
 
@@ -129,7 +119,7 @@ export class LocalControlMockClient {
     return this.event(
       "PAGE_CHANGED",
       { page, total_pages: this.state.total_pages },
-      command.id
+      command.request_id
     );
   }
 
@@ -142,38 +132,30 @@ export class LocalControlMockClient {
       {
         code: "INVALID_PAYLOAD",
         message,
-        command: command.command,
+        command: command.type,
       },
-      command.id
+      command.request_id
     );
   }
 
   private event<TEvent extends LocalControlEventName>(
     eventName: TEvent,
     payload: LocalControlEventPayloadMap[TEvent],
-    correlationId: string
+    requestId: string | undefined
   ): LocalControlEvent<TEvent> {
-    const id = `mock-event-${this.eventCount}`;
-    this.eventCount += 1;
-
     return {
       protocolVersion: localControlProtocolVersion,
-      id,
-      type: "event",
-      event: eventName,
-      payload,
-      correlationId,
+      ...(requestId === undefined ? {} : { request_id: requestId }),
+      type: eventName,
+      ...payload,
     } as LocalControlEvent<TEvent>;
   }
 }
 
 const isAddAnnotationPayload = (
-  payload: unknown
-): payload is AddAnnotationPayload =>
-  typeof payload === "object" &&
-  payload !== null &&
-  "annotation" in payload &&
-  typeof payload.annotation === "object" &&
-  payload.annotation !== null &&
-  "id" in payload.annotation &&
-  typeof payload.annotation.id === "string";
+  command: LocalControlCommand
+): command is LocalControlCommand<"ADD_ANNOTATION"> =>
+  command.type === "ADD_ANNOTATION" &&
+  typeof command.page === "number" &&
+  typeof command.annotation === "object" &&
+  command.annotation !== null;

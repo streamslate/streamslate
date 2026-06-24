@@ -22,14 +22,17 @@ export const localControlCommands = [
 ] as const;
 
 export const localControlEvents = [
+  "STATE",
   "PAGE_CHANGED",
+  "PDF_OPENED",
+  "PDF_CLOSED",
   "ZOOM_CHANGED",
   "PRESENTER_CHANGED",
-  "ANNOTATION_ADDED",
-  "ANNOTATIONS_CLEARED",
-  "STATE",
-  "PONG",
   "ERROR",
+  "PONG",
+  "CONNECTED",
+  "ANNOTATIONS_UPDATED",
+  "ANNOTATIONS_CLEARED",
   "CAPABILITIES",
 ] as const;
 
@@ -44,6 +47,11 @@ export type LocalControlProtocolVersion = typeof localControlProtocolVersion;
 export type LocalControlCommandName = (typeof localControlCommands)[number];
 export type LocalControlEventName = (typeof localControlEvents)[number];
 export type LocalControlFeatureName = (typeof localControlFeatures)[number];
+
+export interface LocalControlV2Metadata {
+  protocolVersion?: LocalControlProtocolVersion;
+  request_id?: string;
+}
 
 export interface LocalControlStateSnapshot {
   page: number;
@@ -64,85 +72,64 @@ export type LocalControlErrorCode =
   | "INTERNAL_ERROR";
 
 export interface LocalControlErrorPayload {
-  code: LocalControlErrorCode;
   message: string;
+  code?: LocalControlErrorCode;
   command?: LocalControlCommandName;
   details?: Record<string, unknown>;
 }
 
-export interface LocalControlCapability {
-  feature: LocalControlFeatureName;
-  supported: boolean;
-  commands: LocalControlCommandName[];
-  events: LocalControlEventName[];
-}
-
 export interface LocalControlCapabilitiesPayload {
   protocolVersion: LocalControlProtocolVersion;
-  transport: typeof localControlTransport;
+  supported_commands: LocalControlCommandName[];
+  supported_events: LocalControlEventName[];
   features: LocalControlFeatureName[];
-  capabilities: LocalControlCapability[];
 }
 
 export interface AddAnnotationPayload {
-  annotation: {
-    id: string;
-    page: number;
-    type: "highlight" | "note" | "drawing";
-    color?: string;
-    text?: string;
-    points?: Array<{ x: number; y: number }>;
-  };
+  page: number;
+  annotation: Record<string, unknown>;
 }
 
 export interface LocalControlCommandPayloadMap {
-  NEXT_PAGE: undefined;
-  PREVIOUS_PAGE: undefined;
+  NEXT_PAGE: Record<never, never>;
+  PREVIOUS_PAGE: Record<never, never>;
   GO_TO_PAGE: { page: number };
-  GET_STATE: undefined;
+  GET_STATE: Record<never, never>;
   SET_ZOOM: { zoom: number };
-  TOGGLE_PRESENTER: { active?: boolean };
-  PING: { nonce?: string } | undefined;
+  TOGGLE_PRESENTER: Record<never, never>;
+  PING: Record<never, never>;
   ADD_ANNOTATION: AddAnnotationPayload;
-  CLEAR_ANNOTATIONS: { page?: number } | undefined;
-  GET_CAPABILITIES: undefined;
+  CLEAR_ANNOTATIONS: Record<never, never>;
+  GET_CAPABILITIES: Record<never, never>;
 }
 
 export interface LocalControlEventPayloadMap {
-  PAGE_CHANGED: { page: number; total_pages: number };
-  ZOOM_CHANGED: { zoom: number };
-  PRESENTER_CHANGED: { presenter_active: boolean };
-  ANNOTATION_ADDED: AddAnnotationPayload;
-  ANNOTATIONS_CLEARED: { page?: number; cleared: true };
   STATE: LocalControlStateSnapshot;
-  PONG: { nonce?: string; ok: true };
+  PAGE_CHANGED: { page: number; total_pages: number };
+  PDF_OPENED: { path: string; title: string | null; page_count: number };
+  PDF_CLOSED: Record<string, never>;
+  ZOOM_CHANGED: { zoom: number };
+  PRESENTER_CHANGED: { active: boolean };
   ERROR: LocalControlErrorPayload;
+  PONG: Record<never, never>;
+  CONNECTED: { version: string };
+  ANNOTATIONS_UPDATED: { annotations: Record<string, unknown[]> };
+  ANNOTATIONS_CLEARED: Record<never, never>;
   CAPABILITIES: LocalControlCapabilitiesPayload;
 }
 
 export type LocalControlCommand<
   TCommand extends LocalControlCommandName = LocalControlCommandName,
 > = TCommand extends LocalControlCommandName
-  ? {
-      protocolVersion: LocalControlProtocolVersion;
-      id: string;
-      type: "command";
-      command: TCommand;
-      payload?: LocalControlCommandPayloadMap[TCommand];
-    }
+  ? { type: TCommand } & LocalControlV2Metadata &
+      LocalControlCommandPayloadMap[TCommand]
   : never;
 
 export type LocalControlEvent<
   TEvent extends LocalControlEventName = LocalControlEventName,
 > = TEvent extends LocalControlEventName
-  ? {
-      protocolVersion: LocalControlProtocolVersion;
-      id: string;
-      type: "event";
-      event: TEvent;
-      payload: LocalControlEventPayloadMap[TEvent];
-      correlationId?: string;
-    }
+  ? { type: TEvent } & LocalControlV2Metadata &
+      LocalControlEventPayloadMap[TEvent]
   : never;
 
 export interface LocalControlSchemaShape {
@@ -173,47 +160,10 @@ export const localControlSchemas = {
 
 export const localControlCapabilities: LocalControlCapabilitiesPayload = {
   protocolVersion: localControlProtocolVersion,
-  transport: localControlTransport,
+  supported_commands: [...localControlCommands],
+  supported_events: [...localControlEvents],
   features: [...localControlFeatures],
-  capabilities: [
-    {
-      feature: "presenter",
-      supported: true,
-      commands: ["TOGGLE_PRESENTER"],
-      events: ["PRESENTER_CHANGED", "STATE"],
-    },
-    {
-      feature: "annotations",
-      supported: true,
-      commands: ["ADD_ANNOTATION", "CLEAR_ANNOTATIONS"],
-      events: ["ANNOTATION_ADDED", "ANNOTATIONS_CLEARED", "STATE"],
-    },
-    {
-      feature: "pdf_state",
-      supported: true,
-      commands: [
-        "NEXT_PAGE",
-        "PREVIOUS_PAGE",
-        "GO_TO_PAGE",
-        "GET_STATE",
-        "SET_ZOOM",
-      ],
-      events: ["PAGE_CHANGED", "ZOOM_CHANGED", "STATE"],
-    },
-    {
-      feature: "websocket_control",
-      supported: true,
-      commands: ["PING", "GET_CAPABILITIES"],
-      events: ["PONG", "ERROR", "CAPABILITIES"],
-    },
-  ],
 };
-
-const hasOwn = <TKey extends PropertyKey>(
-  value: object,
-  key: TKey
-): value is object & Record<TKey, unknown> =>
-  Object.prototype.hasOwnProperty.call(value, key);
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -252,46 +202,35 @@ export const isLocalControlCommand = (
   value: unknown
 ): value is LocalControlCommand =>
   isRecord(value) &&
-  value.protocolVersion === localControlProtocolVersion &&
-  value.type === "command" &&
-  typeof value.id === "string" &&
-  isCommandName(value.command);
+  isCommandName(value.type) &&
+  (value.protocolVersion === undefined ||
+    value.protocolVersion === localControlProtocolVersion) &&
+  (value.request_id === undefined || typeof value.request_id === "string");
 
 export const isLocalControlEvent = (
   value: unknown
 ): value is LocalControlEvent =>
   isRecord(value) &&
-  value.protocolVersion === localControlProtocolVersion &&
-  value.type === "event" &&
-  typeof value.id === "string" &&
-  isEventName(value.event) &&
-  hasOwn(value, "payload");
+  isEventName(value.type) &&
+  (value.protocolVersion === undefined ||
+    value.protocolVersion === localControlProtocolVersion) &&
+  (value.request_id === undefined || typeof value.request_id === "string");
 
 export const isLocalControlErrorPayload = (
   value: unknown
 ): value is LocalControlErrorPayload =>
   isRecord(value) &&
-  typeof value.code === "string" &&
   typeof value.message === "string" &&
-  (!hasOwn(value, "command") || isCommandName(value.command));
+  (value.code === undefined || typeof value.code === "string");
 
 export const isLocalControlCapabilitiesPayload = (
   value: unknown
 ): value is LocalControlCapabilitiesPayload =>
   isRecord(value) &&
   value.protocolVersion === localControlProtocolVersion &&
-  isRecord(value.transport) &&
-  value.transport.name === localControlTransport.name &&
+  Array.isArray(value.supported_commands) &&
+  value.supported_commands.every(isCommandName) &&
+  Array.isArray(value.supported_events) &&
+  value.supported_events.every(isEventName) &&
   Array.isArray(value.features) &&
-  value.features.every(isFeatureName) &&
-  Array.isArray(value.capabilities) &&
-  value.capabilities.every(
-    (capability) =>
-      isRecord(capability) &&
-      isFeatureName(capability.feature) &&
-      typeof capability.supported === "boolean" &&
-      Array.isArray(capability.commands) &&
-      capability.commands.every(isCommandName) &&
-      Array.isArray(capability.events) &&
-      capability.events.every(isEventName)
-  );
+  value.features.every(isFeatureName);

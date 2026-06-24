@@ -27,17 +27,19 @@ export const emptyPdfStateFixture: LocalControlStateSnapshot = {
   presenter_active: false,
 };
 
-const command = <TCommand extends LocalControlCommand["command"]>(
-  id: string,
+const command = <TCommand extends LocalControlCommand["type"]>(
+  requestId: string,
   commandName: TCommand,
-  payload?: LocalControlCommand<TCommand>["payload"]
+  payload?: Omit<
+    LocalControlCommand<TCommand>,
+    "type" | "protocolVersion" | "request_id"
+  >
 ): LocalControlCommand<TCommand> =>
   ({
     protocolVersion: localControlProtocolVersion,
-    id,
-    type: "command",
-    command: commandName,
-    ...(payload === undefined ? {} : { payload }),
+    request_id: requestId,
+    type: commandName,
+    ...(payload ?? {}),
   }) as LocalControlCommand<TCommand>;
 
 export const localControlCommandFixtures = {
@@ -47,11 +49,11 @@ export const localControlCommandFixtures = {
   getState: command("cmd-get-state", "GET_STATE"),
   setZoom: command("cmd-set-zoom", "SET_ZOOM", { zoom: 1.5 }),
   togglePresenter: command("cmd-toggle-presenter", "TOGGLE_PRESENTER"),
-  ping: command("cmd-ping", "PING", { nonce: "fixture-nonce" }),
+  ping: command("cmd-ping", "PING"),
   addAnnotation: command("cmd-add-annotation", "ADD_ANNOTATION", {
+    page: 3,
     annotation: {
       id: "ann-highlight-1",
-      page: 3,
       type: "highlight",
       color: "#facc15",
       text: "Key moment",
@@ -74,69 +76,43 @@ export const localControlErrorFixture: LocalControlErrorPayload = {
 export const localControlEventFixtures = {
   pageChanged: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-page-changed",
-    type: "event",
-    event: "PAGE_CHANGED",
-    correlationId: localControlCommandFixtures.nextPage.id,
-    payload: {
-      page: 4,
-      total_pages: loadedPdfStateFixture.total_pages,
-    },
+    request_id: localControlCommandFixtures.nextPage.request_id,
+    type: "PAGE_CHANGED",
+    page: 4,
+    total_pages: loadedPdfStateFixture.total_pages,
   },
   presenterChanged: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-presenter-changed",
-    type: "event",
-    event: "PRESENTER_CHANGED",
-    correlationId: localControlCommandFixtures.togglePresenter.id,
-    payload: {
-      presenter_active: true,
-    },
+    request_id: localControlCommandFixtures.togglePresenter.request_id,
+    type: "PRESENTER_CHANGED",
+    active: true,
   },
   annotationsCleared: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-annotations-cleared",
-    type: "event",
-    event: "ANNOTATIONS_CLEARED",
-    correlationId: localControlCommandFixtures.clearAnnotations.id,
-    payload: {
-      cleared: true,
-    },
+    request_id: localControlCommandFixtures.clearAnnotations.request_id,
+    type: "ANNOTATIONS_CLEARED",
   },
   state: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-state",
-    type: "event",
-    event: "STATE",
-    correlationId: localControlCommandFixtures.getState.id,
-    payload: loadedPdfStateFixture,
+    request_id: localControlCommandFixtures.getState.request_id,
+    type: "STATE",
+    ...loadedPdfStateFixture,
   },
   pong: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-pong",
-    type: "event",
-    event: "PONG",
-    correlationId: localControlCommandFixtures.ping.id,
-    payload: {
-      nonce: "fixture-nonce",
-      ok: true,
-    },
+    request_id: localControlCommandFixtures.ping.request_id,
+    type: "PONG",
   },
   error: {
     protocolVersion: localControlProtocolVersion,
-    id: "evt-error",
-    type: "event",
-    event: "ERROR",
-    correlationId: "cmd-go-to-page-invalid",
-    payload: localControlErrorFixture,
+    request_id: "cmd-go-to-page-invalid",
+    type: "ERROR",
+    ...localControlErrorFixture,
   },
   capabilities: {
-    protocolVersion: localControlProtocolVersion,
-    id: "evt-capabilities",
-    type: "event",
-    event: "CAPABILITIES",
-    correlationId: localControlCommandFixtures.getCapabilities.id,
-    payload: localControlCapabilities,
+    type: "CAPABILITIES",
+    ...localControlCapabilities,
+    request_id: localControlCommandFixtures.getCapabilities.request_id,
   },
 } as const satisfies Record<string, LocalControlEvent>;
 

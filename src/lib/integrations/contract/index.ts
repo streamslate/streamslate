@@ -15,7 +15,6 @@ export {
 export type {
   AddAnnotationPayload,
   LocalControlCapabilitiesPayload,
-  LocalControlCapability,
   LocalControlCommand,
   LocalControlCommandName,
   LocalControlCommandPayloadMap,

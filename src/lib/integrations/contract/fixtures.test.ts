@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   LocalControlMockClient,
   isLocalControlCapabilitiesPayload,
+  isLocalControlCommand,
   isLocalControlErrorPayload,
   isLocalControlEvent,
   isLocalControlStateSnapshot,
@@ -28,30 +29,44 @@ describe("local-control V2 contract fixtures", () => {
     ]);
   });
 
+  it("preserves the current wire command shape", () => {
+    expect(localControlCommandFixtures.goToPage).toMatchObject({
+      protocolVersion: "2.0",
+      request_id: "cmd-go-to-page",
+      type: "GO_TO_PAGE",
+      page: 6,
+    });
+    expect(isLocalControlCommand(localControlCommandFixtures.goToPage)).toBe(
+      true
+    );
+  });
+
   it("covers next page, previous page, and go to page fixtures", () => {
     const client = new LocalControlMockClient();
 
     const next = client.process(localControlCommandFixtures.nextPage);
     expect(next).toMatchObject({
       protocolVersion: "2.0",
-      type: "event",
-      event: "PAGE_CHANGED",
-      correlationId: "cmd-next-page",
-      payload: { page: 4, total_pages: 12 },
+      type: "PAGE_CHANGED",
+      request_id: "cmd-next-page",
+      page: 4,
+      total_pages: 12,
     });
 
     const previous = client.process(localControlCommandFixtures.previousPage);
     expect(previous).toMatchObject({
-      event: "PAGE_CHANGED",
-      correlationId: "cmd-previous-page",
-      payload: { page: 3, total_pages: 12 },
+      type: "PAGE_CHANGED",
+      request_id: "cmd-previous-page",
+      page: 3,
+      total_pages: 12,
     });
 
     const goToPage = client.process(localControlCommandFixtures.goToPage);
     expect(goToPage).toMatchObject({
-      event: "PAGE_CHANGED",
-      correlationId: "cmd-go-to-page",
-      payload: { page: 6, total_pages: 12 },
+      type: "PAGE_CHANGED",
+      request_id: "cmd-go-to-page",
+      page: 6,
+      total_pages: 12,
     });
   });
 
@@ -62,17 +77,16 @@ describe("local-control V2 contract fixtures", () => {
       localControlCommandFixtures.togglePresenter
     );
     expect(presenter).toMatchObject({
-      event: "PRESENTER_CHANGED",
-      payload: { presenter_active: true },
+      type: "PRESENTER_CHANGED",
+      active: true,
     });
 
     const clearAnnotations = client.process(
       localControlCommandFixtures.clearAnnotations
     );
     expect(clearAnnotations).toMatchObject({
-      event: "ANNOTATIONS_CLEARED",
-      correlationId: "cmd-clear-annotations",
-      payload: { cleared: true },
+      type: "ANNOTATIONS_CLEARED",
+      request_id: "cmd-clear-annotations",
     });
   });
 
@@ -81,36 +95,36 @@ describe("local-control V2 contract fixtures", () => {
 
     const state = client.process(localControlCommandFixtures.getState);
     expect(state).toMatchObject({
-      event: "STATE",
-      correlationId: "cmd-get-state",
-      payload: loadedPdfStateFixture,
+      type: "STATE",
+      request_id: "cmd-get-state",
+      ...loadedPdfStateFixture,
     });
-    expect(isLocalControlStateSnapshot(state.payload)).toBe(true);
+    expect(isLocalControlStateSnapshot(state)).toBe(true);
 
     const pong = client.process(localControlCommandFixtures.ping);
     expect(pong).toMatchObject({
-      event: "PONG",
-      correlationId: "cmd-ping",
-      payload: { nonce: "fixture-nonce", ok: true },
+      type: "PONG",
+      request_id: "cmd-ping",
     });
   });
 
   it("covers error and capabilities payload fixtures", () => {
     expect(isLocalControlEvent(localControlEventFixtures.error)).toBe(true);
-    expect(
-      isLocalControlErrorPayload(localControlEventFixtures.error.payload)
-    ).toBe(true);
+    expect(isLocalControlErrorPayload(localControlEventFixtures.error)).toBe(
+      true
+    );
 
     expect(isLocalControlEvent(localControlEventFixtures.capabilities)).toBe(
       true
     );
     expect(
-      isLocalControlCapabilitiesPayload(
-        localControlEventFixtures.capabilities.payload
-      )
+      isLocalControlCapabilitiesPayload(localControlEventFixtures.capabilities)
     ).toBe(true);
     expect(localControlFixtures.capabilities.features).toContain(
       "websocket_control"
+    );
+    expect(localControlEventFixtures.capabilities.supported_commands).toContain(
+      "GET_CAPABILITIES"
     );
   });
 
@@ -123,7 +137,7 @@ describe("local-control V2 contract fixtures", () => {
       localControlCommandFixtures.ping,
     ]);
 
-    expect(events.map((event) => event.event)).toEqual([
+    expect(events.map((event) => event.type)).toEqual([
       "PAGE_CHANGED",
       "PRESENTER_CHANGED",
       "CAPABILITIES",
@@ -136,18 +150,16 @@ describe("local-control V2 contract fixtures", () => {
     const client = new LocalControlMockClient();
     const error = client.process({
       ...localControlCommandFixtures.goToPage,
-      id: "cmd-go-to-page-invalid",
-      payload: { page: 99 },
+      request_id: "cmd-go-to-page-invalid",
+      page: 99,
     });
 
     expect(error).toMatchObject({
-      event: "ERROR",
-      correlationId: "cmd-go-to-page-invalid",
-      payload: {
-        code: "PAGE_OUT_OF_RANGE",
-        command: "GO_TO_PAGE",
-      },
+      type: "ERROR",
+      request_id: "cmd-go-to-page-invalid",
+      code: "PAGE_OUT_OF_RANGE",
+      command: "GO_TO_PAGE",
     });
-    expect(isLocalControlErrorPayload(error.payload)).toBe(true);
+    expect(isLocalControlErrorPayload(error)).toBe(true);
   });
 });

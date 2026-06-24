@@ -466,13 +466,7 @@ Error guidance:
 {
   "type": "CAPABILITIES",
   "protocolVersion": "2.0",
-  "appVersion": "1.5.0",
-  "transport": {
-    "kind": "websocket-json",
-    "endpoint": "ws://127.0.0.1:11451",
-    "loopbackOnly": true
-  },
-  "commands": [
+  "supported_commands": [
     "NEXT_PAGE",
     "PREVIOUS_PAGE",
     "GO_TO_PAGE",
@@ -484,41 +478,21 @@ Error guidance:
     "CLEAR_ANNOTATIONS",
     "GET_CAPABILITIES"
   ],
-  "events": [
-    "CONNECTED",
+  "supported_events": [
     "STATE",
     "PAGE_CHANGED",
     "PDF_OPENED",
     "PDF_CLOSED",
     "ZOOM_CHANGED",
     "PRESENTER_CHANGED",
-    "ANNOTATIONS_UPDATED",
-    "ANNOTATIONS_CLEARED",
     "ERROR",
     "PONG",
+    "CONNECTED",
+    "ANNOTATIONS_UPDATED",
+    "ANNOTATIONS_CLEARED",
     "CAPABILITIES"
   ],
-  "stateFields": [
-    "page",
-    "total_pages",
-    "zoom",
-    "pdf_loaded",
-    "pdf_path",
-    "pdf_title",
-    "presenter_active"
-  ],
-  "limits": {
-    "pageBase": 1,
-    "maxMessageBytes": null,
-    "zoom": {
-      "min": 0.1,
-      "max": 5.0
-    }
-  },
-  "compatibility": {
-    "acceptsV1Commands": true,
-    "messageOnlyErrors": true
-  }
+  "features": ["presenter", "annotations", "pdf_state", "websocket_control"]
 }
 ```
 
@@ -572,7 +546,7 @@ Fixture checks should verify:
 ## Implementation Notes For Integration Agents
 
 OBS and Stream Deck agents should start with `GET_CAPABILITIES`, then bind only
-to commands listed in `commands`. They should keep their first supported
+to commands listed in `supported_commands`. They should keep their first supported
 feature set to local WebSocket control and avoid cloud or mobile assumptions.
 
 Sync and mobile agents should treat loopback-only transport as a hard boundary.

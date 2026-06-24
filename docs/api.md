@@ -136,11 +136,7 @@ Planned V2 capabilities response:
 {
   "type": "CAPABILITIES",
   "protocolVersion": "2.0",
-  "transport": {
-    "kind": "websocket-json",
-    "loopbackOnly": true
-  },
-  "commands": [
+  "supported_commands": [
     "NEXT_PAGE",
     "PREVIOUS_PAGE",
     "GO_TO_PAGE",
@@ -152,15 +148,21 @@ Planned V2 capabilities response:
     "CLEAR_ANNOTATIONS",
     "GET_CAPABILITIES"
   ],
-  "stateFields": [
-    "page",
-    "total_pages",
-    "zoom",
-    "pdf_loaded",
-    "pdf_path",
-    "pdf_title",
-    "presenter_active"
-  ]
+  "supported_events": [
+    "STATE",
+    "PAGE_CHANGED",
+    "PDF_OPENED",
+    "PDF_CLOSED",
+    "ZOOM_CHANGED",
+    "PRESENTER_CHANGED",
+    "ERROR",
+    "PONG",
+    "CONNECTED",
+    "ANNOTATIONS_UPDATED",
+    "ANNOTATIONS_CLEARED",
+    "CAPABILITIES"
+  ],
+  "features": ["presenter", "annotations", "pdf_state", "websocket_control"]
 }
 ```
 
