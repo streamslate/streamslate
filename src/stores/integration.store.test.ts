@@ -126,6 +126,37 @@ describe("integration.store", () => {
       expect(ws.port).toBe(11451); // default preserved
     });
 
+    it("setWebSocketState preserves capability metadata", () => {
+      useIntegrationStore.getState().setWebSocketState({
+        capabilities: {
+          protocolVersion: "2.0",
+          supported_commands: ["GET_CAPABILITIES"],
+          supported_events: ["CAPABILITIES"],
+          features: ["websocket_control"],
+        },
+        capabilityNegotiated: true,
+        legacyFallback: false,
+      });
+
+      const ws = useIntegrationStore.getState().websocket;
+      expect(ws.capabilityNegotiated).toBe(true);
+      expect(ws.legacyFallback).toBe(false);
+      expect(ws.capabilities?.supported_commands).toContain("GET_CAPABILITIES");
+    });
+
+    it("setWebSocketState records legacy fallback", () => {
+      useIntegrationStore.getState().setWebSocketState({
+        capabilities: null,
+        capabilityNegotiated: true,
+        legacyFallback: true,
+      });
+
+      const ws = useIntegrationStore.getState().websocket;
+      expect(ws.capabilities).toBeNull();
+      expect(ws.capabilityNegotiated).toBe(true);
+      expect(ws.legacyFallback).toBe(true);
+    });
+
     it("setOBSState merges partial state", () => {
       useIntegrationStore
         .getState()
