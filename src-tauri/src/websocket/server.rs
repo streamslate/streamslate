@@ -19,7 +19,10 @@
 //! WebSocket server implementation using tokio-tungstenite
 
 use super::handlers::handle_command;
-use super::protocol::{WebSocketCommand, WebSocketEvent};
+use super::protocol::{
+    is_supported_command_type, WebSocketErrorCode, WebSocketEvent, WebSocketMessageMetadata,
+    WebSocketRequest,
+};
 use crate::state::AppState;
 use futures_util::{SinkExt, StreamExt};
 use std::sync::Arc;
@@ -108,12 +111,14 @@ async fn handle_connection(
                     Some(Ok(Message::Text(text))) => {
                         debug!(msg = %text, "Received WebSocket message");
 
-                        match serde_json::from_str::<WebSocketCommand>(&text) {
-                            Ok(command) => {
-                                let response = handle_command(command, &state, &app_handle);
+                        match serde_json::from_str::<WebSocketRequest>(&text) {
+                            Ok(request) => {
+                                let response = handle_command(request.command, &state, &app_handle);
 
                                 // Send response back to this client
-                                let response_msg = serde_json::to_string(&response)?;
+                                let response_msg = serde_json::to_string(
+                                    &response.direct_response(&request.metadata)
+                                )?;
                                 ws_sender.send(Message::Text(response_msg)).await?;
 
                                 // Broadcast state-changing events to all clients
@@ -123,8 +128,10 @@ async fn handle_connection(
                             }
                             Err(e) => {
                                 warn!(error = %e, "Failed to parse WebSocket command");
-                                let error_event = WebSocketEvent::error(format!("Invalid command: {}", e));
-                                let error_msg = serde_json::to_string(&error_event)?;
+                                let (error_event, metadata) = invalid_command_error(&text, &e);
+                                let error_msg = serde_json::to_string(
+                                    &error_event.direct_response(&metadata)
+                                )?;
                                 ws_sender.send(Message::Text(error_msg)).await?;
                             }
                         }
@@ -170,6 +177,48 @@ async fn handle_connection(
     Ok(())
 }
 
+fn invalid_command_error(
+    text: &str,
+    error: &dyn std::fmt::Display,
+) -> (WebSocketEvent, WebSocketMessageMetadata) {
+    let metadata = serde_json::from_str::<WebSocketMessageMetadata>(text).unwrap_or_default();
+    let command = command_type_from_text(text);
+    let code = match command.as_deref() {
+        Some(command) if is_supported_command_type(command) => WebSocketErrorCode::InvalidPayload,
+        _ => WebSocketErrorCode::InvalidCommand,
+    };
+    let details = match command {
+        Some(command) => serde_json::json!({
+            "command": command,
+            "parse_error": error.to_string()
+        }),
+        None => serde_json::json!({
+            "parse_error": error.to_string()
+        }),
+    };
+
+    (
+        WebSocketEvent::classified_error(
+            code,
+            format!("Invalid command: {}", error),
+            false,
+            Some(details),
+        ),
+        metadata,
+    )
+}
+
+fn command_type_from_text(text: &str) -> Option<String> {
+    serde_json::from_str::<serde_json::Value>(text)
+        .ok()
+        .and_then(|value| {
+            value
+                .get("type")
+                .and_then(|kind| kind.as_str())
+                .map(String::from)
+        })
+}
+
 /// Get current state as a WebSocketEvent
 fn get_current_state(state: &Arc<AppState>) -> WebSocketEvent {
     let pdf_state = state.get_pdf_state().unwrap_or_default();
@@ -213,5 +262,39 @@ mod tests {
         assert!(!should_broadcast(&WebSocketEvent::Pong));
         assert!(!should_broadcast(&WebSocketEvent::error("test")));
         assert!(!should_broadcast(&WebSocketEvent::capabilities()));
+    }
+
+    #[test]
+    fn test_invalid_command_error_preserves_metadata() {
+        let (event, metadata) = invalid_command_error(
+            r#"{"type": "NOPE", "protocolVersion": "2.0", "request_id": "bad-1"}"#,
+            &"unknown variant",
+        );
+
+        let json = serde_json::to_value(event.direct_response(&metadata)).unwrap();
+
+        assert_eq!(json["type"], "ERROR");
+        assert_eq!(json["protocolVersion"], "2.0");
+        assert_eq!(json["request_id"], "bad-1");
+        assert_eq!(json["code"], "INVALID_COMMAND");
+        assert_eq!(json["recoverable"], false);
+        assert_eq!(json["details"]["command"], "NOPE");
+        assert_eq!(json["details"]["parse_error"], "unknown variant");
+    }
+
+    #[test]
+    fn test_invalid_payload_error_preserves_metadata() {
+        let (event, metadata) = invalid_command_error(
+            r#"{"type": "GO_TO_PAGE", "protocolVersion": "2.0", "request_id": "bad-page"}"#,
+            &"missing field `page`",
+        );
+
+        let json = serde_json::to_value(event.direct_response(&metadata)).unwrap();
+
+        assert_eq!(json["type"], "ERROR");
+        assert_eq!(json["request_id"], "bad-page");
+        assert_eq!(json["code"], "INVALID_PAYLOAD");
+        assert_eq!(json["details"]["command"], "GO_TO_PAGE");
+        assert_eq!(json["details"]["parse_error"], "missing field `page`");
     }
 }
