@@ -324,6 +324,33 @@ describe("processUnhandledEvents", () => {
 
     expect(markHandled).toHaveBeenCalledWith("e1");
   });
+
+  it("marks CAPABILITIES handled without mutating store state", () => {
+    const actions = makeActions();
+    const markHandled = vi.fn();
+    const events = [
+      makeEvent({
+        id: "e1",
+        type: IntegrationMessageType.CAPABILITIES,
+        data: {
+          protocolVersion: "2.0",
+          supported_commands: ["NEXT_PAGE"],
+          supported_events: ["CAPABILITIES"],
+          features: ["local_control"],
+        },
+      }),
+    ];
+
+    processUnhandledEvents(events, actions, markHandled);
+
+    expect(markHandled).toHaveBeenCalledWith("e1");
+    expect(actions.setCurrentPage).not.toHaveBeenCalled();
+    expect(actions.setZoom).not.toHaveBeenCalled();
+    expect(actions.setPresenterMode).not.toHaveBeenCalled();
+    expect(actions.setDocument).not.toHaveBeenCalled();
+    expect(actions.setPageAnnotations).not.toHaveBeenCalled();
+    expect(actions.clearAnnotations).not.toHaveBeenCalled();
+  });
 });
 
 // ── getStatusMessage ───────────────────────────────────────────────────
@@ -395,12 +422,19 @@ describe("getStatusMessage", () => {
 // ── message-map.ts ─────────────────────────────────────────────────────
 
 describe("message-map", () => {
-  it("WS_MESSAGE_MAP has 11 entries", () => {
-    expect(WS_MESSAGE_MAP.length).toBe(11);
+  it("WS_MESSAGE_MAP has 12 entries", () => {
+    expect(WS_MESSAGE_MAP.length).toBe(12);
   });
 
   it("WS_MESSAGE_TYPES matches map keys", () => {
     expect(WS_MESSAGE_TYPES).toEqual(WS_MESSAGE_MAP.map(([t]) => t));
+  });
+
+  it("maps CAPABILITIES messages to observable integration events", () => {
+    expect(WS_MESSAGE_MAP).toContainEqual([
+      "CAPABILITIES",
+      IntegrationMessageType.CAPABILITIES,
+    ]);
   });
 
   it("registerWebSocketHandlers registers all message types", () => {
@@ -422,9 +456,9 @@ describe("message-map", () => {
     );
 
     // Should clean up all old handlers first
-    expect(offMessageCalls.length).toBe(11);
-    // Should register all 11 handlers
-    expect(onMessageCalls.length).toBe(11);
+    expect(offMessageCalls.length).toBe(12);
+    // Should register all 12 handlers
+    expect(onMessageCalls.length).toBe(12);
   });
 
   it("registerWebSocketHandlers calls addEvent on message", () => {
@@ -448,6 +482,36 @@ describe("message-map", () => {
     expect(addEvent.mock.calls[0][0]).toMatchObject({
       type: IntegrationMessageType.PAGE_CHANGED,
       data: { page: 5 },
+    });
+  });
+
+  it("registerWebSocketHandlers emits CAPABILITIES events", () => {
+    const handlers = new Map<string, (data: unknown) => void>();
+    const mockClient = {
+      onMessage: (type: string, handler: (data: unknown) => void) => {
+        handlers.set(type, handler);
+      },
+      offMessage: () => {},
+    };
+
+    const addEvent = vi.fn();
+    registerWebSocketHandlers(
+      mockClient as unknown as Parameters<typeof registerWebSocketHandlers>[0],
+      addEvent
+    );
+
+    const capabilities = {
+      protocolVersion: "2.0",
+      supported_commands: ["NEXT_PAGE"],
+      supported_events: ["CAPABILITIES"],
+      features: ["local_control"],
+    };
+    handlers.get("CAPABILITIES")!(capabilities);
+
+    expect(addEvent).toHaveBeenCalledTimes(1);
+    expect(addEvent.mock.calls[0][0]).toMatchObject({
+      type: IntegrationMessageType.CAPABILITIES,
+      data: capabilities,
     });
   });
 
