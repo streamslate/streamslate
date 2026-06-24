@@ -22,6 +22,39 @@
 
 use serde::{Deserialize, Serialize};
 
+/// WebSocket control protocol version exposed by capability discovery.
+pub const PROTOCOL_VERSION: &str = "2.0";
+
+const SUPPORTED_COMMANDS: &[&str] = &[
+    "NEXT_PAGE",
+    "PREVIOUS_PAGE",
+    "GO_TO_PAGE",
+    "GET_STATE",
+    "SET_ZOOM",
+    "TOGGLE_PRESENTER",
+    "PING",
+    "ADD_ANNOTATION",
+    "CLEAR_ANNOTATIONS",
+    "GET_CAPABILITIES",
+];
+
+const SUPPORTED_EVENTS: &[&str] = &[
+    "STATE",
+    "PAGE_CHANGED",
+    "PDF_OPENED",
+    "PDF_CLOSED",
+    "ZOOM_CHANGED",
+    "PRESENTER_CHANGED",
+    "ERROR",
+    "PONG",
+    "CONNECTED",
+    "ANNOTATIONS_UPDATED",
+    "ANNOTATIONS_CLEARED",
+    "CAPABILITIES",
+];
+
+const SUPPORTED_FEATURES: &[&str] = &["presenter", "annotations", "pdf_state", "websocket_control"];
+
 /// Commands that clients can send to StreamSlate
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "SCREAMING_SNAKE_CASE")]
@@ -55,6 +88,26 @@ pub enum WebSocketCommand {
 
     /// Clear all annotations
     ClearAnnotations,
+
+    /// Get supported protocol capabilities
+    GetCapabilities,
+}
+
+/// Capability discovery payload for the WebSocket control protocol.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebSocketCapabilities {
+    /// Protocol version for the local-control contract.
+    #[serde(rename = "protocolVersion")]
+    pub protocol_version: String,
+
+    /// Commands accepted by this server.
+    pub supported_commands: Vec<String>,
+
+    /// Events this server may emit.
+    pub supported_events: Vec<String>,
+
+    /// High-level feature areas exposed through the protocol.
+    pub features: Vec<String>,
 }
 
 /// Events that StreamSlate sends to clients
@@ -108,6 +161,9 @@ pub enum WebSocketEvent {
 
     /// All annotations cleared
     AnnotationsCleared,
+
+    /// Capability discovery response
+    Capabilities(WebSocketCapabilities),
 }
 
 impl WebSocketEvent {
@@ -123,6 +179,25 @@ impl WebSocketEvent {
         Self::Error {
             message: message.into(),
         }
+    }
+
+    /// Create a capabilities response event.
+    pub fn capabilities() -> Self {
+        Self::Capabilities(WebSocketCapabilities {
+            protocol_version: PROTOCOL_VERSION.to_string(),
+            supported_commands: SUPPORTED_COMMANDS
+                .iter()
+                .map(|command| (*command).to_string())
+                .collect(),
+            supported_events: SUPPORTED_EVENTS
+                .iter()
+                .map(|event| (*event).to_string())
+                .collect(),
+            features: SUPPORTED_FEATURES
+                .iter()
+                .map(|feature| (*feature).to_string())
+                .collect(),
+        })
     }
 }
 
@@ -154,5 +229,57 @@ mod tests {
         let json = r#"{"type": "NEXT_PAGE"}"#;
         let cmd: WebSocketCommand = serde_json::from_str(json).unwrap();
         assert!(matches!(cmd, WebSocketCommand::NextPage));
+    }
+
+    #[test]
+    fn test_get_capabilities_command_deserialization() {
+        let json = r#"{"type": "GET_CAPABILITIES"}"#;
+        let cmd: WebSocketCommand = serde_json::from_str(json).unwrap();
+        assert!(matches!(cmd, WebSocketCommand::GetCapabilities));
+    }
+
+    #[test]
+    fn test_capabilities_serialization_shape() {
+        let event = WebSocketEvent::capabilities();
+        let json = serde_json::to_value(&event).unwrap();
+
+        assert_eq!(json["type"], "CAPABILITIES");
+        assert_eq!(json["protocolVersion"], PROTOCOL_VERSION);
+        assert_eq!(
+            json["supported_commands"],
+            serde_json::json!([
+                "NEXT_PAGE",
+                "PREVIOUS_PAGE",
+                "GO_TO_PAGE",
+                "GET_STATE",
+                "SET_ZOOM",
+                "TOGGLE_PRESENTER",
+                "PING",
+                "ADD_ANNOTATION",
+                "CLEAR_ANNOTATIONS",
+                "GET_CAPABILITIES"
+            ])
+        );
+        assert_eq!(
+            json["supported_events"],
+            serde_json::json!([
+                "STATE",
+                "PAGE_CHANGED",
+                "PDF_OPENED",
+                "PDF_CLOSED",
+                "ZOOM_CHANGED",
+                "PRESENTER_CHANGED",
+                "ERROR",
+                "PONG",
+                "CONNECTED",
+                "ANNOTATIONS_UPDATED",
+                "ANNOTATIONS_CLEARED",
+                "CAPABILITIES"
+            ])
+        );
+        assert_eq!(
+            json["features"],
+            serde_json::json!(["presenter", "annotations", "pdf_state", "websocket_control"])
+        );
     }
 }

@@ -46,6 +46,7 @@ pub fn handle_command(
             handle_add_annotation(state, app_handle, page, annotation)
         }
         WebSocketCommand::ClearAnnotations => handle_clear_annotations(state, app_handle),
+        WebSocketCommand::GetCapabilities => WebSocketEvent::capabilities(),
     }
 }
 
