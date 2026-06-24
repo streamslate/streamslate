@@ -5,8 +5,8 @@ tools.
 
 This page documents the currently implemented local API. The V2 contract is
 defined for local-control clients; see [API V2 Contract](api-v2-contract.md)
-and the concrete [`api-v2-fixtures/`](api-v2-fixtures/) examples for the S1
-runtime and fixture behavior.
+and the concrete [`api-v2-fixtures/`](api-v2-fixtures/) examples for the
+shipped runtime and fixture behavior.
 
 ## Endpoint
 
@@ -80,6 +80,7 @@ Server events are emitted with a `type` field in `SCREAMING_SNAKE_CASE`.
 - `ANNOTATIONS_CLEARED`
 - `ERROR`
 - `PONG`
+- `CAPABILITIES`
 
 ### Event Examples
 
@@ -120,9 +121,9 @@ State snapshot:
 ## V2 Contract Additions
 
 The V2 local-control contract keeps the current command and event names stable
-and adds optional command metadata plus capability discovery. S1 runtimes accept
-commands with or without `protocolVersion` and `request_id`, so existing v1
-clients can keep sending minimal command objects.
+and adds optional command metadata plus capability discovery. The shipped
+runtime accepts commands with or without `protocolVersion` and `request_id`, so
+existing v1 clients can keep sending minimal command objects.
 
 V2 discovery command:
 
@@ -171,6 +172,16 @@ V2 capabilities response:
 }
 ```
 
+The TypeScript integration client treats `CAPABILITIES` as an observable event:
+after a successful discovery response updates the connection state, registered
+`CAPABILITIES` handlers and integration listeners receive the payload. Discovery
+is a direct response to `GET_CAPABILITIES`, not a state-changing peer broadcast.
+
+Annotation mutation commands are state changes. `ADD_ANNOTATION` returns
+`ANNOTATIONS_UPDATED` to the requesting client and broadcasts the same event to
+other connected peers. `CLEAR_ANNOTATIONS` returns `ANNOTATIONS_CLEARED` to the
+requesting client and broadcasts `ANNOTATIONS_CLEARED` to peers.
+
 V2 clients should treat the current `ERROR` event as the minimum supported error
 envelope:
 
@@ -186,8 +197,8 @@ V2 implementations may add fields such as `code`, `request_id`, `details`, and
 
 Fixture coverage for the V2 additions is checked in under
 [`api-v2-fixtures/`](api-v2-fixtures/), including v1 downgrade examples,
-loaded/empty state, capabilities discovery, and annotation updates with string
-page keys.
+loaded/empty state, observable capabilities discovery, annotation updates with
+string page keys, and annotation-cleared state changes.
 
 ## Notes
 

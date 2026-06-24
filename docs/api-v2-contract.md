@@ -17,9 +17,11 @@ version and capability discovery.
 - Binding: loopback-only unless a future pairing flow changes the trust model
 - Compatibility baseline: current v1 clients that send only `type` and command
   parameters continue to work
-- S1 runtime behavior: accepts optional `protocolVersion: "2.0"` and
-  `request_id` metadata on commands, supports `GET_CAPABILITIES`, and may echo
-  `request_id` on direct V2 responses where runtime support is present
+- Shipped runtime behavior: accepts optional `protocolVersion: "2.0"` and
+  `request_id` metadata on commands, supports `GET_CAPABILITIES`, echoes
+  `request_id` on direct V2 responses where runtime support is present, exposes
+  `CAPABILITIES` to TypeScript integration listeners, and peer-broadcasts
+  annotation mutation events
 - Discovery: clients use `GET_CAPABILITIES` and fall back to v1 behavior if an
   older runtime returns `ERROR` or closes the connection
 - Fixtures: concrete JSON examples live in
@@ -262,6 +264,10 @@ Expected direct response:
 V2 should keep annotation payloads JSON-compatible and reject payloads that
 cannot be serialized.
 
+This is a state-changing response. The requesting client receives the direct
+`ANNOTATIONS_UPDATED` response, and other connected peers receive
+`ANNOTATIONS_UPDATED` as a broadcast state change.
+
 ### CLEAR_ANNOTATIONS
 
 Clear all annotations.
@@ -280,9 +286,13 @@ Expected direct response:
 }
 ```
 
+This is a state-changing response. The requesting client receives the direct
+`ANNOTATIONS_CLEARED` response, and other connected peers receive
+`ANNOTATIONS_CLEARED` as a broadcast state change.
+
 ### GET_CAPABILITIES
 
-Return protocol and feature discovery metadata. In S1 runtimes this is
+Return protocol and feature discovery metadata. In the shipped runtime this is
 loopback-only local-control discovery; it is not a remote pairing, cloud sync,
 OBS, Stream Deck, or mobile feature.
 
@@ -294,8 +304,12 @@ OBS, Stream Deck, or mobile feature.
 }
 ```
 
-Expected direct response: `CAPABILITIES` on S1 runtimes, or v1-compatible
-`ERROR` when an older runtime does not implement the command.
+Expected direct response: `CAPABILITIES` on V2-capable runtimes, or a
+v1-compatible `ERROR` when an older runtime does not implement the command.
+
+`CAPABILITIES` is observable by TypeScript integration listeners after the
+client stores the negotiated capability state. It is a direct discovery
+response, not a peer-broadcast state change.
 
 ## Events
 
@@ -409,6 +423,10 @@ These fields are the minimum V2 state contract.
 The `annotations` object maps page numbers to arrays. JSON object keys are
 strings, so clients should parse page keys as positive integers.
 
+When produced by `ADD_ANNOTATION`, the requesting client receives a direct
+response that may include V2 metadata such as `request_id`. Other connected
+clients receive the event as a peer broadcast without request-specific metadata.
+
 ### ANNOTATIONS_CLEARED
 
 ```json
@@ -416,6 +434,10 @@ strings, so clients should parse page keys as positive integers.
   "type": "ANNOTATIONS_CLEARED"
 }
 ```
+
+When produced by `CLEAR_ANNOTATIONS`, the requesting client receives a direct
+response that may include V2 metadata such as `request_id`. Other connected
+clients receive the event as a peer broadcast without request-specific metadata.
 
 ### PONG
 
@@ -466,7 +488,7 @@ Error guidance:
 
 ## Capabilities
 
-`CAPABILITIES` is the V2 discovery response.
+`CAPABILITIES` is the V2 discovery response and an observable integration event.
 
 ```json
 {
@@ -506,6 +528,11 @@ Clients should treat absent capability fields as unknown, not false. A v1
 server may return `ERROR` for `GET_CAPABILITIES`; that means clients should use
 the current API documented in [Local API](api.md).
 
+The TypeScript integration client dispatches valid `CAPABILITIES` payloads to
+registered handlers after updating connection state. Servers should not
+broadcast `CAPABILITIES` to peers because discovery does not mutate shared
+document state.
+
 ## Backwards Compatibility
 
 V2 is additive.
@@ -522,7 +549,7 @@ V2 is additive.
 
 ## Fixture Expectations
 
-The S1 contract fixtures are checked in under
+The V2 contract fixtures are checked in under
 [`docs/api-v2-fixtures/`](api-v2-fixtures/). They prove the public JSON shapes
 without requiring the Tauri app to run.
 
@@ -539,6 +566,7 @@ Fixture groups:
 | `command.go-to-page.v1.json`       | Existing minimal command shape.              |
 | `command.get-capabilities.v2.json` | V2 discovery command shape.                  |
 | `annotations-updated.v2.json`      | Annotation map with string page keys.        |
+| `annotations-cleared.v2.json`      | Annotation-cleared state-change event.       |
 
 Fixture checks verify:
 
