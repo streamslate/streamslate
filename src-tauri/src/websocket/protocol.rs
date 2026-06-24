@@ -20,7 +20,7 @@
 //!
 //! Defines the JSON message format for client-server communication.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// WebSocket control protocol version exposed by capability discovery.
 pub const PROTOCOL_VERSION: &str = "2.0";
@@ -247,6 +247,7 @@ pub enum WebSocketEvent {
     /// Annotations updated notification
     AnnotationsUpdated {
         /// Map of page number to list of annotations
+        #[serde(deserialize_with = "deserialize_annotation_map")]
         annotations: std::collections::HashMap<u32, Vec<serde_json::Value>>,
     },
 
@@ -331,9 +332,59 @@ impl WebSocketEvent {
     }
 }
 
+fn deserialize_annotation_map<'de, D>(
+    deserializer: D,
+) -> Result<std::collections::HashMap<u32, Vec<serde_json::Value>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let annotations =
+        std::collections::HashMap::<String, Vec<serde_json::Value>>::deserialize(deserializer)?;
+
+    annotations
+        .into_iter()
+        .map(|(page, annotations)| {
+            page.parse::<u32>()
+                .map(|page| (page, annotations))
+                .map_err(serde::de::Error::custom)
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn fixture(name: &str) -> serde_json::Value {
+        let path = format!(
+            "{}/../docs/api-v2-fixtures/{}",
+            env!("CARGO_MANIFEST_DIR"),
+            name
+        );
+        let json = std::fs::read_to_string(&path)
+            .unwrap_or_else(|error| panic!("failed to read fixture {path}: {error}"));
+
+        serde_json::from_str(&json)
+            .unwrap_or_else(|error| panic!("failed to parse fixture {path}: {error}"))
+    }
+
+    fn optional_fixture(name: &str) -> Option<serde_json::Value> {
+        let path = format!(
+            "{}/../docs/api-v2-fixtures/{}",
+            env!("CARGO_MANIFEST_DIR"),
+            name
+        );
+        let json = match std::fs::read_to_string(&path) {
+            Ok(json) => json,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return None,
+            Err(error) => panic!("failed to read fixture {path}: {error}"),
+        };
+
+        Some(
+            serde_json::from_str(&json)
+                .unwrap_or_else(|error| panic!("failed to parse fixture {path}: {error}")),
+        )
+    }
 
     #[test]
     fn test_command_serialization() {
@@ -529,5 +580,97 @@ mod tests {
             json,
             serde_json::json!({"type": "ERROR", "message": "plain error"})
         );
+    }
+
+    #[test]
+    fn test_capabilities_v2_fixture_matches_protocol_capabilities() {
+        let mut fixture = fixture("capabilities.v2.json");
+        assert_eq!(fixture["request_id"], "cmd-get-capabilities");
+        fixture
+            .as_object_mut()
+            .expect("capabilities fixture should be an object")
+            .remove("request_id");
+
+        let capabilities = WebSocketEvent::capabilities();
+        let json = serde_json::to_value(&capabilities).unwrap();
+
+        assert_eq!(json, fixture);
+    }
+
+    #[test]
+    fn test_error_fixtures_deserialize() {
+        let v1: WebSocketEvent = serde_json::from_value(fixture("error.v1.json")).unwrap();
+        match v1 {
+            WebSocketEvent::Error {
+                message,
+                code,
+                recoverable,
+                details,
+            } => {
+                assert_eq!(message, "Page 99 is outside the loaded document range.");
+                assert!(code.is_none());
+                assert!(recoverable.is_none());
+                assert!(details.is_none());
+            }
+            _ => panic!("expected v1 error fixture to deserialize as ERROR"),
+        }
+
+        let v2: WebSocketEvent = serde_json::from_value(fixture("error.v2.json")).unwrap();
+        match v2 {
+            WebSocketEvent::Error {
+                message,
+                code,
+                recoverable,
+                details,
+            } => {
+                assert_eq!(message, "Page 99 is outside the loaded document range.");
+                assert_eq!(code, Some(WebSocketErrorCode::PageOutOfRange));
+                assert_eq!(recoverable, Some(true));
+                let details = details.expect("v2 error fixture should include details");
+                assert_eq!(details["command"], "GO_TO_PAGE");
+                assert_eq!(details["requested_page"], 99);
+                assert_eq!(details["total_pages"], 12);
+            }
+            _ => panic!("expected v2 error fixture to deserialize as ERROR"),
+        }
+    }
+
+    #[test]
+    fn test_get_capabilities_v2_fixture_preserves_request_metadata() {
+        let request: WebSocketRequest =
+            serde_json::from_value(fixture("command.get-capabilities.v2.json")).unwrap();
+
+        assert!(matches!(request.command, WebSocketCommand::GetCapabilities));
+        assert_eq!(
+            request.metadata.protocol_version.as_deref(),
+            Some(PROTOCOL_VERSION)
+        );
+        assert_eq!(
+            request.metadata.request_id.as_deref(),
+            Some("cmd-get-capabilities")
+        );
+    }
+
+    #[test]
+    fn test_annotation_v2_fixtures_deserialize_when_present() {
+        let updated: WebSocketEvent =
+            serde_json::from_value(fixture("annotations-updated.v2.json")).unwrap();
+        match updated {
+            WebSocketEvent::AnnotationsUpdated { annotations } => {
+                let page_annotations = annotations
+                    .get(&3)
+                    .expect("annotations-updated fixture should include page 3");
+                assert_eq!(page_annotations.len(), 1);
+                assert_eq!(page_annotations[0]["id"], "ann-highlight-1");
+            }
+            _ => {
+                panic!("expected annotations-updated fixture to deserialize as ANNOTATIONS_UPDATED")
+            }
+        }
+
+        if let Some(cleared) = optional_fixture("annotations-cleared.v2.json") {
+            let cleared: WebSocketEvent = serde_json::from_value(cleared).unwrap();
+            assert!(matches!(cleared, WebSocketEvent::AnnotationsCleared));
+        }
     }
 }
