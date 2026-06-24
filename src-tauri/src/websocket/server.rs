@@ -212,5 +212,6 @@ mod tests {
         assert!(should_broadcast(&WebSocketEvent::PdfClosed));
         assert!(!should_broadcast(&WebSocketEvent::Pong));
         assert!(!should_broadcast(&WebSocketEvent::error("test")));
+        assert!(!should_broadcast(&WebSocketEvent::capabilities()));
     }
 }
