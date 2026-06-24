@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import capabilitiesFixture from "../../../docs/api-v2-fixtures/capabilities.v2.json";
 import {
   IntegrationMessageType,
   IntegrationSource,
@@ -325,19 +326,14 @@ describe("processUnhandledEvents", () => {
     expect(markHandled).toHaveBeenCalledWith("e1");
   });
 
-  it("marks CAPABILITIES handled without mutating store state", () => {
+  it("marks fixture CAPABILITIES handled without mutating store state", () => {
     const actions = makeActions();
     const markHandled = vi.fn();
     const events = [
       makeEvent({
         id: "e1",
         type: IntegrationMessageType.CAPABILITIES,
-        data: {
-          protocolVersion: "2.0",
-          supported_commands: ["NEXT_PAGE"],
-          supported_events: ["CAPABILITIES"],
-          features: ["local_control"],
-        },
+        data: capabilitiesFixture,
       }),
     ];
 
@@ -437,6 +433,16 @@ describe("message-map", () => {
     ]);
   });
 
+  it("maps ANNOTATIONS_CLEARED messages to observable integration events", () => {
+    expect(capabilitiesFixture.supported_events).toContain(
+      "ANNOTATIONS_CLEARED"
+    );
+    expect(WS_MESSAGE_MAP).toContainEqual([
+      "ANNOTATIONS_CLEARED",
+      IntegrationMessageType.ANNOTATIONS_CLEARED,
+    ]);
+  });
+
   it("registerWebSocketHandlers registers all message types", () => {
     const onMessageCalls: [string, (data: unknown) => void][] = [];
     const offMessageCalls: string[] = [];
@@ -485,7 +491,7 @@ describe("message-map", () => {
     });
   });
 
-  it("registerWebSocketHandlers emits CAPABILITIES events", () => {
+  it("registerWebSocketHandlers emits fixture CAPABILITIES events", () => {
     const handlers = new Map<string, (data: unknown) => void>();
     const mockClient = {
       onMessage: (type: string, handler: (data: unknown) => void) => {
@@ -500,19 +506,48 @@ describe("message-map", () => {
       addEvent
     );
 
-    const capabilities = {
-      protocolVersion: "2.0",
-      supported_commands: ["NEXT_PAGE"],
-      supported_events: ["CAPABILITIES"],
-      features: ["local_control"],
-    };
-    handlers.get("CAPABILITIES")!(capabilities);
+    handlers.get("CAPABILITIES")!(capabilitiesFixture);
 
     expect(addEvent).toHaveBeenCalledTimes(1);
     expect(addEvent.mock.calls[0][0]).toMatchObject({
       type: IntegrationMessageType.CAPABILITIES,
-      data: capabilities,
+      data: capabilitiesFixture,
     });
+  });
+
+  it("registerWebSocketHandlers emits and handles ANNOTATIONS_CLEARED events", () => {
+    const handlers = new Map<string, (data: unknown) => void>();
+    const mockClient = {
+      onMessage: (type: string, handler: (data: unknown) => void) => {
+        handlers.set(type, handler);
+      },
+      offMessage: () => {},
+    };
+    const addEvent = vi.fn();
+    registerWebSocketHandlers(
+      mockClient as unknown as Parameters<typeof registerWebSocketHandlers>[0],
+      addEvent
+    );
+
+    const clearedMessage = {
+      type: "ANNOTATIONS_CLEARED",
+      protocolVersion: capabilitiesFixture.protocolVersion,
+      request_id: "cmd-clear-annotations",
+    };
+    handlers.get("ANNOTATIONS_CLEARED")!(clearedMessage);
+
+    const event = addEvent.mock.calls[0][0] as IntegrationEvent;
+    const actions = makeActions();
+    const markHandled = vi.fn();
+    processUnhandledEvents([event], actions, markHandled);
+
+    expect(addEvent).toHaveBeenCalledTimes(1);
+    expect(event).toMatchObject({
+      type: IntegrationMessageType.ANNOTATIONS_CLEARED,
+      data: clearedMessage,
+    });
+    expect(actions.clearAnnotations).toHaveBeenCalledTimes(1);
+    expect(markHandled).toHaveBeenCalledWith(event.id);
   });
 
   it("registerWebSocketHandlers calls onError for ERROR messages", () => {

@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import capabilitiesFixture from "../../../docs/api-v2-fixtures/capabilities.v2.json";
+import errorV2Fixture from "../../../docs/api-v2-fixtures/error.v2.json";
 import { StreamSlateWebSocketClient } from "./client";
 
 type MessageEventLike = { data: string };
@@ -57,19 +59,13 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
     vi.unstubAllGlobals();
   });
 
-  it("sends GET_CAPABILITIES after connect and stores CAPABILITIES", async () => {
+  it("sends GET_CAPABILITIES after connect and stores fixture CAPABILITIES", async () => {
     const client = new StreamSlateWebSocketClient(12345);
     const states: ReturnType<typeof client.getState>[] = [];
     let stateSeenByHandler: ReturnType<typeof client.getState> | null = null;
     const capabilitiesHandler = vi.fn((payload: unknown) => {
       stateSeenByHandler = client.getState();
-      expect(payload).toMatchObject({
-        type: "CAPABILITIES",
-        protocolVersion: "2.0",
-        supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
-        supported_events: ["STATE", "CAPABILITIES"],
-        features: ["pdf_state", "websocket_control"],
-      });
+      expect(payload).toEqual(capabilitiesFixture);
     });
     client.onStateChange((state) => states.push(state));
     client.onMessage("CAPABILITIES", capabilitiesHandler);
@@ -88,16 +84,7 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
     });
     expect(typeof command.request_id).toBe("string");
 
-    const capabilitiesMessage = {
-      type: "CAPABILITIES",
-      protocolVersion: "2.0",
-      request_id: command.request_id,
-      supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
-      supported_events: ["STATE", "CAPABILITIES"],
-      features: ["pdf_state", "websocket_control"],
-    };
-
-    socket.receive(capabilitiesMessage);
+    socket.receive(capabilitiesFixture);
 
     expect(client.getState()).toMatchObject({
       connected: true,
@@ -105,24 +92,24 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
       legacyFallback: false,
       capabilities: {
         protocolVersion: "2.0",
-        supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
-        supported_events: ["STATE", "CAPABILITIES"],
-        features: ["pdf_state", "websocket_control"],
+        supported_commands: capabilitiesFixture.supported_commands,
+        supported_events: capabilitiesFixture.supported_events,
+        features: capabilitiesFixture.features,
       },
     });
     expect(states[states.length - 1]?.capabilities?.features).toContain(
       "websocket_control"
     );
     expect(capabilitiesHandler).toHaveBeenCalledTimes(1);
-    expect(capabilitiesHandler).toHaveBeenCalledWith(capabilitiesMessage);
+    expect(capabilitiesHandler).toHaveBeenCalledWith(capabilitiesFixture);
     expect(stateSeenByHandler).toMatchObject({
       capabilityNegotiated: true,
       legacyFallback: false,
       capabilities: {
         protocolVersion: "2.0",
-        supported_commands: ["GET_STATE", "GET_CAPABILITIES"],
-        supported_events: ["STATE", "CAPABILITIES"],
-        features: ["pdf_state", "websocket_control"],
+        supported_commands: capabilitiesFixture.supported_commands,
+        supported_events: capabilitiesFixture.supported_events,
+        features: capabilitiesFixture.features,
       },
     });
   });
@@ -153,5 +140,27 @@ describe("StreamSlateWebSocketClient capabilities negotiation", () => {
       lastError: null,
     });
     expect(errorHandler).not.toHaveBeenCalled();
+  });
+
+  it("delivers rich V2 errors to ERROR handlers when not legacy fallback", async () => {
+    const client = new StreamSlateWebSocketClient();
+    const errorHandler = vi.fn();
+    client.onMessage("ERROR", errorHandler);
+
+    const connectPromise = client.connect();
+    const socket = MockWebSocket.instances[0];
+    socket.open();
+    await connectPromise;
+
+    socket.receive(errorV2Fixture);
+
+    expect(client.getState()).toMatchObject({
+      connected: true,
+      capabilityNegotiated: false,
+      legacyFallback: false,
+      capabilities: null,
+    });
+    expect(errorHandler).toHaveBeenCalledTimes(1);
+    expect(errorHandler).toHaveBeenCalledWith(errorV2Fixture);
   });
 });
