@@ -244,6 +244,8 @@ fn should_broadcast(event: &WebSocketEvent) -> bool {
             | WebSocketEvent::PresenterChanged { .. }
             | WebSocketEvent::PdfOpened { .. }
             | WebSocketEvent::PdfClosed
+            | WebSocketEvent::AnnotationsUpdated { .. }
+            | WebSocketEvent::AnnotationsCleared
     )
 }
 
@@ -252,13 +254,29 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_should_broadcast() {
+    fn test_should_broadcast_state_changes() {
         assert!(should_broadcast(&WebSocketEvent::PageChanged {
             page: 1,
             total_pages: 10
         }));
         assert!(should_broadcast(&WebSocketEvent::ZoomChanged { zoom: 1.5 }));
+        assert!(should_broadcast(&WebSocketEvent::PresenterChanged {
+            active: true
+        }));
+        assert!(should_broadcast(&WebSocketEvent::PdfOpened {
+            path: "/tmp/slides.pdf".to_string(),
+            title: Some("Slides".to_string()),
+            page_count: 10,
+        }));
         assert!(should_broadcast(&WebSocketEvent::PdfClosed));
+        assert!(should_broadcast(&WebSocketEvent::AnnotationsUpdated {
+            annotations: std::collections::HashMap::new(),
+        }));
+        assert!(should_broadcast(&WebSocketEvent::AnnotationsCleared));
+    }
+
+    #[test]
+    fn test_should_not_broadcast_control_or_discovery_events() {
         assert!(!should_broadcast(&WebSocketEvent::Pong));
         assert!(!should_broadcast(&WebSocketEvent::error("test")));
         assert!(!should_broadcast(&WebSocketEvent::capabilities()));
