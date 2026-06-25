@@ -1,10 +1,11 @@
 const WebSocket = require("ws");
 
-// Stream Deck Action Handler
-// This is a simple proof-of-concept script that simulates a Stream Deck plugin
+// Example control surface handler.
+// This proof-of-concept script simulates a Stream Deck-style integration
 // connecting to the StreamSlate WebSocket server.
 
 const STREAMSLATE_WS_URL = "ws://127.0.0.1:11451";
+const PROTOCOL_VERSION = "2.0";
 
 class StreamSlatePlugin {
   constructor() {
@@ -18,7 +19,8 @@ class StreamSlatePlugin {
 
     this.ws.on("open", () => {
       console.log("Connected to StreamSlate!");
-      // Identify or request state
+      this.sendCapabilitiesRequest();
+      // Request current state after capability discovery.
       this.sendMessage({ type: "GET_STATE" });
     });
 
@@ -47,6 +49,14 @@ class StreamSlatePlugin {
     }
   }
 
+  sendCapabilitiesRequest() {
+    this.sendMessage({
+      type: "GET_CAPABILITIES",
+      protocolVersion: PROTOCOL_VERSION,
+      request_id: `test-plugin-capabilities-${Date.now()}`,
+    });
+  }
+
   handleMessage(message) {
     console.log("Received:", message.type);
     if (message.type === "STATE") {
@@ -54,6 +64,16 @@ class StreamSlatePlugin {
       console.log("Total Pages:", message.total_pages);
     } else if (message.type === "PAGE_CHANGED") {
       console.log(`Page changed to ${message.page}`);
+    } else if (message.type === "CAPABILITIES") {
+      console.log("Protocol Version:", message.protocolVersion);
+      console.log(
+        "Supported Commands:",
+        (message.supported_commands || []).join(", ")
+      );
+      console.log(
+        "Supported Events:",
+        (message.supported_events || []).join(", ")
+      );
     }
   }
 
