@@ -17,7 +17,7 @@ Mark it. Show it. – A lightning-fast PDF annotator built specifically for stre
 Teaching live, reacting to research papers, or breaking down patch notes on stream usually means fumbling with clunky viewers or overlay hacks. StreamSlate gives you a purpose-built workspace that:
 • Stays invisible until you need it – auto-hiding chrome and a one-click Presenter Mode keep the focus on content, not UI.
 • Loves the dark – dark-first UI with stream-optimized neon/pastel palettes that pop on camera without glare.
-• Plugs into your streaming stack – local WebSocket API makes OBS Browser Source setup and remote control trivial.
+• Plugs into your streaming stack – presenter-window capture, native output, and a loopback WebSocket API support live production control.
 • Runs light – powered by Tauri + PDF.js; <10 MB install and <80 MB RAM with a 100-page PDF.
 
 ⸻
@@ -44,7 +44,7 @@ Using Pre-built Releases 1. Grab the latest .dmg / .msi / .AppImage from Release
 
 streamslate MyDeck.pdf
 
-    4.	In OBS, Add → Browser Source pointing to http://localhost:11451/presenter.
+    4.	In OBS, capture the Presenter Mode window with Window Capture, or enable NDI/Syphon native output when available.
 
 Building From Source
 
@@ -62,20 +62,20 @@ The first build will compile the Tauri (Rust) side – subsequent runs are much 
 🎛️ Integration Guide
 
 Tool Steps
-OBS Studio Add a Browser Source pointing to `http://localhost:11451/presenter` for a clean overlay view
-WebSocket API Control page navigation, zoom, presenter mode, and annotations over `ws://127.0.0.1:11451` – see [docs/api.md](docs/api.md)
+OBS Studio Capture the Presenter Mode window, or ingest NDI/Syphon native output when those build-time integrations are enabled
+WebSocket API Control page navigation, zoom, presenter mode, and annotations over loopback-only WebSocket JSON at `ws://127.0.0.1:11451` – see [docs/api.md](docs/api.md)
 NDI / Syphon Enable NDI or Syphon output for native video feed to receivers (build-time opt-in; requires NDI SDK or Syphon.framework on macOS)
-Automation Any WebSocket client can send commands – build custom Stream Deck profiles, scripts, or companion apps using the [API reference](docs/api.md)
+Automation Same-machine WebSocket clients can send local-control commands – build scripts or future integration adapters using the [API reference](docs/api.md)
 
 ⸻
 
 🗺️ Roadmap
-• MVP – Dark viewer, highlighter, OBS browser source
+• MVP – Dark viewer, highlighter, presenter-window capture
 • Beta – Annotation save/export, WebSocket remote control
 • 1.0 – Cross-platform builds, auto-update, Cypress E2E ✅
 • 1.1 – Presets/templates, annotation toolbar, Syphon scaffolding ✅
 • 1.2+ – NDI & Syphon output, multi-monitor capture, portable settings sync ✅
-• Next – PDF page inversion, OBS WebSocket integration, mobile companion
+• Next – OBS WebSocket direct scene/source control, Stream Deck plugin, mobile companion, cloud settings sync
 
 See more in ROADMAP.md. Have a feature request? Open an issue or vote on the board!
 
