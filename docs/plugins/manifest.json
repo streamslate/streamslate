@@ -5,7 +5,7 @@
   "sdk_version": 2,
   "platforms": ["mac", "windows"],
   "author": "FlexInfer",
-  "description": "Control StreamSlate PDF presenter from your Stream Deck",
+  "description": "Example proof-of-concept control surface for StreamSlate PDF presenter integrations",
   "icon": "icon",
   "actions": [
     {
