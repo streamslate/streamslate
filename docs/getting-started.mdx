@@ -11,7 +11,7 @@ StreamSlate is a desktop PDF-annotation app designed specifically for live strea
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (version 18 or higher)
+- **Node.js** (version 20 or higher)
 - **Rust** (latest stable version)
 - **npm** or **yarn** package manager
 
@@ -90,14 +90,18 @@ For live streaming, enable Presenter Mode:
 3. Position and resize as needed in your scene
 4. Your PDF annotations will now appear in your stream
 
-### Stream Deck Integration
+### Stream Deck Automation
 
-StreamSlate supports Stream Deck for remote control:
+StreamSlate does not ship an official Stream Deck plugin yet. For now, use
+Stream Deck actions that can call local WebSocket commands, or bridge through
+another automation tool that can send JSON to the StreamSlate WebSocket API.
+See the [Local API](/docs/api) and [V2 API contract](/docs/api-v2-contract) for
+the supported command list.
 
-- **Next Page**: Navigate to the next PDF page
-- **Previous Page**: Go back to the previous page
-- **Clear Annotations**: Remove all annotations from current page
-- **Toggle Presenter**: Show/hide presenter mode
+- **Next Page**: send `{"type":"NEXT_PAGE"}`
+- **Previous Page**: send `{"type":"PREVIOUS_PAGE"}`
+- **Clear Annotations**: send `{"type":"CLEAR_ANNOTATIONS"}`
+- **Toggle Presenter**: send `{"type":"TOGGLE_PRESENTER"}`
 
 ## Keyboard Shortcuts
 
@@ -126,23 +130,24 @@ Access settings through **File > Preferences**:
 
 ### WebSocket API
 
-StreamSlate exposes a WebSocket API on port `11451` for external integrations:
+StreamSlate exposes a WebSocket API on port `11451` for external integrations
+and automation:
 
 ```javascript
-const ws = new WebSocket("ws://localhost:11451");
+const ws = new WebSocket("ws://127.0.0.1:11451");
 
-// Change page
+// Go to a 1-based PDF page number.
 ws.send(
   JSON.stringify({
-    action: "changePage",
+    type: "GO_TO_PAGE",
     page: 5,
   })
 );
 
-// Clear annotations
+// Clear annotations from the current page.
 ws.send(
   JSON.stringify({
-    action: "clearAnnotations",
+    type: "CLEAR_ANNOTATIONS",
   })
 );
 ```
