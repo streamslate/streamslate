@@ -32,7 +32,9 @@ cypress/screenshots
 coverage
 
 # Docs
-docs
+docs/*
+!docs/api-v2-fixtures/
+!docs/api-v2-fixtures/*.json
 *.md
 
 # Environment
