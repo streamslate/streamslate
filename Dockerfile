@@ -21,6 +21,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 # Copy only the frontend sources to avoid cache busts
 COPY index.html ./
 COPY src ./src
+COPY docs/api-v2-fixtures ./docs/api-v2-fixtures
 COPY public ./public
 COPY vite.config.ts tsconfig.json tsconfig.node.json tailwind.config.js postcss.config.js ./
 
