@@ -90,6 +90,22 @@ For live streaming, enable Presenter Mode:
 3. Position and resize as needed in your scene
 4. Your PDF annotations will now appear in your stream
 
+You can also ingest StreamSlate through NDI or Syphon native output when those
+build-time integrations are enabled.
+
+### OBS WebSocket Direct Control
+
+StreamSlate can connect to a local OBS Studio instance over OBS WebSocket v5 for
+production control. This is separate from capturing the StreamSlate presenter
+window or native video output.
+
+1. In OBS, enable **Tools > WebSocket Server Settings**
+2. Keep the default server port `4455`, or update StreamSlate's OBS integration
+   settings to match your OBS host and port
+3. In StreamSlate, open **Settings > Output** and click **Connect** under OBS
+4. Use the OBS scene selector, source visibility toggles, and recording or
+   streaming buttons from StreamSlate
+
 ### Stream Deck Automation
 
 StreamSlate does not ship an official Stream Deck plugin yet. For now, use

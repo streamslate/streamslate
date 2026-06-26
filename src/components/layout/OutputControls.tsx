@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNDI } from "../../hooks/useNDI";
+import { useIntegrationStore } from "../../stores/integration.store";
 
 /**
- * Output controls for screen capture and video output (NDI / Syphon).
+ * Output controls for screen capture, native video output, and OBS control.
  *
  * Surfaces the user-facing capture workflow: pick a display, start/stop
  * capture, and toggle Syphon output.  Debug-only features (legacy IPC
@@ -22,10 +23,47 @@ export const OutputControls: React.FC = () => {
     listDisplays,
     getCaptureStatus,
   } = useNDI();
+  const {
+    obs,
+    config,
+    connectOBS,
+    disconnectOBS,
+    setOBSCurrentScene,
+    setOBSSourceVisibility,
+    startOBSRecording,
+    stopOBSRecording,
+    startOBSStreaming,
+    stopOBSStreaming,
+  } = useIntegrationStore((state) => ({
+    obs: state.obs,
+    config: state.config,
+    connectOBS: state.connectOBS,
+    disconnectOBS: state.disconnectOBS,
+    setOBSCurrentScene: state.setOBSCurrentScene,
+    setOBSSourceVisibility: state.setOBSSourceVisibility,
+    startOBSRecording: state.startOBSRecording,
+    stopOBSRecording: state.stopOBSRecording,
+    startOBSStreaming: state.startOBSStreaming,
+    stopOBSStreaming: state.stopOBSStreaming,
+  }));
 
   const [selectedDisplayId, setSelectedDisplayId] = useState<
     number | undefined
   >(undefined);
+  const [obsBusy, setOBSBusy] = useState<string | null>(null);
+
+  const currentOBSScene = obs.scenes.find(
+    (scene) => scene.name === obs.currentScene
+  );
+
+  const handleOBSAction = async (key: string, action: () => Promise<void>) => {
+    setOBSBusy(key);
+    try {
+      await action();
+    } finally {
+      setOBSBusy(null);
+    }
+  };
 
   useEffect(() => {
     listDisplays();
@@ -148,6 +186,136 @@ export const OutputControls: React.FC = () => {
         Capture a display or the StreamSlate window for NDI/Syphon video output.
         NDI requires the NDI SDK; Syphon is macOS-only.
       </p>
+
+      <div className="pt-4 border-t border-border-secondary space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <span
+            className={`text-xs flex items-center gap-1 ${
+              obs.connected ? "text-green-400" : "text-text-tertiary"
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                obs.connected ? "bg-green-400" : "bg-text-tertiary"
+              }`}
+            />
+            OBS {obs.connected ? (obs.version ?? "connected") : "disconnected"}
+          </span>
+          <button
+            onClick={() =>
+              void handleOBSAction(
+                obs.connected ? "disconnect" : "connect",
+                obs.connected ? disconnectOBS : connectOBS
+              )
+            }
+            disabled={obsBusy !== null}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+              obs.connected
+                ? "bg-surface-tertiary text-text-primary hover:bg-bg-tertiary border border-border-primary"
+                : "bg-primary text-white hover:bg-primary-dark"
+            }`}
+          >
+            {obs.connected ? "Disconnect" : "Connect"}
+          </button>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs text-text-tertiary">OBS scene</label>
+          <select
+            value={obs.currentScene ?? ""}
+            onChange={(e) =>
+              e.target.value
+                ? void handleOBSAction("scene", () =>
+                    setOBSCurrentScene(e.target.value)
+                  )
+                : undefined
+            }
+            disabled={
+              !obs.connected || obs.scenes.length === 0 || obsBusy !== null
+            }
+            className="w-full text-sm bg-surface-secondary border border-border-primary rounded-lg px-3 py-2 disabled:opacity-50 text-text-primary"
+          >
+            <option value="" disabled>
+              No scene selected
+            </option>
+            {obs.scenes.map((scene) => (
+              <option key={scene.name} value={scene.name}>
+                {scene.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {currentOBSScene && currentOBSScene.sources.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-xs text-text-tertiary">Sources</div>
+            <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+              {currentOBSScene.sources.map((source) => (
+                <label
+                  key={source.name}
+                  className="flex items-center gap-2 text-sm text-text-primary bg-surface-secondary border border-border-primary rounded-lg px-3 py-2"
+                >
+                  <input
+                    type="checkbox"
+                    checked={source.visible}
+                    disabled={!obs.connected || obsBusy !== null}
+                    onChange={(e) =>
+                      void handleOBSAction("source", () =>
+                        setOBSSourceVisibility(
+                          currentOBSScene.name,
+                          source.name,
+                          e.target.checked
+                        )
+                      )
+                    }
+                    className="w-4 h-4 text-primary bg-surface-primary border-border-secondary rounded focus:ring-primary focus:ring-2"
+                  />
+                  <span className="truncate">{source.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() =>
+              void handleOBSAction(
+                "record",
+                obs.isRecording ? stopOBSRecording : startOBSRecording
+              )
+            }
+            disabled={!obs.connected || obsBusy !== null}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+              obs.isRecording
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-surface-tertiary text-text-primary hover:bg-bg-tertiary border border-border-primary"
+            }`}
+          >
+            {obs.isRecording ? "Stop Rec" : "Record"}
+          </button>
+          <button
+            onClick={() =>
+              void handleOBSAction(
+                "stream",
+                obs.isStreaming ? stopOBSStreaming : startOBSStreaming
+              )
+            }
+            disabled={!obs.connected || obsBusy !== null}
+            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+              obs.isStreaming
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "bg-surface-tertiary text-text-primary hover:bg-bg-tertiary border border-border-primary"
+            }`}
+          >
+            {obs.isStreaming ? "Stop Live" : "Stream"}
+          </button>
+        </div>
+
+        <div className="text-xs text-text-tertiary">
+          {config.obs.host}:{config.obs.port}
+        </div>
+      </div>
     </div>
   );
 };

@@ -10,7 +10,7 @@
 
 **v1.4.0+** (March 2026)
 
-StreamSlate is production-ready and professional-grade. All README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
+StreamSlate is production-ready and professional-grade. All README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
 
 ## Phases
 
@@ -60,9 +60,14 @@ StreamSlate is production-ready and professional-grade. All README feature claim
 - [x] Verification coverage: 180 → 211 tests (+31)
 - [x] Manual verification checklist for NDI/Syphon/multi-monitor
 
+### 1.6 ✅ (OBS WebSocket Direct Control)
+
+- [x] OBS WebSocket integration (direct scene/source control) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/11))
+- [x] OBS recording and streaming controls
+- [x] Manual verification checklist for local OBS WebSocket control
+
 ### Future
 
-- [ ] OBS WebSocket integration (direct scene/source control) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/11))
 - [ ] Stream Deck plugin (official Elgato SDK v2 plugin) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
 - [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
