@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "rollup -c && node scripts/normalize-bundle.mjs",
+    "validate:package": "node scripts/validate-package.mjs",
+    "preflight": "npm run typecheck && npm test && npm run build && npm run validate:package",
+    "pack:local": "npm run preflight && streamdeck pack ./ai.flexinfer.streamslate.sdPlugin",
     "watch": "rollup -c -w",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

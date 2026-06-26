@@ -75,6 +75,7 @@ PDF text-semantic extraction.
 - [x] Official Elgato SDK v2 plugin runtime under `plugins/streamdeck` ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
 - [x] Stream Deck actions for page navigation, zoom, presenter mode, state refresh, and health check over `ws://127.0.0.1:11451`
 - [x] Local development, install, build, and manual verification documentation
+- [x] Local package preflight validates manifest assets, compiled bundle, version, and runtime metadata
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
 

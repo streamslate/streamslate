@@ -144,6 +144,18 @@ npm run build
 npm run watch
 ```
 
+Run the local package preflight before linking, packing, or handing the plugin
+to another tester:
+
+```bash
+npm run preflight
+```
+
+The preflight typechecks, runs unit tests, rebuilds the compiled plugin bundle,
+and validates that `manifest.json` points to existing bundle and icon assets,
+uses the expected SDK/runtime fields, and stays version-aligned with
+`package.json`.
+
 Link the compiled plugin directory to Stream Deck if the package script does
 not do it automatically:
 
@@ -155,8 +167,8 @@ streamdeck restart ai.flexinfer.streamslate
 Validate and package for local distribution only:
 
 ```bash
-streamdeck validate ./ai.flexinfer.streamslate.sdPlugin
-streamdeck pack ./ai.flexinfer.streamslate.sdPlugin
+npm run validate:package
+npm run pack:local
 ```
 
 Packaging creates a `.streamDeckPlugin` installer. It does not mean the plugin
