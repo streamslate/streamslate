@@ -92,6 +92,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Local development, install, build, and manual verification documentation
 - [x] Local package preflight validating manifest assets, compiled bundle, version, and runtime metadata
 - [x] Validation evidence template for hardware or Stream Deck Mobile testing
+- [x] Marketplace submission checklist for post-validation package review
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 
@@ -114,7 +115,7 @@ Integrated as roadmap 1.8:
 5. **M5** — Multi-monitor UI ✅ `bdff25f`
 6. **M6** — Verification coverage ✅ `cc9fe46`
 7. **M7** — OBS WebSocket direct control ✅ (roadmap 1.6)
-8. **M8** — Stream Deck local plugin/package readiness 🚧 (roadmap 1.7; external validation pending)
+8. **M8** — Stream Deck local plugin/package readiness 🚧 (roadmap 1.7; external validation and publication pending)
 9. **M9** — Text-line annotations ✅ (roadmap 1.8)
 
 ## Acceptance Gate — ALL MET
@@ -144,3 +145,4 @@ Integrated as roadmap 1.8:
 - `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
 - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
 - `.loom/067-plan-v2-s9-streamdeck-validation-evidence-2026-06-26.md`
+- `.loom/068-plan-v2-s10-streamdeck-marketplace-readiness-2026-06-26.md`

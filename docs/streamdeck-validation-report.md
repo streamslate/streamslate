@@ -58,5 +58,11 @@ validation complete.
 
 - Icon and action names reviewed:
 - Manifest metadata reviewed:
+- Marketplace checklist reviewed:
 - Known blockers before submission:
 - Follow-up tasks:
+
+After this report passes, use
+[Stream Deck Marketplace Checklist](streamdeck-marketplace-checklist.md) to
+prepare the submission package. Do not mark Marketplace publication complete
+from this validation report alone.
