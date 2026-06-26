@@ -158,6 +158,19 @@ and validates that `manifest.json` points to existing bundle and icon assets,
 uses the expected SDK/runtime fields, and stays version-aligned with
 `package.json`.
 
+Capture validation evidence metadata before or during a hardware/mobile test:
+
+```bash
+npm run capture:validation -- --output validation-report.md
+```
+
+Add `--probe` while StreamSlate is running to record loopback API capabilities,
+state, and ping evidence:
+
+```bash
+npm run capture:validation -- --probe --output validation-report.md
+```
+
 Link the compiled plugin directory to Stream Deck if the package script does
 not do it automatically:
 

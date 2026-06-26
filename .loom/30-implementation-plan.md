@@ -92,6 +92,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Local development, install, build, and manual verification documentation
 - [x] Local package preflight validating manifest assets, compiled bundle, version, and runtime metadata
 - [x] Validation evidence template for hardware or Stream Deck Mobile testing
+- [x] Validation capture helper for environment metadata and loopback API evidence
 - [x] Marketplace submission checklist for post-validation package review
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review

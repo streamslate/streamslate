@@ -77,6 +77,7 @@ PDF text-semantic extraction.
 - [x] Local development, install, build, and manual verification documentation
 - [x] Local package preflight validates manifest assets, compiled bundle, version, and runtime metadata
 - [x] Validation evidence template prepared for hardware or Stream Deck Mobile testing
+- [x] Validation capture helper prepared for environment metadata and loopback API evidence
 - [x] Marketplace submission checklist prepared for post-validation packaging review
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
