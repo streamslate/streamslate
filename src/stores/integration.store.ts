@@ -430,7 +430,11 @@ export const useIntegrationStore = create<IntegrationStore>()(
               ...state.obs,
               connected:
                 connectionInfo.connected ?? runtimeState.connected ?? true,
-              version: connectionInfo.version ?? runtimeState.version ?? null,
+              version:
+                connectionInfo.version ??
+                runtimeState.version ??
+                runtimeState.connection?.version ??
+                null,
               scenes: runtimeState.scenes ?? scenes,
               currentScene: runtimeState.currentScene ?? null,
               isRecording: runtimeState.isRecording ?? recordStatus.isRecording,

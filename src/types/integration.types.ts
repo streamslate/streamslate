@@ -114,11 +114,15 @@ export interface OBSIntegration {
 
 export interface OBSConnectionInfo {
   connected?: boolean;
-  version: string;
+  host?: string;
+  port?: number;
+  version: string | null;
+  rpcVersion?: number;
 }
 
 export interface OBSRuntimeState {
   connected?: boolean;
+  connection?: OBSConnectionInfo | null;
   version?: string | null;
   scenes?: OBSScene[];
   currentScene?: string | null;

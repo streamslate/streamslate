@@ -203,10 +203,6 @@ struct OutputStatusResponse {
     output_active: bool,
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct EmptyResponse {}
-
 type ObsSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 
 pub struct ObsClient {
@@ -406,7 +402,7 @@ impl ObsClient {
     }
 
     async fn call_empty(&mut self, request_type: &str, request_data: Option<Value>) -> Result<()> {
-        let _: EmptyResponse = self.call(request_type, request_data).await?;
+        let _: Value = self.call(request_type, request_data).await?;
         Ok(())
     }
 
@@ -545,5 +541,12 @@ mod tests {
             serde_json::from_value(json!({ "outputActive": true })).unwrap();
 
         assert!(response.output_active);
+    }
+
+    #[test]
+    fn empty_obs_response_payload_is_accepted_for_commands_without_data() {
+        let response: Value = serde_json::from_value(Value::Null).unwrap();
+
+        assert!(response.is_null());
     }
 }

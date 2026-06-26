@@ -218,9 +218,12 @@ describe("integration.store", () => {
     it("connectOBS uses configured credentials and populates OBS state", async () => {
       obsCommandsMock.connect.mockResolvedValue({
         connected: true,
-        version: "30.1.2",
+        version: null,
       });
       obsCommandsMock.getState.mockResolvedValue({
+        connection: {
+          version: "30.1.2",
+        },
         currentScene: "Main",
         stats: null,
       });
