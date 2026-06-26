@@ -102,6 +102,7 @@ export default [
       ".eslintrc.cjs",
       "src-tauri",
       "scripts/*.cjs",
+      "plugins/streamdeck/ai.flexinfer.streamslate.sdPlugin/bin",
     ],
   },
 ];

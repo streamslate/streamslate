@@ -17,8 +17,6 @@ import {
   type StreamSlateState,
 } from "./protocol.js";
 
-type SocketEvent = "open" | "message" | "close" | "error";
-
 export interface SocketLike {
   readyState: number;
   on(event: "open", listener: () => void): this;
@@ -53,6 +51,9 @@ interface ClientEvents {
 }
 
 type Listener<T> = (value: T) => void;
+type ClientEventListener = {
+  [TKey in keyof ClientEvents]: Listener<ClientEvents[TKey]>;
+}[keyof ClientEvents];
 
 const OPEN_READY_STATE = 1;
 
@@ -67,7 +68,7 @@ export class StreamSlateClient {
   private readonly socketFactory: (url: string) => SocketLike;
   private readonly listeners = new Map<
     keyof ClientEvents,
-    Set<Listener<any>>
+    Set<ClientEventListener>
   >();
   private socket: SocketLike | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -110,12 +111,13 @@ export class StreamSlateClient {
     event: TKey,
     listener: Listener<ClientEvents[TKey]>
   ): () => void {
-    const listeners = this.listeners.get(event) ?? new Set();
-    listeners.add(listener);
+    const listeners =
+      this.listeners.get(event) ?? new Set<ClientEventListener>();
+    listeners.add(listener as ClientEventListener);
     this.listeners.set(event, listeners);
 
     return () => {
-      listeners.delete(listener);
+      listeners.delete(listener as ClientEventListener);
       if (listeners.size === 0) {
         this.listeners.delete(event);
       }
@@ -344,7 +346,7 @@ export class StreamSlateClient {
     }
 
     for (const listener of listeners) {
-      listener(value);
+      (listener as Listener<ClientEvents[TKey]>)(value);
     }
   }
 }
