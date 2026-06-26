@@ -91,6 +91,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Actions for page navigation, zoom, presenter mode, state refresh, and health check over local WebSocket control
 - [x] Local development, install, build, and manual verification documentation
 - [x] Local package preflight validating manifest assets, compiled bundle, version, and runtime metadata
+- [x] Validation evidence template for hardware or Stream Deck Mobile testing
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 
@@ -142,3 +143,4 @@ Integrated as roadmap 1.8:
 - `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`
 - `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
 - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
+- `.loom/067-plan-v2-s9-streamdeck-validation-evidence-2026-06-26.md`
