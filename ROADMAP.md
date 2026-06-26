@@ -8,9 +8,13 @@
 
 ## Current Status
 
-**Post-1.6 / 1.7 in progress** (June 2026)
+**1.8 text-line annotations complete / 1.7 validation in progress** (June 2026)
 
 StreamSlate is production-ready and professional-grade. All completed README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
+
+Underline and strikethrough are available as geometry-based visual annotation
+tools. They can be exported into burned-in PDFs, but they do not imply OCR or
+PDF text-semantic extraction.
 
 ## Phases
 
@@ -73,6 +77,12 @@ StreamSlate is production-ready and professional-grade. All completed README fea
 - [x] Local development, install, build, and manual verification documentation
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
+
+### 1.8 ✅ (Text-Line Annotations)
+
+- [x] Underline and strikethrough annotation types restored as supported tools
+- [x] PDF export burns in underline and strikethrough marks at matching page coordinates
+- [x] Documentation describes them as visual geometry annotations, not OCR or PDF text extraction
 
 ### Future
 
