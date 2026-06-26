@@ -35,6 +35,8 @@ Useful upstream references:
 - [Stream Deck CLI introduction](https://docs.elgato.com/streamdeck/cli/intro/)
 - [Stream Deck manifest reference](https://docs.elgato.com/streamdeck/sdk/references/manifest/)
 - [Stream Deck distribution](https://docs.elgato.com/streamdeck/sdk/introduction/distribution/)
+- [Stream Deck CLI validate](https://docs.elgato.com/streamdeck/cli/commands/validate/)
+- [Stream Deck CLI pack](https://docs.elgato.com/streamdeck/cli/commands/pack/)
 
 ## Repository Layout
 
@@ -173,6 +175,12 @@ npm run pack:local
 
 Packaging creates a `.streamDeckPlugin` installer. It does not mean the plugin
 has been reviewed, DRM-processed, or published on Elgato Marketplace.
+
+Before any Marketplace submission, complete hardware or Stream Deck Mobile
+validation and then use the
+[Stream Deck Marketplace Checklist](streamdeck-marketplace-checklist.md). Keep
+Marketplace publication unclaimed until Elgato review and publication are
+actually complete.
 
 ## Manual Verification
 
