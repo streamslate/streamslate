@@ -433,10 +433,8 @@ export const useIntegrationStore = create<IntegrationStore>()(
               version: connectionInfo.version ?? runtimeState.version ?? null,
               scenes: runtimeState.scenes ?? scenes,
               currentScene: runtimeState.currentScene ?? null,
-              isRecording:
-                runtimeState.isRecording ?? recordStatus.isRecording,
-              isStreaming:
-                runtimeState.isStreaming ?? streamStatus.isStreaming,
+              isRecording: runtimeState.isRecording ?? recordStatus.isRecording,
+              isStreaming: runtimeState.isStreaming ?? streamStatus.isStreaming,
               stats: runtimeState.stats ?? null,
             },
           }));

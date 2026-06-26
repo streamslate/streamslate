@@ -46,9 +46,7 @@ export interface OBSSetSourceVisibilityOptions {
 }
 
 export class OBSCommands {
-  static async connect(
-    options: OBSConnectOptions
-  ): Promise<OBSConnectionInfo> {
+  static async connect(options: OBSConnectOptions): Promise<OBSConnectionInfo> {
     return await invoke<OBSConnectionInfo>("obs_connect", {
       host: options.host,
       port: options.port,
