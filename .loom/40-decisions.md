@@ -1,5 +1,40 @@
 # Decisions
 
+## 2026-06-26: Treat Stream Deck Hardware and Marketplace as External Validation Gates
+
+- Decision:
+  - Mark Stream Deck local plugin/package readiness as complete, but keep hardware or Stream Deck Mobile validation and Marketplace publication open until there is direct external evidence.
+- Rationale:
+  - The repo now contains an official Elgato SDK v2 plugin runtime, action set, compiled package output, and local preflight validation, but this coding environment cannot prove physical hardware/mobile behavior or Elgato review/publication.
+- Alternatives considered:
+  - Mark the whole Stream Deck milestone complete after local preflight.
+  - Keep the local plugin work unclaimed until hardware validation is available.
+- Consequences:
+  - README and ROADMAP can truthfully claim local SDK v2 plugin/package support while preserving the validation caveat.
+  - The next Stream Deck slice should gather hardware/mobile evidence or prepare Marketplace submission only after validation passes.
+- Sources:
+  - `ROADMAP.md`
+  - `docs/streamdeck-plugin.md`
+  - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
+
+## 2026-06-26: Restore Underline and Strikethrough as Visual Geometry Annotations
+
+- Decision:
+  - Treat underline and strikethrough as supported visual annotation tools, not OCR-backed or PDF text-semantic operations.
+- Rationale:
+  - The implementation uses the existing annotation geometry model (`x`, `y`, `width`, `height`, `color`, `opacity`, and `strokeWidth`) consistently across drag creation, SVG rendering, and PDF export. This gives streamers the visible marks they expect without overclaiming text extraction.
+- Alternatives considered:
+  - Wait for PDF text selection/OCR before restoring these tools.
+  - Keep them out of the tool palette despite complete visual rendering/export support.
+- Consequences:
+  - Public docs must keep describing underline/strikethrough as visual marks.
+  - Future semantic text features should be scoped separately.
+- Sources:
+  - `src/types/pdf.types.ts`
+  - `src/components/pdf/AnnotationLayer.tsx`
+  - `src/lib/pdf/exporter.ts`
+  - `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
+
 ## 2026-03-14: Close Feature Truthfulness Gaps Before Adding New Features
 
 - Decision:

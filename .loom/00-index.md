@@ -12,15 +12,16 @@
 
 ## Current Goal
 
-**COMPLETE.** StreamSlate is at professional grade. All feature truthfulness gaps are closed, implementation mismatches resolved, and verification coverage expanded. Every README claim is backed by working code.
+**Professional-grade baseline complete; roadmap expansion in progress.** StreamSlate's completed public claims are backed by working code, and recent roadmap slices added OBS WebSocket control, local Stream Deck SDK v2 plugin packaging, and visual text-line annotations.
 
 ## Current Status
 
-- Version: `1.4.0` (aligned across `package.json`, `Cargo.toml`, `tauri.conf.json`)
+- Version: `1.5.0` (`package.json`)
 - CI: full cross-platform pipeline (macOS, Windows, Linux)
-- Codebase index: 593 chunks (lexical, current)
+- Codebase index: lexical baseline last recorded at 593 chunks
 - Feature reality audit: complete (2026-03-14)
 - **Professional grade remediation: M1–M6 complete (2026-03-14)**
+- **Roadmap expansion: 1.6 OBS complete, 1.8 text-line annotations complete, 1.7 Stream Deck local package/preflight complete with external validation pending (2026-06-26)**
 
 ## Completed Milestones (2026-03-14)
 
@@ -41,11 +42,18 @@
 - **Unused annotation types** → Removed from enum (UNDERLINE, STRIKETHROUGH, STAMP, NOTE)
 - **OBS stub** → Isolated with clarifying comment, not exposed in UI
 
+## Roadmap Expansion Status
+
+- **1.6 OBS WebSocket Direct Control** → Complete; Tauri OBS WebSocket v5 commands and Output settings scene/source/recording/streaming controls are implemented.
+- **1.7 Stream Deck Plugin** → Local SDK v2 plugin runtime, action set, build, package validation, and preflight are complete. Hardware or Stream Deck Mobile validation and Marketplace publication remain external follow-ups.
+- **1.8 Text-Line Annotations** → Complete; underline and strikethrough are supported as visual geometry annotations, including tool palette, drag preview, SVG rendering, and PDF export.
+
 ## Remaining Future Work
 
-- M7: OBS WebSocket Client (optional)
-- M8: Stream Deck Plugin (optional)
-- M9: Underline/Strikethrough Annotations (optional)
+- Stream Deck hardware or Stream Deck Mobile validation
+- Stream Deck Marketplace packaging/publication after validation evidence
+- Mobile companion (iPad side-car)
+- Cloud sync for settings
 
 ## Success Criteria — ALL MET
 
@@ -59,5 +67,5 @@
 
 - `.loom/10-research.md` (feature reality audit, 2026-03-14)
 - `.loom/30-implementation-plan.md` (execution plan)
-- `package.json:4`, `src-tauri/Cargo.toml:3`, `src-tauri/tauri.conf.json:3`
+- `package.json:4`, `ROADMAP.md`, `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`, `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`, `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
 - MCP: `codebase_stats(repo_id="streamslate")` → 593 chunks

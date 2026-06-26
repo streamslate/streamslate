@@ -1,5 +1,24 @@
 # Worklog
 
+## 2026-06-26: RALPH Planning Reconciliation
+
+- What changed:
+  - Ran the RALPH review phase against `ROADMAP.md`, root `.loom` planning docs, recent slice mirrors, and agent-context recall.
+  - Confirmed current `origin/main` already includes roadmap 1.6 OBS WebSocket direct control, roadmap 1.7 Stream Deck local plugin/package preflight, and roadmap 1.8 text-line annotations.
+  - Updated root `.loom` context docs so the index, product spec, implementation plan, and decisions reflect shipped 1.6/1.8 work and the still-open external Stream Deck validation gates.
+- Why:
+  - Root `.loom` docs still described M7-M9 as optional future backlog even though the recent roadmap and slice mirrors had advanced. This created stale planning context for future agents.
+- What's next:
+  - Run hardware or Stream Deck Mobile validation and record evidence.
+  - Prepare Marketplace packaging/publication only after validation evidence exists.
+  - Continue mobile companion or cloud sync only as separately scoped roadmap slices.
+- Sources:
+  - `ROADMAP.md`
+  - `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`
+  - `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
+  - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
+  - Agent-context session `dfaa45b243fa0b4a`
+
 ## 2026-03-14 (session 2): M1–M6 Execution — Professional Grade Complete
 
 - What changed:
