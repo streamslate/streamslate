@@ -5,6 +5,16 @@ against Stream Deck hardware or Stream Deck Mobile. Commit the completed report,
 or attach it to the validation issue or MR, before marking roadmap 1.7 hardware
 validation complete.
 
+For a prefilled environment and loopback API evidence capture, run this from
+`plugins/streamdeck`:
+
+```bash
+npm run capture:validation -- --probe --output validation-report.md
+```
+
+Copy the generated details into this report, or attach the generated file as
+evidence alongside the completed manual action results.
+
 ## Summary
 
 - Date:
@@ -25,6 +35,7 @@ validation complete.
 - Stream Deck CLI version:
 - StreamSlate launch command:
 - Plugin install method: link | local package
+- Validation capture artifact:
 
 ## Preflight
 
