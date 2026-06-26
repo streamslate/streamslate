@@ -37,6 +37,8 @@ import {
   clampOpacity,
   hexToRgba,
   getPointsFromAnnotation,
+  getTextLineY,
+  isTextLineAnnotationType,
   type ResizeHandle,
 } from "../../lib/annotations/drawing";
 
@@ -316,6 +318,47 @@ const AnnotationShape: React.FC<AnnotationShapeProps> = ({
       );
     }
 
+    case AnnotationType.UNDERLINE:
+    case AnnotationType.STRIKETHROUGH: {
+      const startX = annotation.x * viewport.scale;
+      const endX = (annotation.x + annotation.width) * viewport.scale;
+      const lineY =
+        getTextLineY(annotation.type, annotation.y, annotation.height) *
+        viewport.scale;
+      const hitStrokeWidth = Math.max(12, (annotation.strokeWidth ?? 2) + 8);
+
+      return (
+        <g>
+          <line
+            x1={startX}
+            y1={lineY}
+            x2={endX}
+            y2={lineY}
+            data-annotation-id={annotation.id}
+            data-annotation-type={annotation.type}
+            stroke="transparent"
+            strokeWidth={hitStrokeWidth}
+            cursor="pointer"
+            pointerEvents="stroke"
+            onMouseDown={(e: React.MouseEvent) => onMouseDown(annotation, e)}
+          />
+          <line
+            data-line-role="visible"
+            x1={startX}
+            y1={lineY}
+            x2={endX}
+            y2={lineY}
+            stroke={isSelected ? selectionStroke : annotation.color}
+            strokeWidth={isSelected ? strokeWidth + 1 : strokeWidth}
+            strokeOpacity={annotation.opacity}
+            strokeLinecap="round"
+            cursor="pointer"
+            pointerEvents="none"
+          />
+        </g>
+      );
+    }
+
     case AnnotationType.TEXT: {
       const x = annotation.x * viewport.scale;
       const y = annotation.y * viewport.scale;
@@ -486,6 +529,22 @@ const DrawingPreview: React.FC<DrawingPreviewProps> = ({
         />
       );
 
+    case AnnotationType.UNDERLINE:
+    case AnnotationType.STRIKETHROUGH: {
+      const lineY = getTextLineY(activeTool, y, height);
+      return (
+        <line
+          {...previewProps}
+          data-testid="drawing-preview-text-line"
+          x1={x}
+          y1={lineY}
+          x2={x + width}
+          y2={lineY}
+          strokeLinecap="round"
+        />
+      );
+    }
+
     case AnnotationType.FREE_DRAW: {
       if (points.length < 2) return null;
       const pathData = pointsToSmoothPath(points, viewport.scale);
@@ -531,7 +590,10 @@ const SelectionHandles: React.FC<SelectionHandlesProps> = ({
   const surface = "rgb(var(--color-surface-primary))";
   const r = 5;
 
-  if (selectedAnnotation.type === AnnotationType.FREE_DRAW) {
+  if (
+    selectedAnnotation.type === AnnotationType.FREE_DRAW ||
+    isTextLineAnnotationType(selectedAnnotation.type)
+  ) {
     return (
       <rect
         x={selectionBox.x}
