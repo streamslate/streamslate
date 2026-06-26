@@ -108,12 +108,14 @@ window or native video output.
 
 ### Stream Deck Automation
 
-The official Stream Deck SDK v2 plugin is in development and is not published
-on Elgato Marketplace. Until a release includes the plugin, use Stream Deck
-actions that can call local WebSocket commands, or bridge through another
-automation tool that can send JSON to the StreamSlate WebSocket API. Developers
-can follow the [Stream Deck plugin development guide](/docs/streamdeck-plugin)
-once the `plugins/streamdeck` runtime package is present.
+The official Stream Deck SDK v2 plugin lives under `plugins/streamdeck` for
+local development and validation. It is not published on Elgato Marketplace,
+and hardware or Stream Deck Mobile verification is still tracked separately.
+Developers can follow the
+[Stream Deck plugin development guide](/docs/streamdeck-plugin). For released
+builds that do not include the plugin yet, use Stream Deck actions that can call
+local WebSocket commands, or bridge through another automation tool that can
+send JSON to the StreamSlate WebSocket API.
 
 See the [Local API](/docs/api) and [V2 API contract](/docs/api-v2-contract) for
 the supported command list.

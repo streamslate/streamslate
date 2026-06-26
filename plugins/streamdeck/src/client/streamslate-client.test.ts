@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  StreamSlateClient,
-  type SocketLike,
-} from "./streamslate-client.js";
+import { StreamSlateClient, type SocketLike } from "./streamslate-client.js";
 
 type MockEvent = "open" | "message" | "close" | "error";
 
 class MockSocket implements SocketLike {
   readyState = 0;
   readonly sent: string[] = [];
-  private readonly listeners = new Map<MockEvent, Set<(value?: unknown) => void>>();
+  private readonly listeners = new Map<
+    MockEvent,
+    Set<(value?: unknown) => void>
+  >();
 
   on(event: "open", listener: () => void): this;
   on(event: "message", listener: (data: string) => void): this;
@@ -18,7 +18,7 @@ class MockSocket implements SocketLike {
   on(event: "error", listener: (error: Error) => void): this;
   on(
     event: MockEvent,
-    listener: (() => void) | ((data: string) => void) | ((error: Error) => void),
+    listener: (() => void) | ((data: string) => void) | ((error: Error) => void)
   ): this {
     const listeners = this.listeners.get(event) ?? new Set();
     listeners.add(listener as (value?: unknown) => void);
@@ -117,7 +117,11 @@ describe("StreamSlateClient", () => {
     });
     socket.fail(new Error("connection refused"));
 
-    expect(client.state).toMatchObject({ page: 3, total_pages: 10, zoom: 1.25 });
+    expect(client.state).toMatchObject({
+      page: 3,
+      total_pages: 10,
+      zoom: 1.25,
+    });
     expect(states).toContain(3);
     expect(errors).toContain("connection refused");
   });

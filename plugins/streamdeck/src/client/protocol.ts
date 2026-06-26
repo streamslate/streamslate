@@ -118,17 +118,17 @@ export const defaultStreamSlateState = (): StreamSlateState => ({
 
 export const streamSlateUrl = (
   host: string = STREAMSLATE_HOST,
-  port: number = STREAMSLATE_PORT,
+  port: number = STREAMSLATE_PORT
 ): string => `ws://${host}:${port}`;
 
 export const isStreamSlateCommandName = (
-  value: unknown,
+  value: unknown
 ): value is StreamSlateCommandName =>
   typeof value === "string" &&
   streamSlateCommands.includes(value as StreamSlateCommandName);
 
 export const isStreamSlateEventName = (
-  value: unknown,
+  value: unknown
 ): value is StreamSlateEventName =>
   typeof value === "string" &&
   streamSlateEvents.includes(value as StreamSlateEventName);
@@ -141,7 +141,7 @@ export const buildStreamSlateCommand = <
 >(
   type: TCommand,
   payload: StreamSlateCommandPayloads[TCommand],
-  requestId: string,
+  requestId: string
 ): StreamSlateCommand<TCommand> =>
   ({
     type,

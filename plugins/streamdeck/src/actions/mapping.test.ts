@@ -21,6 +21,14 @@ describe("Stream Deck action mapping", () => {
       type: "TOGGLE_PRESENTER",
       payload: {},
     });
+    expect(commandForAction(ACTION_UUIDS.refreshState)).toEqual({
+      type: "GET_STATE",
+      payload: {},
+    });
+    expect(commandForAction(ACTION_UUIDS.healthCheck)).toEqual({
+      type: "PING",
+      payload: {},
+    });
   });
 
   it("normalizes configured page and zoom payloads", () => {
@@ -44,16 +52,22 @@ describe("Stream Deck action mapping", () => {
     };
 
     expect(titleForAction(ACTION_UUIDS.nextPage, {}, state, true)).toBe(
-      "Next\n4/9",
+      "Next\n4/9"
     );
     expect(titleForAction(ACTION_UUIDS.togglePresenter, {}, state, true)).toBe(
-      "Presenter\nOn",
+      "Presenter\nOn"
     );
-    expect(titleForAction(ACTION_UUIDS.setZoom, { zoom: 1.5 }, state, true)).toBe(
-      "Zoom\n150%",
-    );
+    expect(
+      titleForAction(ACTION_UUIDS.setZoom, { zoom: 1.5 }, state, true)
+    ).toBe("Zoom\n150%");
     expect(titleForAction(ACTION_UUIDS.nextPage, {}, state, false)).toBe(
-      "StreamSlate\nOffline",
+      "StreamSlate\nOffline"
+    );
+    expect(titleForAction(ACTION_UUIDS.refreshState, {}, state, true)).toBe(
+      "Refresh\nState"
+    );
+    expect(titleForAction(ACTION_UUIDS.healthCheck, {}, state, true)).toBe(
+      "Health\nCheck"
     );
   });
 
@@ -64,6 +78,8 @@ describe("Stream Deck action mapping", () => {
       "TOGGLE_PRESENTER",
       "GO_TO_PAGE",
       "SET_ZOOM",
+      "GET_STATE",
+      "PING",
     ]);
   });
 });

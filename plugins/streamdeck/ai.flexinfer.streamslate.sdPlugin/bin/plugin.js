@@ -9200,9 +9200,7 @@ class StreamSlateClient {
             ? null
             : {
                 ...this.currentCapabilities,
-                supported_commands: [
-                    ...this.currentCapabilities.supported_commands,
-                ],
+                supported_commands: [...this.currentCapabilities.supported_commands],
                 supported_events: [...this.currentCapabilities.supported_events],
                 features: [...this.currentCapabilities.features],
             };
@@ -9460,6 +9458,8 @@ const ACTION_UUIDS = {
     togglePresenter: "ai.flexinfer.streamslate.toggle-presenter",
     goToPage: "ai.flexinfer.streamslate.go-to-page",
     setZoom: "ai.flexinfer.streamslate.set-zoom",
+    refreshState: "ai.flexinfer.streamslate.refresh-state",
+    healthCheck: "ai.flexinfer.streamslate.health-check",
 };
 
 const normalizePage = (value) => {
@@ -9489,13 +9489,20 @@ const commandForAction = (actionUuid, settings = {}) => {
                 type: "SET_ZOOM",
                 payload: { zoom: normalizeZoom(settings.zoom) },
             };
+        case ACTION_UUIDS.refreshState:
+            return { type: "GET_STATE", payload: {} };
+        case ACTION_UUIDS.healthCheck:
+            return { type: "PING", payload: {} };
     }
 };
 const titleForAction = (actionUuid, settings, state, connected) => {
     if (!connected) {
         return "StreamSlate\nOffline";
     }
-    if (!state.pdf_loaded && actionUuid !== ACTION_UUIDS.togglePresenter) {
+    if (!state.pdf_loaded &&
+        actionUuid !== ACTION_UUIDS.togglePresenter &&
+        actionUuid !== ACTION_UUIDS.refreshState &&
+        actionUuid !== ACTION_UUIDS.healthCheck) {
         return "No PDF";
     }
     switch (actionUuid) {
@@ -9509,6 +9516,10 @@ const titleForAction = (actionUuid, settings, state, connected) => {
             return `Page\n${normalizePage(settings.page)}`;
         case ACTION_UUIDS.setZoom:
             return `Zoom\n${Math.round(normalizeZoom(settings.zoom) * 100)}%`;
+        case ACTION_UUIDS.refreshState:
+            return "Refresh\nState";
+        case ACTION_UUIDS.healthCheck:
+            return "Health\nCheck";
     }
 };
 const pageTitle = (label, page, totalPages) => totalPages > 0 ? `${label}\n${page}/${totalPages}` : label;
@@ -9572,6 +9583,29 @@ let GoToPageAction = (() => {
     return _classThis;
 })();
 
+let HealthCheckAction = (() => {
+    let _classDecorators = [action({ UUID: ACTION_UUIDS.healthCheck })];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    let _classSuper = StreamSlateKeyAction;
+    (class extends _classSuper {
+        static { _classThis = this; }
+        static {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        }
+        uuid = ACTION_UUIDS.healthCheck;
+        constructor(client, registry) {
+            super(client, registry);
+        }
+    });
+    return _classThis;
+})();
+
 let NextPageAction = (() => {
     let _classDecorators = [action({ UUID: ACTION_UUIDS.nextPage })];
     let _classDescriptor;
@@ -9613,6 +9647,32 @@ let PreviousPageAction = (() => {
         uuid = ACTION_UUIDS.previousPage;
         constructor(client, registry) {
             super(client, registry);
+        }
+    });
+    return _classThis;
+})();
+
+let RefreshStateAction = (() => {
+    let _classDecorators = [action({ UUID: ACTION_UUIDS.refreshState })];
+    let _classDescriptor;
+    let _classExtraInitializers = [];
+    let _classThis;
+    let _classSuper = StreamSlateKeyAction;
+    (class extends _classSuper {
+        static { _classThis = this; }
+        static {
+            const _metadata = typeof Symbol === "function" && Symbol.metadata ? Object.create(_classSuper[Symbol.metadata] ?? null) : void 0;
+            __esDecorate(null, _classDescriptor = { value: _classThis }, _classDecorators, { kind: "class", name: _classThis.name, metadata: _metadata }, null, _classExtraInitializers);
+            _classThis = _classDescriptor.value;
+            if (_metadata) Object.defineProperty(_classThis, Symbol.metadata, { enumerable: true, configurable: true, writable: true, value: _metadata });
+            __runInitializers(_classThis, _classExtraInitializers);
+        }
+        uuid = ACTION_UUIDS.refreshState;
+        constructor(client, registry) {
+            super(client, registry);
+        }
+        async afterSuccessfulSend(action) {
+            await action.showOk();
         }
     });
     return _classThis;
@@ -9710,6 +9770,8 @@ streamDeck.actions.registerAction(new PreviousPageAction(streamSlateClient, regi
 streamDeck.actions.registerAction(new TogglePresenterAction(streamSlateClient, registry));
 streamDeck.actions.registerAction(new GoToPageAction(streamSlateClient, registry));
 streamDeck.actions.registerAction(new SetZoomAction(streamSlateClient, registry));
+streamDeck.actions.registerAction(new RefreshStateAction(streamSlateClient, registry));
+streamDeck.actions.registerAction(new HealthCheckAction(streamSlateClient, registry));
 streamSlateClient.on("error", (error) => {
     streamDeck.logger.warn(`StreamSlate WebSocket error: ${error.message}`);
 });

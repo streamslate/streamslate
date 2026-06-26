@@ -4,6 +4,8 @@ export const ACTION_UUIDS = {
   togglePresenter: "ai.flexinfer.streamslate.toggle-presenter",
   goToPage: "ai.flexinfer.streamslate.go-to-page",
   setZoom: "ai.flexinfer.streamslate.set-zoom",
+  refreshState: "ai.flexinfer.streamslate.refresh-state",
+  healthCheck: "ai.flexinfer.streamslate.health-check",
 } as const;
 
 export type StreamSlateActionUuid =

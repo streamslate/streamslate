@@ -20,11 +20,13 @@ export type ActionCommandBinding =
       payload: StreamSlateCommandPayloads["TOGGLE_PRESENTER"];
     }
   | { type: "GO_TO_PAGE"; payload: StreamSlateCommandPayloads["GO_TO_PAGE"] }
-  | { type: "SET_ZOOM"; payload: StreamSlateCommandPayloads["SET_ZOOM"] };
+  | { type: "SET_ZOOM"; payload: StreamSlateCommandPayloads["SET_ZOOM"] }
+  | { type: "GET_STATE"; payload: StreamSlateCommandPayloads["GET_STATE"] }
+  | { type: "PING"; payload: StreamSlateCommandPayloads["PING"] };
 
 export const commandForAction = (
   actionUuid: StreamSlateActionUuid,
-  settings: StreamSlateActionSettings = {},
+  settings: StreamSlateActionSettings = {}
 ): ActionCommandBinding => {
   switch (actionUuid) {
     case ACTION_UUIDS.nextPage:
@@ -43,6 +45,10 @@ export const commandForAction = (
         type: "SET_ZOOM",
         payload: { zoom: normalizeZoom(settings.zoom) },
       };
+    case ACTION_UUIDS.refreshState:
+      return { type: "GET_STATE", payload: {} };
+    case ACTION_UUIDS.healthCheck:
+      return { type: "PING", payload: {} };
   }
 };
 
@@ -56,13 +62,18 @@ export const titleForAction = (
     pdf_loaded: boolean;
     presenter_active: boolean;
   },
-  connected: boolean,
+  connected: boolean
 ): string => {
   if (!connected) {
     return "StreamSlate\nOffline";
   }
 
-  if (!state.pdf_loaded && actionUuid !== ACTION_UUIDS.togglePresenter) {
+  if (
+    !state.pdf_loaded &&
+    actionUuid !== ACTION_UUIDS.togglePresenter &&
+    actionUuid !== ACTION_UUIDS.refreshState &&
+    actionUuid !== ACTION_UUIDS.healthCheck
+  ) {
     return "No PDF";
   }
 
@@ -77,11 +88,23 @@ export const titleForAction = (
       return `Page\n${normalizePage(settings.page)}`;
     case ACTION_UUIDS.setZoom:
       return `Zoom\n${Math.round(normalizeZoom(settings.zoom) * 100)}%`;
+    case ACTION_UUIDS.refreshState:
+      return "Refresh\nState";
+    case ACTION_UUIDS.healthCheck:
+      return "Health\nCheck";
   }
 };
 
-export const streamSlateCommandNamesForManifest = (): StreamSlateCommandName[] =>
-  ["NEXT_PAGE", "PREVIOUS_PAGE", "TOGGLE_PRESENTER", "GO_TO_PAGE", "SET_ZOOM"];
+export const streamSlateCommandNamesForManifest =
+  (): StreamSlateCommandName[] => [
+    "NEXT_PAGE",
+    "PREVIOUS_PAGE",
+    "TOGGLE_PRESENTER",
+    "GO_TO_PAGE",
+    "SET_ZOOM",
+    "GET_STATE",
+    "PING",
+  ];
 
 const pageTitle = (label: string, page: number, totalPages: number): string =>
   totalPages > 0 ? `${label}\n${page}/${totalPages}` : label;

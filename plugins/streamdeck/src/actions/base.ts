@@ -18,7 +18,7 @@ export abstract class StreamSlateKeyAction extends SingletonAction {
 
   constructor(
     protected readonly client: StreamSlateClient,
-    private readonly registry: StreamSlateActionRegistry,
+    private readonly registry: StreamSlateActionRegistry
   ) {
     super();
   }
@@ -28,7 +28,7 @@ export abstract class StreamSlateKeyAction extends SingletonAction {
       this.registry.register(
         this.uuid,
         ev.action,
-        ev.payload.settings as StreamSlateActionSettings,
+        ev.payload.settings as StreamSlateActionSettings
       );
     }
   }
@@ -41,7 +41,7 @@ export abstract class StreamSlateKeyAction extends SingletonAction {
     if (ev.action.isKey()) {
       this.registry.updateSettings(
         ev.action,
-        ev.payload.settings as StreamSlateActionSettings,
+        ev.payload.settings as StreamSlateActionSettings
       );
     }
   }
@@ -49,7 +49,7 @@ export abstract class StreamSlateKeyAction extends SingletonAction {
   override async onKeyDown(ev: KeyDownEvent): Promise<void> {
     const binding = commandForAction(
       this.uuid,
-      ev.payload.settings as StreamSlateActionSettings,
+      ev.payload.settings as StreamSlateActionSettings
     );
     const result = this.client.send(binding.type, binding.payload);
 

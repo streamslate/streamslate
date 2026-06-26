@@ -1,8 +1,6 @@
 import type { KeyAction } from "@elgato/streamdeck";
 
-import {
-  type StreamSlateClient,
-} from "../client/streamslate-client.js";
+import { type StreamSlateClient } from "../client/streamslate-client.js";
 import { ACTION_UUIDS, type StreamSlateActionUuid } from "./ids.js";
 import { titleForAction } from "./mapping.js";
 import type { StreamSlateActionSettings } from "./settings.js";
@@ -24,7 +22,7 @@ export class StreamSlateActionRegistry {
   register(
     uuid: StreamSlateActionUuid,
     action: KeyAction,
-    settings: StreamSlateActionSettings,
+    settings: StreamSlateActionSettings
   ): void {
     this.visibleActions.set(action.id, { action, uuid, settings });
     void this.refresh(action.id);
@@ -45,7 +43,9 @@ export class StreamSlateActionRegistry {
   }
 
   private async refreshAll(): Promise<void> {
-    await Promise.all([...this.visibleActions.keys()].map((id) => this.refresh(id)));
+    await Promise.all(
+      [...this.visibleActions.keys()].map((id) => this.refresh(id))
+    );
   }
 
   private async refresh(actionId: string): Promise<void> {
@@ -57,7 +57,7 @@ export class StreamSlateActionRegistry {
     const connected = this.client.connectionStatus === "connected";
     const state = this.client.state;
     await visible.action.setTitle(
-      titleForAction(visible.uuid, visible.settings, state, connected),
+      titleForAction(visible.uuid, visible.settings, state, connected)
     );
 
     if (visible.uuid === ACTION_UUIDS.togglePresenter) {

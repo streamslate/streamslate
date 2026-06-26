@@ -5,7 +5,8 @@
   "description": "First-party StreamSlate Stream Deck plugin",
   "type": "module",
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && node scripts/normalize-bundle.mjs",
+    "watch": "rollup -c -w",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

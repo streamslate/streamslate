@@ -5,6 +5,7 @@
     "moduleResolution": "Bundler",
     "strict": true,
     "noEmit": true,
+    "importHelpers": true,
     "experimentalDecorators": false,
     "skipLibCheck": true,
     "types": ["node"],

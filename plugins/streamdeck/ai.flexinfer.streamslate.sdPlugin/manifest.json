@@ -63,6 +63,30 @@
       ],
       "Tooltip": "Set StreamSlate to a configured zoom level",
       "UUID": "ai.flexinfer.streamslate.set-zoom"
+    },
+    {
+      "Icon": "imgs/plugin",
+      "Name": "Refresh State",
+      "States": [
+        {
+          "Image": "imgs/plugin",
+          "Title": "Refresh"
+        }
+      ],
+      "Tooltip": "Refresh the current StreamSlate page, zoom, and presenter state",
+      "UUID": "ai.flexinfer.streamslate.refresh-state"
+    },
+    {
+      "Icon": "imgs/plugin",
+      "Name": "Health Check",
+      "States": [
+        {
+          "Image": "imgs/plugin",
+          "Title": "Ping"
+        }
+      ],
+      "Tooltip": "Send a StreamSlate WebSocket health check",
+      "UUID": "ai.flexinfer.streamslate.health-check"
     }
   ],
   "Author": "FlexInfer",

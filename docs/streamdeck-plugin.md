@@ -12,8 +12,10 @@ WebSocket demo and not an installable Stream Deck plugin.
   `ws://127.0.0.1:11451`.
 - Marketplace status: not published or submitted. Treat the plugin as local
   development / validation work until a release explicitly says otherwise.
-- If `plugins/streamdeck/**` is absent in your checkout, the runtime package has
-  not landed there yet; use the local WebSocket API directly.
+- Runtime package: `plugins/streamdeck/**` contains the SDK v2 manifest,
+  TypeScript source, compiled local plugin bundle, and tests.
+- Hardware status: Stream Deck hardware or Stream Deck Mobile validation is
+  still pending.
 
 The local API is already implemented by StreamSlate. See [Local API](api.md)
 and [API V2 Contract](api-v2-contract.md) for the command and event contract
@@ -34,9 +36,9 @@ Useful upstream references:
 - [Stream Deck manifest reference](https://docs.elgato.com/streamdeck/sdk/references/manifest/)
 - [Stream Deck distribution](https://docs.elgato.com/streamdeck/sdk/introduction/distribution/)
 
-## Expected Repository Layout
+## Repository Layout
 
-The first-party plugin should live under `plugins/streamdeck/` and follow the
+The first-party plugin lives under `plugins/streamdeck/` and follows the
 official SDK scaffold shape:
 
 ```text
@@ -133,7 +135,7 @@ npm install
 npm run tauri:dev
 ```
 
-Build and watch the plugin after `plugins/streamdeck/**` exists:
+Build and watch the plugin:
 
 ```bash
 cd /path/to/streamslate/plugins/streamdeck

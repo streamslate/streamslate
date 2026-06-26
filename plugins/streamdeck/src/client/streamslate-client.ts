@@ -65,7 +65,10 @@ export class StreamSlateClient {
   private readonly autoReconnect: boolean;
   private readonly reconnectDelayMs: number;
   private readonly socketFactory: (url: string) => SocketLike;
-  private readonly listeners = new Map<keyof ClientEvents, Set<Listener<any>>>();
+  private readonly listeners = new Map<
+    keyof ClientEvents,
+    Set<Listener<any>>
+  >();
   private socket: SocketLike | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private requestCounter = 0;
@@ -77,7 +80,7 @@ export class StreamSlateClient {
   constructor(options: StreamSlateClientOptions = {}) {
     this.url = streamSlateUrl(
       options.host ?? STREAMSLATE_HOST,
-      options.port ?? STREAMSLATE_PORT,
+      options.port ?? STREAMSLATE_PORT
     );
     this.autoReconnect = options.autoReconnect ?? true;
     this.reconnectDelayMs = options.reconnectDelayMs ?? 3000;
@@ -97,9 +100,7 @@ export class StreamSlateClient {
       ? null
       : {
           ...this.currentCapabilities,
-          supported_commands: [
-            ...this.currentCapabilities.supported_commands,
-          ],
+          supported_commands: [...this.currentCapabilities.supported_commands],
           supported_events: [...this.currentCapabilities.supported_events],
           features: [...this.currentCapabilities.features],
         };
@@ -107,7 +108,7 @@ export class StreamSlateClient {
 
   on<TKey extends keyof ClientEvents>(
     event: TKey,
-    listener: Listener<ClientEvents[TKey]>,
+    listener: Listener<ClientEvents[TKey]>
   ): () => void {
     const listeners = this.listeners.get(event) ?? new Set();
     listeners.add(listener);
@@ -152,18 +153,18 @@ export class StreamSlateClient {
 
   send<TCommand extends StreamSlateCommandName>(
     type: TCommand,
-    payload: StreamSlateCommandPayloads[TCommand],
+    payload: StreamSlateCommandPayloads[TCommand]
   ): SendResult<TCommand> {
     const command = buildStreamSlateCommand(
       type,
       payload,
-      this.nextRequestId(type),
+      this.nextRequestId(type)
     );
 
     if (!this.isConnected()) {
       this.emit(
         "error",
-        new Error(`Cannot send ${type}: StreamSlate is not connected`),
+        new Error(`Cannot send ${type}: StreamSlate is not connected`)
       );
       return { command, sent: false };
     }
@@ -187,7 +188,10 @@ export class StreamSlateClient {
     this.setStatus("disconnected");
 
     if (this.autoReconnect && !this.intentionalClose) {
-      this.reconnectTimer = setTimeout(() => this.connect(), this.reconnectDelayMs);
+      this.reconnectTimer = setTimeout(
+        () => this.connect(),
+        this.reconnectDelayMs
+      );
       this.reconnectTimer.unref?.();
     }
   }
@@ -217,7 +221,7 @@ export class StreamSlateClient {
     } catch (error) {
       this.emit(
         "error",
-        error instanceof Error ? error : new Error("Invalid StreamSlate event"),
+        error instanceof Error ? error : new Error("Invalid StreamSlate event")
       );
       return null;
     }
@@ -332,7 +336,7 @@ export class StreamSlateClient {
 
   private emit<TKey extends keyof ClientEvents>(
     event: TKey,
-    value: ClientEvents[TKey],
+    value: ClientEvents[TKey]
   ): void {
     const listeners = this.listeners.get(event);
     if (listeners === undefined) {

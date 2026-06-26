@@ -9,7 +9,7 @@ import {
 describe("StreamSlate protocol helpers", () => {
   it("builds V2 command envelopes with request metadata", () => {
     expect(
-      buildStreamSlateCommand("GO_TO_PAGE", { page: 7 }, "deck-page-7"),
+      buildStreamSlateCommand("GO_TO_PAGE", { page: 7 }, "deck-page-7")
     ).toEqual({
       type: "GO_TO_PAGE",
       protocolVersion: STREAMSLATE_PROTOCOL_VERSION,
