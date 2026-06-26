@@ -3,7 +3,13 @@
  * Copyright (C) 2025 StreamSlate Contributors
  */
 
-import { PDFDocument, rgb, StandardFonts, type RGB } from "pdf-lib";
+import {
+  PDFDocument,
+  rgb,
+  StandardFonts,
+  type PDFPage,
+  type RGB,
+} from "pdf-lib";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
@@ -60,6 +66,27 @@ function normalizeOpacity(
   return Math.max(0, Math.min(1, opacity));
 }
 
+function drawTextLineAnnotation(
+  page: PDFPage,
+  annotation: Annotation,
+  pageHeight: number,
+  color: RGB,
+  strokeWidth: number,
+  placement: "underline" | "strikethrough"
+): void {
+  const lineOffset =
+    placement === "underline" ? annotation.height : annotation.height / 2;
+  const lineY = pageHeight - (annotation.y + lineOffset);
+
+  page.drawLine({
+    start: { x: annotation.x, y: lineY },
+    end: { x: annotation.x + annotation.width, y: lineY },
+    color,
+    thickness: strokeWidth,
+    opacity: normalizeOpacity(annotation.opacity, 1),
+  });
+}
+
 /**
  * Export PDF with annotations burned in
  */
@@ -100,7 +127,7 @@ export async function exportPDF(
 
       const color = hexToRgb(annotation.color);
       const strokeWidth = annotation.strokeWidth ?? 2;
-      // PDF-ib uses bottom-left origin, StreamSlate uses top-left
+      // pdf-lib uses bottom-left origin, StreamSlate uses top-left
       // y = pageHeight - y - height (for shapes)
 
       switch (annotation.type) {
@@ -115,6 +142,28 @@ export async function exportPDF(
             color: color,
             opacity: annotation.opacity,
           });
+          break;
+
+        case AnnotationType.UNDERLINE:
+          drawTextLineAnnotation(
+            page,
+            annotation,
+            pageHeight,
+            color,
+            strokeWidth,
+            "underline"
+          );
+          break;
+
+        case AnnotationType.STRIKETHROUGH:
+          drawTextLineAnnotation(
+            page,
+            annotation,
+            pageHeight,
+            color,
+            strokeWidth,
+            "strikethrough"
+          );
           break;
 
         case AnnotationType.RECTANGLE:
