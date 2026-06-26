@@ -1,0 +1,117 @@
+{
+  "Actions": [
+    {
+      "Icon": "imgs/actions/next-page",
+      "Name": "Next Page",
+      "States": [
+        {
+          "Image": "imgs/actions/next-page",
+          "Title": "Next"
+        }
+      ],
+      "Tooltip": "Advance StreamSlate to the next page",
+      "UUID": "ai.flexinfer.streamslate.next-page"
+    },
+    {
+      "Icon": "imgs/actions/previous-page",
+      "Name": "Previous Page",
+      "States": [
+        {
+          "Image": "imgs/actions/previous-page",
+          "Title": "Prev"
+        }
+      ],
+      "Tooltip": "Move StreamSlate to the previous page",
+      "UUID": "ai.flexinfer.streamslate.previous-page"
+    },
+    {
+      "Icon": "imgs/actions/toggle-presenter",
+      "Name": "Toggle Presenter",
+      "States": [
+        {
+          "Image": "imgs/actions/toggle-presenter",
+          "Title": "Presenter"
+        },
+        {
+          "Image": "imgs/actions/toggle-presenter-on",
+          "Title": "Presenter"
+        }
+      ],
+      "Tooltip": "Toggle StreamSlate presenter mode",
+      "UUID": "ai.flexinfer.streamslate.toggle-presenter"
+    },
+    {
+      "Icon": "imgs/actions/go-to-page",
+      "Name": "Go To Page",
+      "States": [
+        {
+          "Image": "imgs/actions/go-to-page",
+          "Title": "Page"
+        }
+      ],
+      "Tooltip": "Jump StreamSlate to a configured page",
+      "UUID": "ai.flexinfer.streamslate.go-to-page"
+    },
+    {
+      "Icon": "imgs/actions/set-zoom",
+      "Name": "Set Zoom",
+      "States": [
+        {
+          "Image": "imgs/actions/set-zoom",
+          "Title": "Zoom"
+        }
+      ],
+      "Tooltip": "Set StreamSlate to a configured zoom level",
+      "UUID": "ai.flexinfer.streamslate.set-zoom"
+    },
+    {
+      "Icon": "imgs/plugin",
+      "Name": "Refresh State",
+      "States": [
+        {
+          "Image": "imgs/plugin",
+          "Title": "Refresh"
+        }
+      ],
+      "Tooltip": "Refresh the current StreamSlate page, zoom, and presenter state",
+      "UUID": "ai.flexinfer.streamslate.refresh-state"
+    },
+    {
+      "Icon": "imgs/plugin",
+      "Name": "Health Check",
+      "States": [
+        {
+          "Image": "imgs/plugin",
+          "Title": "Ping"
+        }
+      ],
+      "Tooltip": "Send a StreamSlate WebSocket health check",
+      "UUID": "ai.flexinfer.streamslate.health-check"
+    }
+  ],
+  "Author": "FlexInfer",
+  "Category": "StreamSlate",
+  "CodePath": "bin/plugin.js",
+  "Description": "Control StreamSlate pages, presenter mode, and zoom from Stream Deck.",
+  "Icon": "imgs/plugin",
+  "Name": "StreamSlate",
+  "Nodejs": {
+    "Version": "24"
+  },
+  "OS": [
+    {
+      "MinimumVersion": "12",
+      "Platform": "mac"
+    },
+    {
+      "MinimumVersion": "10",
+      "Platform": "windows"
+    }
+  ],
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "UUID": "ai.flexinfer.streamslate",
+  "Version": "0.1.0.0"
+}

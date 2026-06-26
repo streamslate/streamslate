@@ -12,6 +12,7 @@ src-tauri/gen/
 # Frontend build output
 dist/
 build/
+plugins/streamdeck/ai.flexinfer.streamslate.sdPlugin/bin/
 
 # Local-only scratch files (not committed)
 docs/roadmap-reconciliation-*.md

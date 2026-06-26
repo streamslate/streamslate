@@ -17,7 +17,7 @@ Mark it. Show it. – A lightning-fast PDF annotator built specifically for stre
 Teaching live, reacting to research papers, or breaking down patch notes on stream usually means fumbling with clunky viewers or overlay hacks. StreamSlate gives you a purpose-built workspace that:
 • Stays invisible until you need it – auto-hiding chrome and a one-click Presenter Mode keep the focus on content, not UI.
 • Loves the dark – dark-first UI with stream-optimized neon/pastel palettes that pop on camera without glare.
-• Plugs into your streaming stack – presenter-window capture, native output, OBS WebSocket direct control, and a loopback WebSocket API support live production control.
+• Plugs into your streaming stack – presenter-window capture, native output, OBS WebSocket direct control, a loopback WebSocket API, and a first-party Stream Deck SDK v2 plugin support live production control.
 • Runs light – powered by Tauri + PDF.js; <10 MB install and <80 MB RAM with a 100-page PDF.
 
 ⸻
@@ -36,6 +36,7 @@ Category What you get Status
 ☁️ Settings Sync Export/import all settings as portable JSON ✅
 🔄 Auto-Update Built-in update checker with one-click install ✅
 🎚️ OBS WebSocket Direct Control Connect to OBS WebSocket v5 for scene, source visibility, recording, and streaming control ✅
+🎛️ Stream Deck Plugin Official Elgato SDK v2 plugin for local StreamSlate control ✅ local package / 🚧 hardware validation
 
 ⸻
 
@@ -68,6 +69,7 @@ OBS WebSocket Direct Control Enable OBS WebSocket v5 in OBS, then connect from S
 WebSocket API Control page navigation, zoom, presenter mode, and annotations over loopback-only WebSocket JSON at `ws://127.0.0.1:11451` – see [docs/api.md](docs/api.md)
 NDI / Syphon Enable NDI or Syphon output for native video feed to receivers (build-time opt-in; requires NDI SDK or Syphon.framework on macOS)
 Automation Same-machine WebSocket clients can send local-control commands – build scripts or future integration adapters using the [API reference](docs/api.md)
+Stream Deck Plugin Build the first-party Elgato SDK v2 plugin under `plugins/streamdeck`; see [docs/streamdeck-plugin.md](docs/streamdeck-plugin.md) for local development and manual verification guidance
 
 ⸻
 
@@ -78,7 +80,8 @@ Automation Same-machine WebSocket clients can send local-control commands – bu
 • 1.1 – Presets/templates, annotation toolbar, Syphon scaffolding ✅
 • 1.2+ – NDI & Syphon output, multi-monitor capture, portable settings sync ✅
 • Current – OBS WebSocket direct scene/source/recording/streaming control ✅
-• Next – Stream Deck plugin, mobile companion, cloud settings sync
+• Current – Stream Deck SDK v2 plugin for loopback local control; hardware validation still pending
+• Next – Mobile companion, cloud settings sync
 
 See more in ROADMAP.md. Have a feature request? Open an issue or vote on the board!
 

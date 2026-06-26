@@ -4,13 +4,13 @@
 
 - [Roadmap tracking issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/1)
 
-> Last Updated: March 2026
+> Last Updated: June 2026
 
 ## Current Status
 
-**v1.4.0+** (March 2026)
+**Post-1.6 / 1.7 in progress** (June 2026)
 
-StreamSlate is production-ready and professional-grade. All README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
+StreamSlate is production-ready and professional-grade. All completed README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
 
 ## Phases
 
@@ -66,9 +66,16 @@ StreamSlate is production-ready and professional-grade. All README feature claim
 - [x] OBS recording and streaming controls
 - [x] Manual verification checklist for local OBS WebSocket control
 
+### 1.7 🚧 (Stream Deck Plugin)
+
+- [x] Official Elgato SDK v2 plugin runtime under `plugins/streamdeck` ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
+- [x] Stream Deck actions for page navigation, zoom, presenter mode, state refresh, and health check over `ws://127.0.0.1:11451`
+- [x] Local development, install, build, and manual verification documentation
+- [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
+- [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
+
 ### Future
 
-- [ ] Stream Deck plugin (official Elgato SDK v2 plugin) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
 - [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
 - [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 

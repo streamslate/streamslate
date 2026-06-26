@@ -1,0 +1,3 @@
+node_modules/
+ai.flexinfer.streamslate.sdPlugin/logs/
+*.streamDeckPlugin
