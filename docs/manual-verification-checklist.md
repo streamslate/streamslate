@@ -77,12 +77,32 @@ Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/s
 
 **Prerequisites:** WebSocket client (e.g., `websocat ws://127.0.0.1:11451`).
 
-- [ ] Send `{"type": "PAGE_CHANGED", "page": 3}` → app navigates to page 3
-- [ ] Send `{"type": "ZOOM_CHANGED", "zoom": 1.5}` → app zooms to 150%
-- [ ] Send `{"type": "PRESENTER_MODE_TOGGLED", "active": true}` → presenter opens
+- [ ] Send `{"type": "GET_CAPABILITIES", "protocolVersion": "2.0", "request_id": "manual-capabilities"}` → app replies with `CAPABILITIES`
+- [ ] Send `{"type": "GO_TO_PAGE", "page": 3}` → app navigates to page 3
+- [ ] Send `{"type": "SET_ZOOM", "zoom": 1.5}` → app zooms to 150%
+- [ ] Send `{"type": "TOGGLE_PRESENTER"}` → presenter opens or closes
 - [ ] Connection status indicator in status bar shows connected
 - [ ] Disconnect and reconnect → auto-reconnection succeeds
 - [ ] Multiple simultaneous WebSocket clients work correctly
+
+## Stream Deck Plugin (Official SDK v2)
+
+**Prerequisites:** Stream Deck 7.1+, Stream Deck hardware or Stream Deck
+Mobile, Node.js 24+, Stream Deck CLI, StreamSlate running locally, and the
+`plugins/streamdeck` runtime package present in the working tree.
+
+- [ ] `npm run build` succeeds from `plugins/streamdeck`
+- [ ] `npm run watch` starts the plugin watcher without errors
+- [ ] `streamdeck link ./ai.flexinfer.streamslate.sdPlugin` links the compiled plugin directory
+- [ ] StreamSlate action group appears in the Stream Deck app
+- [ ] Next Page action sends `NEXT_PAGE` and advances the loaded PDF
+- [ ] Previous Page action sends `PREVIOUS_PAGE` and moves back one page
+- [ ] Toggle Presenter action sends `TOGGLE_PRESENTER` and opens or closes presenter mode
+- [ ] State-bearing keys update after `STATE`, `PAGE_CHANGED`, `PRESENTER_CHANGED`, and `ZOOM_CHANGED`
+- [ ] Invalid page or zoom settings surface a visible error state without crashing the plugin
+- [ ] Quitting StreamSlate changes keys to disconnected/error state
+- [ ] Restarting StreamSlate reconnects the plugin and refreshes state
+- [ ] `streamdeck validate ./ai.flexinfer.streamslate.sdPlugin` succeeds before packaging
 
 ## Auto-Updater
 
