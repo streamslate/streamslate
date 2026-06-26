@@ -70,7 +70,7 @@
     "copyright": "",
     "category": "Productivity",
     "shortDescription": "PDF annotation tool for streamers",
-    "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with OBS integration",
+    "longDescription": "A desktop PDF-annotation app for live streamers and YouTubers with presenter-window capture, native output options, and loopback WebSocket local control",
     "macOS": {
       "hardenedRuntime": true,
       "entitlements": "./entitlements.plist",
