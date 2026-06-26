@@ -21,7 +21,7 @@
 - Codebase index: lexical baseline last recorded at 593 chunks
 - Feature reality audit: complete (2026-03-14)
 - **Professional grade remediation: M1–M6 complete (2026-03-14)**
-- **Roadmap expansion: 1.6 OBS complete, 1.8 text-line annotations complete, 1.7 Stream Deck local package/preflight complete with external validation pending (2026-06-26)**
+- **Roadmap expansion: 1.6 OBS complete, 1.8 text-line annotations complete, 1.7 Stream Deck local package/preflight and validation evidence path complete with external validation pending (2026-06-26)**
 
 ## Completed Milestones (2026-03-14)
 
@@ -45,7 +45,7 @@
 ## Roadmap Expansion Status
 
 - **1.6 OBS WebSocket Direct Control** → Complete; Tauri OBS WebSocket v5 commands and Output settings scene/source/recording/streaming controls are implemented.
-- **1.7 Stream Deck Plugin** → Local SDK v2 plugin runtime, action set, build, package validation, and preflight are complete. Hardware or Stream Deck Mobile validation and Marketplace publication remain external follow-ups.
+- **1.7 Stream Deck Plugin** → Local SDK v2 plugin runtime, action set, build, package validation, preflight, and validation evidence template are complete. Hardware or Stream Deck Mobile validation and Marketplace publication remain external follow-ups.
 - **1.8 Text-Line Annotations** → Complete; underline and strikethrough are supported as visual geometry annotations, including tool palette, drag preview, SVG rendering, and PDF export.
 
 ## Remaining Future Work
@@ -67,5 +67,5 @@
 
 - `.loom/10-research.md` (feature reality audit, 2026-03-14)
 - `.loom/30-implementation-plan.md` (execution plan)
-- `package.json:4`, `ROADMAP.md`, `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`, `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`, `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
+- `package.json:4`, `ROADMAP.md`, `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`, `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`, `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`, `.loom/067-plan-v2-s9-streamdeck-validation-evidence-2026-06-26.md`
 - MCP: `codebase_stats(repo_id="streamslate")` → 593 chunks

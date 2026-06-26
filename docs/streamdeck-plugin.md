@@ -213,4 +213,7 @@ Use these steps before marking the plugin slice complete:
     and refresh state.
 
 Record the StreamSlate version, Stream Deck version, Node.js version, OS, and
-plugin commit when completing manual verification.
+plugin commit when completing manual verification. Use
+[Stream Deck Validation Report](streamdeck-validation-report.md) to capture
+the environment, action results, reconnect behavior, and evidence links before
+marking hardware or Stream Deck Mobile validation complete.
