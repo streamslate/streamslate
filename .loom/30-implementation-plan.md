@@ -71,31 +71,38 @@ Commit: `cc9fe46` (2026-03-14)
 - [x] Manual verification checklist — `docs/manual-verification-checklist.md`
 - Test count: 180 → 211 (+31 tests)
 
-## Phase 3: Professional Polish (Future)
+## Phase 3: Professional Polish — UPDATED 2026-06-26
 
-### M7: OBS WebSocket Client (Optional)
+### M7: OBS WebSocket Client ✅
 
-If OBS integration is desired:
+Integrated as roadmap 1.6:
 
-- Implement OBS WebSocket v5 client in Rust or frontend
-- Scene switching, source control, streaming/recording state
-- This is a significant feature — scope separately
+- [x] OBS WebSocket v5 client/runtime in Tauri
+- [x] Scene switching and source visibility control
+- [x] Recording and streaming state/control
+- [x] Output settings UI for local OBS control
+- [x] Manual verification checklist for local OBS WebSocket control
 
-### M8: Stream Deck Plugin (Optional)
+### M8: Stream Deck Plugin 🚧
 
-If Stream Deck support is desired:
+Integrated as roadmap 1.7 local plugin readiness:
 
-- Build proper Elgato Stream Deck SDK v2 plugin
-- Package with property inspectors and action images
-- This is a standalone deliverable — scope separately
+- [x] Official Elgato SDK v2 plugin runtime under `plugins/streamdeck`
+- [x] Actions for page navigation, zoom, presenter mode, state refresh, and health check over local WebSocket control
+- [x] Local development, install, build, and manual verification documentation
+- [x] Local package preflight validating manifest assets, compiled bundle, version, and runtime metadata
+- [ ] Hardware or Stream Deck Mobile validation
+- [ ] Marketplace packaging/publication after validation and Elgato review
 
-### M9: Underline/Strikethrough Annotations (Optional)
+### M9: Underline/Strikethrough Annotations ✅
 
-If text-level annotations are desired:
+Integrated as roadmap 1.8:
 
-- Implement `UNDERLINE` and `STRIKETHROUGH` rendering in AnnotationLayer
-- Add to TOOLS array in presets.ts
-- Add to PDF export in exporter.ts
+- [x] Restored `UNDERLINE` and `STRIKETHROUGH` annotation types
+- [x] Added visible tool defaults and preset/template support
+- [x] Added drag creation, SVG rendering, selection hit targets, and live previews
+- [x] Added PDF export using matching text-line placement helpers
+- [x] Updated docs to describe them as visual geometry annotations, not OCR or semantic PDF text extraction
 
 ## Execution Order
 
@@ -105,7 +112,9 @@ If text-level annotations are desired:
 4. **M4** — PDF page inversion ✅ `dd9216e`
 5. **M5** — Multi-monitor UI ✅ `bdff25f`
 6. **M6** — Verification coverage ✅ `cc9fe46`
-7. **M7-M9** — Future scope (backlog)
+7. **M7** — OBS WebSocket direct control ✅ (roadmap 1.6)
+8. **M8** — Stream Deck local plugin/package readiness 🚧 (roadmap 1.7; external validation pending)
+9. **M9** — Text-line annotations ✅ (roadmap 1.8)
 
 ## Acceptance Gate — ALL MET
 
@@ -128,3 +137,8 @@ If text-level annotations are desired:
 - `src/types/pdf.types.ts:65-76`
 - `src/components/pdf/AnnotationLayer.tsx:243-416`
 - `src/components/debug/NDIControls.tsx:104-176`
+- `ROADMAP.md`
+- `docs/streamdeck-plugin.md`
+- `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`
+- `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
+- `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
