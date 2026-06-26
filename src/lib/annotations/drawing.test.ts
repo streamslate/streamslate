@@ -8,6 +8,8 @@ import {
   getPointsFromAnnotation,
   bboxFromPoints,
   moveAnnotationBy,
+  getTextLineY,
+  isTextLineAnnotationType,
   MIN_ANNOTATION_SIZE,
 } from "./drawing";
 
@@ -188,6 +190,22 @@ describe("moveAnnotationBy", () => {
       { x: 5, y: 5 },
       { x: 15, y: 15 },
     ]);
+  });
+});
+
+describe("text line helpers", () => {
+  it("identifies underline and strikethrough annotation types", () => {
+    expect(isTextLineAnnotationType(AnnotationType.UNDERLINE)).toBe(true);
+    expect(isTextLineAnnotationType(AnnotationType.STRIKETHROUGH)).toBe(true);
+    expect(isTextLineAnnotationType(AnnotationType.HIGHLIGHT)).toBe(false);
+  });
+
+  it("places underline near the lower part of the geometry", () => {
+    expect(getTextLineY(AnnotationType.UNDERLINE, 100, 50)).toBe(141);
+  });
+
+  it("places strikethrough at the vertical midpoint", () => {
+    expect(getTextLineY(AnnotationType.STRIKETHROUGH, 100, 50)).toBe(125);
   });
 });
 

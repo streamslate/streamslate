@@ -142,6 +142,54 @@ describe("AnnotationLayer rendering", () => {
     expect(line!.tagName.toLowerCase()).toBe("line");
   });
 
+  it("renders UNDERLINE as a horizontal SVG line near the lower geometry", async () => {
+    const annotation = makeAnnotation(AnnotationType.UNDERLINE, {
+      y: 100,
+      height: 50,
+      strokeWidth: 3,
+    });
+    const { container } = await render(
+      <AnnotationLayer {...defaultProps} annotations={[annotation]} />
+    );
+
+    const svg = container.querySelector("[data-testid='annotation-layer']");
+    const hitLine = svg!.querySelector(
+      `[data-annotation-type="${AnnotationType.UNDERLINE}"]`
+    );
+    const visibleLine = svg!.querySelector(`line[data-line-role="visible"]`);
+
+    expect(hitLine).not.toBeNull();
+    expect(hitLine!.tagName.toLowerCase()).toBe("line");
+    expect(hitLine!.getAttribute("stroke")).toBe("transparent");
+    expect(hitLine!.getAttribute("pointer-events")).toBe("stroke");
+    expect(hitLine!.getAttribute("stroke-width")).toBe("12");
+    expect(visibleLine).not.toBeNull();
+    expect(visibleLine!.getAttribute("y1")).toBe("141");
+    expect(visibleLine!.getAttribute("y2")).toBe("141");
+  });
+
+  it("renders STRIKETHROUGH as a horizontal SVG line at midpoint", async () => {
+    const annotation = makeAnnotation(AnnotationType.STRIKETHROUGH, {
+      y: 100,
+      height: 50,
+    });
+    const { container } = await render(
+      <AnnotationLayer {...defaultProps} annotations={[annotation]} />
+    );
+
+    const svg = container.querySelector("[data-testid='annotation-layer']");
+    const hitLine = svg!.querySelector(
+      `[data-annotation-type="${AnnotationType.STRIKETHROUGH}"]`
+    );
+    const visibleLine = svg!.querySelector(`line[data-line-role="visible"]`);
+
+    expect(hitLine).not.toBeNull();
+    expect(hitLine!.tagName.toLowerCase()).toBe("line");
+    expect(visibleLine).not.toBeNull();
+    expect(visibleLine!.getAttribute("y1")).toBe("125");
+    expect(visibleLine!.getAttribute("y2")).toBe("125");
+  });
+
   it("renders TEXT as SVG text with content", async () => {
     const annotation = makeAnnotation(AnnotationType.TEXT, {
       content: "Test Label",
@@ -215,7 +263,7 @@ describe("AnnotationLayer rendering", () => {
     expect(rect).toBeNull();
   });
 
-  it("renders all 6 annotation types simultaneously", async () => {
+  it("renders all annotation types simultaneously", async () => {
     const points = [
       { x: 10, y: 10 },
       { x: 50, y: 50 },
@@ -231,6 +279,8 @@ describe("AnnotationLayer rendering", () => {
         points,
         content: JSON.stringify(points),
       }),
+      makeAnnotation(AnnotationType.UNDERLINE, { id: "a7" }),
+      makeAnnotation(AnnotationType.STRIKETHROUGH, { id: "a8" }),
     ];
 
     const { container } = await render(
@@ -249,4 +299,75 @@ describe("AnnotationLayer rendering", () => {
       ).not.toBeNull();
     }
   });
+
+  it("previews underline at the lower text-line position while dragging", async () => {
+    const { container } = await render(
+      <AnnotationLayer
+        {...defaultProps}
+        activeTool={AnnotationType.UNDERLINE}
+        annotations={[]}
+      />
+    );
+
+    const svg = container.querySelector("[data-testid='annotation-layer']");
+    await dragOnSvg(svg!, { x: 100, y: 100 }, { x: 300, y: 150 });
+
+    const previewLine = svg!.querySelector(
+      `[data-testid="drawing-preview-text-line"]`
+    );
+    expect(previewLine).not.toBeNull();
+    expect(previewLine!.getAttribute("x1")).toBe("100");
+    expect(previewLine!.getAttribute("x2")).toBe("300");
+    expect(previewLine!.getAttribute("y1")).toBe("141");
+    expect(previewLine!.getAttribute("y2")).toBe("141");
+  });
+
+  it("previews strikethrough at the midpoint while dragging", async () => {
+    const { container } = await render(
+      <AnnotationLayer
+        {...defaultProps}
+        activeTool={AnnotationType.STRIKETHROUGH}
+        annotations={[]}
+      />
+    );
+
+    const svg = container.querySelector("[data-testid='annotation-layer']");
+    await dragOnSvg(svg!, { x: 100, y: 100 }, { x: 300, y: 150 });
+
+    const previewLine = svg!.querySelector(
+      `[data-testid="drawing-preview-text-line"]`
+    );
+    expect(previewLine).not.toBeNull();
+    expect(previewLine!.getAttribute("x1")).toBe("100");
+    expect(previewLine!.getAttribute("x2")).toBe("300");
+    expect(previewLine!.getAttribute("y1")).toBe("125");
+    expect(previewLine!.getAttribute("y2")).toBe("125");
+  });
 });
+
+async function dragOnSvg(
+  svg: Element,
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+) {
+  await act(async () => {
+    svg.dispatchEvent(
+      new MouseEvent("mousedown", {
+        bubbles: true,
+        clientX: start.x,
+        clientY: start.y,
+        button: 0,
+      })
+    );
+  });
+  await act(async () => {
+    svg.dispatchEvent(
+      new MouseEvent("mousemove", {
+        bubbles: true,
+        clientX: end.x,
+        clientY: end.y,
+        button: 0,
+      })
+    );
+  });
+}
