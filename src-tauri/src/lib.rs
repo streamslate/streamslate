@@ -18,6 +18,7 @@
 
 mod commands;
 pub mod error;
+pub mod obs;
 pub mod state;
 pub mod websocket;
 
@@ -87,7 +88,20 @@ pub fn run() {
             get_output_capabilities,
             get_capture_status,
             start_syphon_output,
-            stop_syphon_output
+            stop_syphon_output,
+            // OBS WebSocket commands
+            obs_connect,
+            obs_disconnect,
+            obs_get_state,
+            obs_list_scenes,
+            obs_set_current_scene,
+            obs_set_source_visibility,
+            obs_get_record_status,
+            obs_start_record,
+            obs_stop_record,
+            obs_get_stream_status,
+            obs_start_stream,
+            obs_stop_stream
         ])
         .setup(|app| {
             // Initialize structured logging with tracing

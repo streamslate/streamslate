@@ -23,6 +23,7 @@
 
 pub mod annotations;
 pub mod ndi;
+pub mod obs;
 pub mod pdf;
 pub mod presenter;
 
@@ -33,5 +34,6 @@ pub use ndi::{
     list_capture_displays, list_capture_targets, send_video_frame, start_ndi_sender,
     start_syphon_output, stop_ndi_sender, stop_syphon_output,
 };
+pub use obs::*;
 pub use pdf::*;
 pub use presenter::*;
