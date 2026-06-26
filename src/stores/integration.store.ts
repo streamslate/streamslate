@@ -22,12 +22,17 @@
 
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { NDIQuality, IntegrationSource } from "../types/integration.types";
+import {
+  NDIQuality,
+  IntegrationMessageType,
+  IntegrationSource,
+} from "../types/integration.types";
 import {
   getWebSocketClient,
   resetWebSocketClient,
 } from "../lib/websocket/client";
 import { registerWebSocketHandlers } from "../lib/events/message-map";
+import { OBSCommands } from "../lib/tauri/obs";
 import type {
   WebSocketState,
   OBSIntegration,
@@ -73,7 +78,17 @@ interface IntegrationStore {
   connectWebSocket: () => Promise<void>;
   disconnectWebSocket: () => void;
   connectOBS: () => Promise<void>;
-  disconnectOBS: () => void;
+  disconnectOBS: () => Promise<void>;
+  setOBSCurrentScene: (sceneName: string) => Promise<void>;
+  setOBSSourceVisibility: (
+    sceneName: string,
+    sourceName: string,
+    visible: boolean
+  ) => Promise<void>;
+  startOBSRecording: () => Promise<void>;
+  stopOBSRecording: () => Promise<void>;
+  startOBSStreaming: () => Promise<void>;
+  stopOBSStreaming: () => Promise<void>;
 
   // Utility
   reset: () => void;
@@ -152,6 +167,46 @@ const initialConfig: IntegrationConfig = {
 
 let websocketClient: ReturnType<typeof getWebSocketClient> | null = null;
 let websocketStateHandler: ((state: WebSocketState) => void) | null = null;
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return fallback;
+}
+
+function createOBSIntegrationError(
+  code: "OBS_CONNECTION_FAILED" | "OBS_COMMAND_FAILED",
+  error: unknown,
+  fallback: string
+): IntegrationError {
+  return {
+    code,
+    message: getErrorMessage(error, fallback),
+    source: IntegrationSource.OBS,
+    timestamp: new Date(),
+    details: error,
+  };
+}
+
+function createOBSEvent(
+  type: IntegrationMessageType,
+  data: unknown
+): IntegrationEvent {
+  return {
+    id: `obs-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type,
+    source: IntegrationSource.OBS,
+    timestamp: new Date(),
+    data,
+    handled: false,
+  };
+}
 
 export const useIntegrationStore = create<IntegrationStore>()(
   devtools(
@@ -350,35 +405,226 @@ export const useIntegrationStore = create<IntegrationStore>()(
         }));
       },
 
-      // OBS WebSocket integration is planned but not yet implemented.
-      // This stub exists to satisfy the store interface; no UI exposes it.
       connectOBS: async () => {
         set((state) => ({
-          obs: { ...state.obs, connected: false, version: null },
+          obs: { ...state.obs, connected: false },
         }));
 
-        const integrationError: IntegrationError = {
-          code: "OBS_NOT_IMPLEMENTED",
-          message: "OBS integration is not implemented in this build",
-          source: IntegrationSource.OBS,
-          timestamp: new Date(),
-        };
-        get().addError(integrationError);
+        try {
+          const { host, port, password } = get().config.obs;
+          const connectionInfo = await OBSCommands.connect({
+            host,
+            port,
+            password,
+          });
+          const [runtimeState, scenes, recordStatus, streamStatus] =
+            await Promise.all([
+              OBSCommands.getState(),
+              OBSCommands.listScenes(),
+              OBSCommands.getRecordStatus(),
+              OBSCommands.getStreamStatus(),
+            ]);
+
+          set((state) => ({
+            obs: {
+              ...state.obs,
+              connected:
+                connectionInfo.connected ?? runtimeState.connected ?? true,
+              version: connectionInfo.version ?? runtimeState.version ?? null,
+              scenes: runtimeState.scenes ?? scenes,
+              currentScene: runtimeState.currentScene ?? null,
+              isRecording:
+                runtimeState.isRecording ?? recordStatus.isRecording,
+              isStreaming:
+                runtimeState.isStreaming ?? streamStatus.isStreaming,
+              stats: runtimeState.stats ?? null,
+            },
+          }));
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_CONNECTION_FAILED",
+              error,
+              "Failed to connect to OBS"
+            )
+          );
+
+          set({ obs: initialOBSState });
+        }
       },
 
-      disconnectOBS: () => {
-        set((state) => ({
-          obs: {
-            ...state.obs,
-            connected: false,
-            version: null,
-            scenes: [],
-            currentScene: null,
-            isRecording: false,
-            isStreaming: false,
-            stats: null,
-          },
-        }));
+      disconnectOBS: async () => {
+        try {
+          if (get().obs.connected) {
+            await OBSCommands.disconnect();
+          }
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to disconnect from OBS"
+            )
+          );
+        } finally {
+          set({ obs: initialOBSState });
+        }
+      },
+
+      setOBSCurrentScene: async (sceneName) => {
+        try {
+          await OBSCommands.setCurrentScene({ sceneName });
+
+          set((state) => ({
+            obs: {
+              ...state.obs,
+              currentScene: sceneName,
+            },
+          }));
+          get().addEvent(
+            createOBSEvent(IntegrationMessageType.OBS_SCENE_CHANGED, {
+              sceneName,
+            })
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to set the current OBS scene"
+            )
+          );
+        }
+      },
+
+      setOBSSourceVisibility: async (sceneName, sourceName, visible) => {
+        try {
+          await OBSCommands.setSourceVisibility({
+            sceneName,
+            sourceName,
+            visible,
+          });
+
+          set((state) => ({
+            obs: {
+              ...state.obs,
+              scenes: state.obs.scenes.map((scene) =>
+                scene.name === sceneName
+                  ? {
+                      ...scene,
+                      sources: scene.sources.map((source) =>
+                        source.name === sourceName
+                          ? { ...source, visible }
+                          : source
+                      ),
+                    }
+                  : scene
+              ),
+            },
+          }));
+          get().addEvent(
+            createOBSEvent(
+              IntegrationMessageType.OBS_SOURCE_VISIBILITY_CHANGED,
+              {
+                sceneName,
+                sourceName,
+                visible,
+              }
+            )
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to update OBS source visibility"
+            )
+          );
+        }
+      },
+
+      startOBSRecording: async () => {
+        try {
+          await OBSCommands.startRecord();
+
+          set((state) => ({
+            obs: { ...state.obs, isRecording: true },
+          }));
+          get().addEvent(
+            createOBSEvent(IntegrationMessageType.OBS_RECORDING_STARTED, {})
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to start OBS recording"
+            )
+          );
+        }
+      },
+
+      stopOBSRecording: async () => {
+        try {
+          await OBSCommands.stopRecord();
+
+          set((state) => ({
+            obs: { ...state.obs, isRecording: false },
+          }));
+          get().addEvent(
+            createOBSEvent(IntegrationMessageType.OBS_RECORDING_STOPPED, {})
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to stop OBS recording"
+            )
+          );
+        }
+      },
+
+      startOBSStreaming: async () => {
+        try {
+          await OBSCommands.startStream();
+
+          set((state) => ({
+            obs: { ...state.obs, isStreaming: true },
+          }));
+          get().addEvent(
+            createOBSEvent(IntegrationMessageType.OBS_STREAMING_STARTED, {})
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to start OBS streaming"
+            )
+          );
+        }
+      },
+
+      stopOBSStreaming: async () => {
+        try {
+          await OBSCommands.stopStream();
+
+          set((state) => ({
+            obs: { ...state.obs, isStreaming: false },
+          }));
+          get().addEvent(
+            createOBSEvent(IntegrationMessageType.OBS_STREAMING_STOPPED, {})
+          );
+        } catch (error) {
+          get().addError(
+            createOBSIntegrationError(
+              "OBS_COMMAND_FAILED",
+              error,
+              "Failed to stop OBS streaming"
+            )
+          );
+        }
       },
 
       // Utility
