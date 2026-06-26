@@ -49,6 +49,11 @@ export const TEXT_BACKGROUND_COLORS = [
 
 export const MIN_ANNOTATION_SIZE = 5;
 
+const TEXT_LINE_Y_RATIOS: Record<string, number> = {
+  [AnnotationType.UNDERLINE]: 0.82,
+  [AnnotationType.STRIKETHROUGH]: 0.5,
+};
+
 // ── Types ──────────────────────────────────────────────────────────────
 
 export interface DrawingState {
@@ -85,6 +90,22 @@ export interface ResizeState {
   start: Point;
   origin: Annotation;
   hasMoved: boolean;
+}
+
+// ── Text line helpers ─────────────────────────────────────────────────
+
+export function isTextLineAnnotationType(type: AnnotationType): boolean {
+  return (
+    type === AnnotationType.UNDERLINE || type === AnnotationType.STRIKETHROUGH
+  );
+}
+
+export function getTextLineY(
+  type: AnnotationType,
+  y: number,
+  height: number
+): number {
+  return y + height * (TEXT_LINE_Y_RATIOS[type] ?? 0.5);
 }
 
 // ── Color helpers ──────────────────────────────────────────────────────

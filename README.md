@@ -25,7 +25,7 @@ Teaching live, reacting to research papers, or breaking down patch notes on stre
 🚀 Feature Highlights
 
 Category What you get Status
-✏️ Annotations Highlight • free-ink • shapes • arrows • text call-outs ✅
+✏️ Annotations Highlight • underline • strikethrough • free-ink • shapes • arrows • text call-outs ✅
 🌙 Dark-First UI Dark chrome with stream-optimized color palettes ✅
 🎥 Presenter Mode Borderless window, transparent background toggle ✅
 🌐 WebSocket API Remote page, zoom, presenter, and annotation control via `ws://127.0.0.1:11451` ✅

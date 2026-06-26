@@ -73,6 +73,22 @@ export const TOOLS: Tool[] = [
     config: { color: "#ffff00", opacity: 0.5, strokeWidth: 2 },
   },
   {
+    id: "underline",
+    name: "Underline",
+    type: AnnotationType.UNDERLINE,
+    icon: "U\u0332",
+    active: false,
+    config: { color: "#2563eb", opacity: 1.0, strokeWidth: 2 },
+  },
+  {
+    id: "strikethrough",
+    name: "Strikethrough",
+    type: AnnotationType.STRIKETHROUGH,
+    icon: "S\u0336",
+    active: false,
+    config: { color: "#dc2626", opacity: 1.0, strokeWidth: 2 },
+  },
+  {
     id: "rectangle",
     name: "Rectangle",
     type: AnnotationType.RECTANGLE,

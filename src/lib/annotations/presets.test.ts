@@ -19,6 +19,8 @@ import {
 describe("isAnnotationType", () => {
   it("returns true for valid AnnotationType values", () => {
     expect(isAnnotationType("highlight")).toBe(true);
+    expect(isAnnotationType("underline")).toBe(true);
+    expect(isAnnotationType("strikethrough")).toBe(true);
     expect(isAnnotationType("rectangle")).toBe(true);
     expect(isAnnotationType("free_draw")).toBe(true);
   });
@@ -95,6 +97,24 @@ describe("sanitizePreset", () => {
     expect(result!.id).toBe("test-1");
     expect(result!.name).toBe("My Preset");
     expect(result!.tool).toBe(AnnotationType.HIGHLIGHT);
+  });
+
+  it("accepts text line annotation presets", () => {
+    const underline = sanitizePreset({
+      id: "underline-1",
+      name: "Underline",
+      tool: "underline",
+      config: { color: "#2563eb", opacity: 1, strokeWidth: 2 },
+    });
+    const strikethrough = sanitizePreset({
+      id: "strike-1",
+      name: "Strike",
+      tool: "strikethrough",
+      config: { color: "#dc2626", opacity: 1, strokeWidth: 2 },
+    });
+
+    expect(underline!.tool).toBe(AnnotationType.UNDERLINE);
+    expect(strikethrough!.tool).toBe(AnnotationType.STRIKETHROUGH);
   });
 
   it("generates id if missing", () => {
@@ -238,8 +258,28 @@ describe("exportProfiles", () => {
 });
 
 describe("constants", () => {
-  it("TOOLS has 6 tools", () => {
-    expect(TOOLS.length).toBe(6);
+  it("TOOLS has 8 tools", () => {
+    expect(TOOLS.length).toBe(8);
+  });
+
+  it("TOOLS includes text line tools with visible defaults", () => {
+    const underline = TOOLS.find(
+      (tool) => tool.type === AnnotationType.UNDERLINE
+    );
+    const strikethrough = TOOLS.find(
+      (tool) => tool.type === AnnotationType.STRIKETHROUGH
+    );
+
+    expect(underline).toMatchObject({
+      id: "underline",
+      name: "Underline",
+      config: { color: "#2563eb", opacity: 1, strokeWidth: 2 },
+    });
+    expect(strikethrough).toMatchObject({
+      id: "strikethrough",
+      name: "Strikethrough",
+      config: { color: "#dc2626", opacity: 1, strokeWidth: 2 },
+    });
   });
 
   it("BUILT_IN_PRESETS has 4 presets", () => {
