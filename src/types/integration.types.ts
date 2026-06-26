@@ -112,6 +112,33 @@ export interface OBSIntegration {
   stats: OBSStats | null;
 }
 
+export interface OBSConnectionInfo {
+  connected?: boolean;
+  host?: string;
+  port?: number;
+  version: string | null;
+  rpcVersion?: number;
+}
+
+export interface OBSRuntimeState {
+  connected?: boolean;
+  connection?: OBSConnectionInfo | null;
+  version?: string | null;
+  scenes?: OBSScene[];
+  currentScene?: string | null;
+  isRecording?: boolean;
+  isStreaming?: boolean;
+  stats?: OBSStats | null;
+}
+
+export interface OBSRecordStatus {
+  isRecording: boolean;
+}
+
+export interface OBSStreamStatus {
+  isStreaming: boolean;
+}
+
 export interface OBSScene {
   name: string;
   sources: OBSSource[];

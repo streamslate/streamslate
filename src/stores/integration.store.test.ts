@@ -1,4 +1,24 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+
+const obsCommandsMock = vi.hoisted(() => ({
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  getState: vi.fn(),
+  listScenes: vi.fn(),
+  setCurrentScene: vi.fn(),
+  setSourceVisibility: vi.fn(),
+  getRecordStatus: vi.fn(),
+  startRecord: vi.fn(),
+  stopRecord: vi.fn(),
+  getStreamStatus: vi.fn(),
+  startStream: vi.fn(),
+  stopStream: vi.fn(),
+}));
+
+vi.mock("../lib/tauri/obs", () => ({
+  OBSCommands: obsCommandsMock,
+}));
+
 import { useIntegrationStore } from "./integration.store";
 import {
   IntegrationMessageType,
@@ -22,6 +42,7 @@ function makeEvent(
 
 describe("integration.store", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     useIntegrationStore.getState().reset();
   });
 
@@ -190,6 +211,154 @@ describe("integration.store", () => {
       const config = useIntegrationStore.getState().config;
       expect(config.obs.enabled).toBe(true);
       expect(config.obs.host).toBe("localhost"); // preserved
+    });
+  });
+
+  describe("OBS integration", () => {
+    it("connectOBS uses configured credentials and populates OBS state", async () => {
+      obsCommandsMock.connect.mockResolvedValue({
+        connected: true,
+        version: null,
+      });
+      obsCommandsMock.getState.mockResolvedValue({
+        connection: {
+          version: "30.1.2",
+        },
+        currentScene: "Main",
+        stats: null,
+      });
+      obsCommandsMock.listScenes.mockResolvedValue([
+        {
+          name: "Main",
+          sources: [
+            {
+              name: "Camera",
+              type: "video_capture",
+              visible: true,
+              settings: {},
+            },
+          ],
+        },
+      ]);
+      obsCommandsMock.getRecordStatus.mockResolvedValue({
+        isRecording: true,
+      });
+      obsCommandsMock.getStreamStatus.mockResolvedValue({
+        isStreaming: false,
+      });
+
+      useIntegrationStore.getState().updateConfig({
+        obs: {
+          enabled: true,
+          host: "127.0.0.1",
+          port: 4456,
+          password: "secret",
+          autoConnect: false,
+        },
+      });
+
+      await useIntegrationStore.getState().connectOBS();
+
+      expect(obsCommandsMock.connect).toHaveBeenCalledWith({
+        host: "127.0.0.1",
+        port: 4456,
+        password: "secret",
+      });
+      const obs = useIntegrationStore.getState().obs;
+      expect(obs.connected).toBe(true);
+      expect(obs.version).toBe("30.1.2");
+      expect(obs.scenes).toHaveLength(1);
+      expect(obs.currentScene).toBe("Main");
+      expect(obs.isRecording).toBe(true);
+      expect(obs.isStreaming).toBe(false);
+    });
+
+    it("connectOBS records OBS_CONNECTION_FAILED on failure", async () => {
+      obsCommandsMock.connect.mockRejectedValue(new Error("auth failed"));
+
+      await useIntegrationStore.getState().connectOBS();
+
+      const state = useIntegrationStore.getState();
+      expect(state.obs.connected).toBe(false);
+      expect(state.obs.version).toBeNull();
+      expect(obsCommandsMock.getState).not.toHaveBeenCalled();
+      expect(state.errors).toHaveLength(1);
+      expect(state.errors[0]).toMatchObject({
+        code: "OBS_CONNECTION_FAILED",
+        message: "auth failed",
+        source: IntegrationSource.OBS,
+      });
+    });
+
+    it("disconnectOBS invokes backend disconnect when connected and resets state", async () => {
+      obsCommandsMock.disconnect.mockResolvedValue(undefined);
+      useIntegrationStore.getState().setOBSState({
+        connected: true,
+        version: "30.1.2",
+        currentScene: "Main",
+        isRecording: true,
+        isStreaming: true,
+        scenes: [
+          {
+            name: "Main",
+            sources: [],
+          },
+        ],
+      });
+
+      await useIntegrationStore.getState().disconnectOBS();
+
+      expect(obsCommandsMock.disconnect).toHaveBeenCalledTimes(1);
+      expect(useIntegrationStore.getState().obs).toMatchObject({
+        connected: false,
+        version: null,
+        scenes: [],
+        currentScene: null,
+        isRecording: false,
+        isStreaming: false,
+        stats: null,
+      });
+    });
+
+    it("setOBSSourceVisibility invokes OBS and updates the source state", async () => {
+      obsCommandsMock.setSourceVisibility.mockResolvedValue(undefined);
+      useIntegrationStore.getState().setOBSState({
+        connected: true,
+        scenes: [
+          {
+            name: "Main",
+            sources: [
+              {
+                name: "Camera",
+                type: "video_capture",
+                visible: false,
+                settings: {},
+              },
+            ],
+          },
+        ],
+      });
+
+      await useIntegrationStore
+        .getState()
+        .setOBSSourceVisibility("Main", "Camera", true);
+
+      expect(obsCommandsMock.setSourceVisibility).toHaveBeenCalledWith({
+        sceneName: "Main",
+        sourceName: "Camera",
+        visible: true,
+      });
+      const scene = useIntegrationStore.getState().obs.scenes[0];
+      expect(scene.sources[0].visible).toBe(true);
+      expect(useIntegrationStore.getState().events[0]).toMatchObject({
+        type: IntegrationMessageType.OBS_SOURCE_VISIBILITY_CHANGED,
+        source: IntegrationSource.OBS,
+        data: {
+          sceneName: "Main",
+          sourceName: "Camera",
+          visible: true,
+        },
+      });
     });
   });
 
