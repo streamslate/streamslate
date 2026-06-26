@@ -13,6 +13,7 @@ import {
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { AnnotationType } from "../../types/pdf.types";
 import type { Annotation } from "../../types/pdf.types";
+import { getTextLineY } from "../annotations/drawing";
 import { pointsToSmoothPath } from "../utils/geometry";
 import type { Point } from "../utils/geometry";
 import { logger } from "../logger";
@@ -71,12 +72,10 @@ function drawTextLineAnnotation(
   annotation: Annotation,
   pageHeight: number,
   color: RGB,
-  strokeWidth: number,
-  placement: "underline" | "strikethrough"
+  strokeWidth: number
 ): void {
-  const lineOffset =
-    placement === "underline" ? annotation.height : annotation.height / 2;
-  const lineY = pageHeight - (annotation.y + lineOffset);
+  const lineY =
+    pageHeight - getTextLineY(annotation.type, annotation.y, annotation.height);
 
   page.drawLine({
     start: { x: annotation.x, y: lineY },
@@ -150,8 +149,7 @@ export async function exportPDF(
             annotation,
             pageHeight,
             color,
-            strokeWidth,
-            "underline"
+            strokeWidth
           );
           break;
 
@@ -161,8 +159,7 @@ export async function exportPDF(
             annotation,
             pageHeight,
             color,
-            strokeWidth,
-            "strikethrough"
+            strokeWidth
           );
           break;
 
