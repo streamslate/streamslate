@@ -47,6 +47,23 @@ Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/s
 - [ ] Presenter mode works when app is in borderless mode
 - [ ] Presenter mode works across multiple monitors (drag to second screen)
 
+## OBS WebSocket Direct Control
+
+**Prerequisites:** OBS Studio running locally with WebSocket server enabled
+(`Tools > WebSocket Server Settings`), StreamSlate OBS host/port matching OBS
+(default `localhost:4455`), and at least one OBS scene with one visible source.
+
+- [ ] Output settings OBS status starts disconnected
+- [ ] Click OBS Connect → status shows connected and OBS version or connected state
+- [ ] OBS scene selector lists local OBS scenes
+- [ ] Select a different scene in StreamSlate → OBS program scene changes
+- [ ] Toggle a source visibility checkbox in StreamSlate → source visibility changes in OBS
+- [ ] Start recording in StreamSlate → OBS begins recording and the StreamSlate button changes to stop state
+- [ ] Stop recording in StreamSlate → OBS stops recording
+- [ ] Start streaming in StreamSlate using a safe test destination → OBS begins streaming and the StreamSlate button changes to stop state
+- [ ] Stop streaming in StreamSlate → OBS stops streaming
+- [ ] Disconnect OBS in StreamSlate → controls disable and OBS remains open
+
 ## PDF Page Inversion
 
 - [ ] Dark mode + invert ON → PDF pages have dark background
