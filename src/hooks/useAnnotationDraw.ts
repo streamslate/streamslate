@@ -62,6 +62,12 @@ const INITIAL_DRAWING_STATE: DrawingState = {
   points: [],
 };
 
+function isTextLineAnnotationType(type: AnnotationType): boolean {
+  return (
+    type === AnnotationType.UNDERLINE || type === AnnotationType.STRIKETHROUGH
+  );
+}
+
 export function useAnnotationDraw({
   annotations,
   viewport,
@@ -173,6 +179,8 @@ export function useAnnotationDraw({
     if (!activeTool) return "default";
     switch (activeTool) {
       case AnnotationType.HIGHLIGHT:
+      case AnnotationType.UNDERLINE:
+      case AnnotationType.STRIKETHROUGH:
       case AnnotationType.TEXT:
         return "text";
       case AnnotationType.RECTANGLE:
@@ -502,6 +510,37 @@ export function useAnnotationDraw({
 
     const width = Math.abs(currentX - startX);
     const height = Math.abs(currentY - startY);
+
+    if (isTextLineAnnotationType(activeTool)) {
+      if (width > MIN_ANNOTATION_SIZE) {
+        const bandHeight = Math.max(
+          height,
+          MIN_ANNOTATION_SIZE,
+          toolConfig.strokeWidth * 3
+        );
+        const centerY = (startY + currentY) / 2;
+        const annotation: Partial<Annotation> = {
+          id: crypto.randomUUID(),
+          type: activeTool,
+          pageNumber,
+          x: Math.min(startX, currentX),
+          y: centerY - bandHeight / 2,
+          width,
+          height: bandHeight,
+          content: "",
+          color: toolConfig.color,
+          opacity: toolConfig.opacity,
+          strokeWidth: toolConfig.strokeWidth,
+          created: new Date(),
+          modified: new Date(),
+          visible: true,
+        };
+        onAnnotationCreate(annotation);
+      }
+
+      setDrawingState(INITIAL_DRAWING_STATE);
+      return;
+    }
 
     if (width > 5 && height > 5) {
       const annotation: Partial<Annotation> = {
