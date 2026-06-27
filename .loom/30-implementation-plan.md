@@ -97,6 +97,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Validation capture helper result/evidence-link metadata for external reports
 - [x] Validation capture helper structured JSON metadata for issue/MR evidence attachments
 - [x] Marketplace submission checklist for post-validation package review
+- [x] Package ignore guard for local installer contents
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 

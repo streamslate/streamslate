@@ -1,0 +1,9 @@
+# Keep local development and evidence artifacts out of packaged installers.
+*.map
+logs/
+*.log
+*.tmp
+*.local
+*.streamDeckPlugin
+validation-*.md
+validation-*.json
