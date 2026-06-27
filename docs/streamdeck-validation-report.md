@@ -6,7 +6,15 @@ or attach it to the validation issue or MR, before marking roadmap 1.7 hardware
 validation complete.
 
 For a prefilled environment and loopback API evidence capture, run this from
-`plugins/streamdeck`:
+the repository root:
+
+```bash
+npm run capture:validation -- --probe --target "Stream Deck Mobile" --result partial --evidence-link validation-capture.md --output validation-report.md
+```
+
+The root command forwards to the Stream Deck plugin package. If you are already
+inside `plugins/streamdeck`, the equivalent package-local command is also
+available:
 
 ```bash
 npm run capture:validation -- --probe --target "Stream Deck Mobile" --result partial --evidence-link validation-capture.md --output validation-report.md

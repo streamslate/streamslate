@@ -171,6 +171,12 @@ Capture validation evidence metadata before or during a hardware/mobile test:
 npm run capture:validation -- --target "Stream Deck Mobile" --output validation-report.md
 ```
 
+The same helper can be invoked from the repository root:
+
+```bash
+npm run capture:validation -- --target "Stream Deck Mobile" --output plugins/streamdeck/validation-report.md
+```
+
 Add `--probe` while StreamSlate is running to record loopback API capabilities,
 state, and ping evidence. Add `--result` and one or more `--evidence-link`
 values after the manual run to prefill the validation outcome:
