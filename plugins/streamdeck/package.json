@@ -7,6 +7,7 @@
   "scripts": {
     "build": "rollup -c && node scripts/normalize-bundle.mjs",
     "validate:package": "node scripts/validate-package.mjs",
+    "audit:package": "node scripts/validate-package.mjs --audit-output streamdeck-package-audit.md --json-output streamdeck-package-audit.json",
     "capture:validation": "node scripts/capture-validation.mjs",
     "preflight": "npm run typecheck && npm test && npm run build && npm run validate:package",
     "pack:local": "npm run preflight && streamdeck pack ./ai.flexinfer.streamslate.sdPlugin",

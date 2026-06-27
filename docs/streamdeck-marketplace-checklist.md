@@ -27,6 +27,7 @@ plugin has been submitted, reviewed, DRM-processed, or published.
 - [ ] `npm run preflight` passes in `plugins/streamdeck`
 - [ ] `streamdeck validate ./ai.flexinfer.streamslate.sdPlugin` passes with the
       latest validation rules
+- [ ] `npm run audit:package` writes Markdown and JSON package audit artifacts
 - [ ] `npm run pack:local` produces a `.streamDeckPlugin` installer
 - [ ] Installer is tested locally from a clean Stream Deck profile
 
@@ -48,6 +49,8 @@ plugin has been submitted, reviewed, DRM-processed, or published.
 
 - [x] `.sdignore` excludes source maps, logs, generated installers, validation
       evidence, and other local non-shipping artifacts
+- [x] Package audit command records manifest metadata, action inventory, checked
+      files, and hashes for submission review
 - [ ] Only the compiled bundle, manifest, icons, property inspector assets, and
       required runtime files are packaged
 - [ ] No secrets, tokens, local paths, environment files, or unpublished test
