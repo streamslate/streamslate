@@ -93,6 +93,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Local package preflight validating manifest assets, compiled bundle, version, and runtime metadata
 - [x] Validation evidence template for hardware or Stream Deck Mobile testing
 - [x] Validation capture helper for environment metadata and loopback API evidence
+- [x] Validation capture helper CLI/probe behavior covered by automated tests
 - [x] Marketplace submission checklist for post-validation package review
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
@@ -147,3 +148,4 @@ Integrated as roadmap 1.8:
 - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
 - `.loom/067-plan-v2-s9-streamdeck-validation-evidence-2026-06-26.md`
 - `.loom/068-plan-v2-s10-streamdeck-marketplace-readiness-2026-06-26.md`
+- `.loom/070-plan-v2-s12-streamdeck-validation-capture-tests-2026-06-26.md`
