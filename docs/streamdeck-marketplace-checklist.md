@@ -46,8 +46,8 @@ plugin has been submitted, reviewed, DRM-processed, or published.
 
 ## Package Contents
 
-- [ ] `.sdignore` excludes source maps, logs, local configs, screenshots, and
-      other non-shipping artifacts
+- [x] `.sdignore` excludes source maps, logs, generated installers, validation
+      evidence, and other local non-shipping artifacts
 - [ ] Only the compiled bundle, manifest, icons, property inspector assets, and
       required runtime files are packaged
 - [ ] No secrets, tokens, local paths, environment files, or unpublished test

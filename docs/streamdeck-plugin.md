@@ -156,7 +156,9 @@ npm run preflight
 The preflight typechecks, runs unit tests, rebuilds the compiled plugin bundle,
 and validates that `manifest.json` points to existing bundle and icon assets,
 uses the expected SDK/runtime fields, and stays version-aligned with
-`package.json`.
+`package.json`. It also verifies the plugin package includes a `.sdignore`
+guard so local installers omit source maps, logs, generated installers, and
+validation evidence artifacts.
 
 The plugin test suite also exercises the validation capture helper's help text,
 markdown scaffold generation, JSON evidence metadata, output-file path,

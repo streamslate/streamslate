@@ -45,7 +45,7 @@
 ## Roadmap Expansion Status
 
 - **1.6 OBS WebSocket Direct Control** → Complete; Tauri OBS WebSocket v5 commands and Output settings scene/source/recording/streaming controls are implemented.
-- **1.7 Stream Deck Plugin** → Local SDK v2 plugin runtime, action set, build, package validation, preflight, validation evidence template, validation capture helper with automated CLI/probe coverage plus result/evidence-link and structured JSON metadata, and Marketplace readiness checklist are complete. Hardware or Stream Deck Mobile validation and Marketplace publication remain external follow-ups.
+- **1.7 Stream Deck Plugin** → Local SDK v2 plugin runtime, action set, build, package validation, package ignore guard, preflight, validation evidence template, validation capture helper with automated CLI/probe coverage plus result/evidence-link and structured JSON metadata, and Marketplace readiness checklist are complete. Hardware or Stream Deck Mobile validation and Marketplace publication remain external follow-ups.
 - **1.8 Text-Line Annotations** → Complete; underline and strikethrough are supported as visual geometry annotations, including tool palette, drag preview, SVG rendering, and PDF export.
 
 ## Remaining Future Work

@@ -6,6 +6,7 @@ const root = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const pluginDir = path.join(root, "ai.flexinfer.streamslate.sdPlugin");
 const manifestPath = path.join(pluginDir, "manifest.json");
 const packagePath = path.join(root, "package.json");
+const packageIgnorePath = path.join(pluginDir, ".sdignore");
 
 const requiredManifestFields = [
   "Actions",
@@ -24,6 +25,14 @@ const requiredManifestFields = [
 ];
 
 const errors = [];
+const requiredIgnorePatterns = [
+  "*.map",
+  "logs/",
+  "*.log",
+  "*.streamDeckPlugin",
+  "validation-*.md",
+  "validation-*.json",
+];
 
 async function readJson(file) {
   try {
@@ -117,6 +126,7 @@ async function main() {
     errors.push("Manifest Software.MinimumVersion is required");
   }
 
+  await validatePackageIgnore();
   await requireFile(manifest.CodePath, { nonEmpty: true });
 
   const bundle = await readFile(
@@ -166,6 +176,29 @@ async function main() {
   }
 
   finish();
+}
+
+async function validatePackageIgnore() {
+  let contents = "";
+  try {
+    contents = await readFile(packageIgnorePath, "utf8");
+  } catch {
+    errors.push("Missing package file: .sdignore");
+    return;
+  }
+
+  const patterns = new Set(
+    contents
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith("#"))
+  );
+
+  for (const pattern of requiredIgnorePatterns) {
+    if (!patterns.has(pattern)) {
+      errors.push(`.sdignore must exclude ${pattern}`);
+    }
+  }
 }
 
 function finish() {
