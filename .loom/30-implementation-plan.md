@@ -100,6 +100,8 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Marketplace submission checklist for post-validation package review
 - [x] Package ignore guard for local installer contents
 - [x] Package audit helper for Markdown/JSON Marketplace prep artifacts
+- [x] Root `npm run streamdeck:ci` guard for install, preflight, and package audit
+- [x] GitLab `test:streamdeck` job uploads package audit artifacts
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 
@@ -124,6 +126,12 @@ Integrated as roadmap 1.8:
 7. **M7** — OBS WebSocket direct control ✅ (roadmap 1.6)
 8. **M8** — Stream Deck local plugin/package readiness 🚧 (roadmap 1.7; external validation and publication pending)
 9. **M9** — Text-line annotations ✅ (roadmap 1.8)
+
+### M8 Follow-Up: Stream Deck Validation CI Guard ✅
+
+- [x] Root scripts expose plugin install, preflight, audit, and CI guard commands.
+- [x] GitLab CI runs the plugin guard independently on Node 24 and uploads Markdown/JSON package audit artifacts.
+- [x] Deployment waits for the Stream Deck guard without claiming external hardware/mobile validation.
 
 ## Acceptance Gate — ALL MET
 

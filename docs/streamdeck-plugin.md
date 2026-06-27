@@ -172,6 +172,18 @@ metadata, action inventory, package guard details, checked package files, and
 file hashes. These artifacts support the Marketplace checklist, but they do not
 replace hardware or Stream Deck Mobile validation.
 
+From the repository root, use the CI-equivalent guard when you want the same
+Stream Deck checks that GitLab runs:
+
+```bash
+npm run streamdeck:ci
+```
+
+That command installs the plugin dependencies, runs package preflight, and
+writes the Markdown/JSON package audit artifacts under `plugins/streamdeck/`.
+The GitLab `test:streamdeck` job runs the same guard on Node 24 and uploads
+those audit artifacts for review.
+
 The plugin test suite also exercises the validation capture helper's help text,
 markdown scaffold generation, JSON evidence metadata, output-file path,
 argument validation, and loopback WebSocket probe behavior against a mock

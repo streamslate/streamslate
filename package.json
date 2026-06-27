@@ -26,7 +26,11 @@
     "sync-versions": "node scripts/sync-versions.js",
     "release:preflight": "bash scripts/release-preflight.sh",
     "release:preflight:strict": "bash scripts/release-preflight.sh --strict",
-    "capture:validation": "npm --prefix plugins/streamdeck run capture:validation --"
+    "capture:validation": "npm --prefix plugins/streamdeck run capture:validation --",
+    "streamdeck:install": "npm --prefix plugins/streamdeck ci",
+    "streamdeck:preflight": "npm --prefix plugins/streamdeck run preflight",
+    "streamdeck:audit": "npm --prefix plugins/streamdeck run audit:package",
+    "streamdeck:ci": "npm run streamdeck:install && npm run streamdeck:preflight && npm run streamdeck:audit"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.0",

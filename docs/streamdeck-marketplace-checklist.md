@@ -24,6 +24,8 @@ plugin has been submitted, reviewed, DRM-processed, or published.
 
 - [ ] Hardware or Stream Deck Mobile validation report is complete and passing
 - [ ] Known validation issues are closed or explicitly accepted
+- [ ] Repository root `npm run streamdeck:ci` passes, including package audit
+      artifact generation
 - [ ] `npm run preflight` passes in `plugins/streamdeck`
 - [ ] `streamdeck validate ./ai.flexinfer.streamslate.sdPlugin` passes with the
       latest validation rules
