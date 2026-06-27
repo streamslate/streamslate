@@ -10,6 +10,7 @@ import { WebSocketServer } from "ws";
 const execFileAsync = promisify(execFile);
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(testDir, "../..");
+const repoRoot = path.resolve(pluginRoot, "../..");
 const scriptPath = path.join(pluginRoot, "scripts", "capture-validation.mjs");
 
 const tempDirs: string[] = [];
@@ -45,6 +46,21 @@ describe("capture-validation CLI", () => {
     expect(stdout).toContain("--evidence-link <link>");
     expect(stdout).toContain("--json-output <file>");
     expect(stdout).toContain("-o, --output <file>");
+  });
+
+  it("is exposed from the repository root npm scripts", async () => {
+    const { stdout } = await execFileAsync(
+      "npm",
+      ["run", "capture:validation", "--", "--help"],
+      {
+        cwd: repoRoot,
+        env: { ...process.env, FORCE_COLOR: "0" },
+        timeout: 10_000,
+      }
+    );
+
+    expect(stdout).toContain("Usage: npm run capture:validation -- [options]");
+    expect(stdout).toContain("--json-output <file>");
   });
 
   it("renders a markdown evidence scaffold without probing StreamSlate", async () => {

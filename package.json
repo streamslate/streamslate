@@ -25,7 +25,8 @@
     "fix:ts": "node scripts/auto-fix-ts.cjs",
     "sync-versions": "node scripts/sync-versions.js",
     "release:preflight": "bash scripts/release-preflight.sh",
-    "release:preflight:strict": "bash scripts/release-preflight.sh --strict"
+    "release:preflight:strict": "bash scripts/release-preflight.sh --strict",
+    "capture:validation": "npm --prefix plugins/streamdeck run capture:validation --"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.10.0",

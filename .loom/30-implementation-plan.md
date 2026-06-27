@@ -96,6 +96,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Validation capture helper CLI/probe behavior covered by automated tests
 - [x] Validation capture helper result/evidence-link metadata for external reports
 - [x] Validation capture helper structured JSON metadata for issue/MR evidence attachments
+- [x] Repository-root `npm run capture:validation` wrapper for the validation helper
 - [x] Marketplace submission checklist for post-validation package review
 - [x] Package ignore guard for local installer contents
 - [ ] Hardware or Stream Deck Mobile validation

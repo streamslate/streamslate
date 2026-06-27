@@ -81,6 +81,7 @@ PDF text-semantic extraction.
 - [x] Validation capture helper covered by automated CLI and loopback probe tests
 - [x] Validation capture helper pre-fills result status and evidence links for external test reports
 - [x] Validation capture helper emits structured JSON evidence metadata for issue/MR attachments
+- [x] Repository-root validation capture script forwards to the Stream Deck helper
 - [x] Marketplace submission checklist prepared for post-validation packaging review
 - [x] Package ignore rules guard local installers from source maps, logs, and validation artifacts
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
