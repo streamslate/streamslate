@@ -9,7 +9,7 @@ For a prefilled environment and loopback API evidence capture, run this from
 `plugins/streamdeck`:
 
 ```bash
-npm run capture:validation -- --probe --output validation-report.md
+npm run capture:validation -- --probe --target "Stream Deck Mobile" --result partial --evidence-link validation-capture.md --output validation-report.md
 ```
 
 Copy the generated details into this report, or attach the generated file as

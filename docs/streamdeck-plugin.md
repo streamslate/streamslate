@@ -165,14 +165,15 @@ loopback WebSocket probe behavior against a mock StreamSlate endpoint.
 Capture validation evidence metadata before or during a hardware/mobile test:
 
 ```bash
-npm run capture:validation -- --output validation-report.md
+npm run capture:validation -- --target "Stream Deck Mobile" --output validation-report.md
 ```
 
 Add `--probe` while StreamSlate is running to record loopback API capabilities,
-state, and ping evidence:
+state, and ping evidence. Add `--result` and one or more `--evidence-link`
+values after the manual run to prefill the validation outcome:
 
 ```bash
-npm run capture:validation -- --probe --output validation-report.md
+npm run capture:validation -- --probe --result partial --evidence-link validation-capture.md --output validation-report.md
 ```
 
 Link the compiled plugin directory to Stream Deck if the package script does
