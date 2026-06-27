@@ -64,6 +64,14 @@ variables:
   paths:
     - .npm/
 
+.cache_streamdeck_npm: &cache_streamdeck_npm
+  key:
+    prefix: streamdeck-npm-v1
+    files:
+      - plugins/streamdeck/package-lock.json
+  paths:
+    - plugins/streamdeck/.npm/
+
 .cache_cargo: &cache_cargo
   key:
     prefix: cargo-v3
@@ -133,6 +141,25 @@ test:linux:rust:
   script:
     # Rust tests
     - cd src-tauri && cargo test
+
+test:streamdeck:
+  stage: test
+  image: node:24-bookworm
+  # Start immediately (don't wait for lint stage) for faster plugin feedback.
+  needs: []
+  cache:
+    - <<: *cache_streamdeck_npm
+      policy: pull-push
+  variables:
+    npm_config_cache: "$CI_PROJECT_DIR/plugins/streamdeck/.npm"
+  script:
+    - npm run streamdeck:ci
+  artifacts:
+    when: always
+    paths:
+      - plugins/streamdeck/streamdeck-package-audit.md
+      - plugins/streamdeck/streamdeck-package-audit.json
+    expire_in: 1 week
 
 .test:linux:e2e:
   stage: test
@@ -232,6 +259,7 @@ docker:build:
     [
       "lint:linux",
       "test:linux:rust",
+      "test:streamdeck",
       "test:linux:e2e:core",
       "test:linux:e2e:integration",
     ]
