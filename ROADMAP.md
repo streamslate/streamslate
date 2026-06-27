@@ -79,6 +79,7 @@ PDF text-semantic extraction.
 - [x] Validation evidence template prepared for hardware or Stream Deck Mobile testing
 - [x] Validation capture helper prepared for environment metadata and loopback API evidence
 - [x] Validation capture helper covered by automated CLI and loopback probe tests
+- [x] Validation capture helper pre-fills result status and evidence links for external test reports
 - [x] Marketplace submission checklist prepared for post-validation packaging review
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened

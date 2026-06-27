@@ -15,6 +15,7 @@ const manifestPath = path.join(
   "ai.flexinfer.streamslate.sdPlugin",
   "manifest.json"
 );
+const VALID_RESULTS = new Set(["pass", "fail", "partial"]);
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
@@ -44,7 +45,9 @@ async function main() {
 
   const report = renderReport({
     date: new Date().toISOString(),
+    evidenceLinks: args.evidenceLinks,
     tester: args.tester,
+    result: args.result,
     target: args.target,
     pkg,
     rootPkg,
@@ -66,11 +69,13 @@ async function main() {
 
 function parseArgs(argv) {
   const parsed = {
+    evidenceLinks: [],
     help: false,
     host: "127.0.0.1",
     output: "",
     port: 11451,
     probe: false,
+    result: "",
     target: "",
     tester: "",
     timeoutMs: 3000,
@@ -90,6 +95,8 @@ function parseArgs(argv) {
     else if (arg === "--timeout-ms") parsed.timeoutMs = Number(next());
     else if (arg === "--output" || arg === "-o") parsed.output = next();
     else if (arg === "--tester") parsed.tester = next();
+    else if (arg === "--result") parsed.result = next();
+    else if (arg === "--evidence-link") parsed.evidenceLinks.push(next());
     else if (arg === "--target") parsed.target = next();
     else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -101,6 +108,12 @@ function parseArgs(argv) {
   }
   if (!Number.isInteger(parsed.timeoutMs) || parsed.timeoutMs <= 0) {
     throw new Error("--timeout-ms must be a positive integer");
+  }
+  if (parsed.result && !VALID_RESULTS.has(parsed.result)) {
+    throw new Error("--result must be one of: pass, fail, partial");
+  }
+  if (parsed.evidenceLinks.some((link) => link.trim() === "")) {
+    throw new Error("--evidence-link must be a non-empty value");
   }
 
   return parsed;
@@ -204,7 +217,9 @@ function parseEvent(data) {
 
 function renderReport({
   date,
+  evidenceLinks,
   tester,
+  result,
   target,
   pkg,
   rootPkg,
@@ -220,6 +235,10 @@ function renderReport({
   const supportedEvents = Array.isArray(capabilities?.supported_events)
     ? capabilities.supported_events.join(", ")
     : "";
+  const evidenceBlock =
+    evidenceLinks.length > 0
+      ? `\n${evidenceLinks.map((link) => `  - ${link}`).join("\n")}`
+      : "";
 
   return `# Stream Deck Validation Capture
 
@@ -231,13 +250,13 @@ Deck Mobile validation complete by itself.
 
 - Date: ${date}
 - Tester: ${tester || ""}
-- Result: pass | fail | partial
+- Result: ${result || "pass | fail | partial"}
 - StreamSlate commit: ${gitCommit}
 - StreamSlate version: ${rootPkg.version}
 - Plugin package version: ${pkg.version}
 - Plugin manifest version: ${manifest.Version}
 - Validation target: ${target || "hardware | Stream Deck Mobile"}
-- Evidence links:
+- Evidence links:${evidenceBlock}
 
 ## Environment
 
@@ -306,6 +325,8 @@ Options:
   --timeout-ms <ms>       Probe timeout. Default: 3000.
   --tester <name>         Tester name to prefill.
   --target <target>       hardware or Stream Deck Mobile.
+  --result <result>       Validation result: pass, fail, or partial.
+  --evidence-link <link>  Evidence URL/path/note. Can be passed more than once.
   -o, --output <file>     Write markdown to a file instead of stdout.
   -h, --help              Show this help.
 `);

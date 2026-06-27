@@ -41,6 +41,8 @@ describe("capture-validation CLI", () => {
     expect(stdout).toContain("Usage: npm run capture:validation -- [options]");
     expect(stdout).toContain("--probe");
     expect(stdout).toContain("--target <target>");
+    expect(stdout).toContain("--result <result>");
+    expect(stdout).toContain("--evidence-link <link>");
     expect(stdout).toContain("-o, --output <file>");
   });
 
@@ -81,9 +83,40 @@ describe("capture-validation CLI", () => {
     expect(report).toContain("## Manual Action Results");
   });
 
+  it("prefills result and evidence links", async () => {
+    const { stdout } = await runCapture([
+      "--result",
+      "partial",
+      "--evidence-link",
+      "validation-capture.md",
+      "--evidence-link",
+      "https://example.test/evidence",
+    ]);
+
+    expect(stdout).toContain("- Result: partial");
+    expect(stdout).toContain("- Evidence links:\n  - validation-capture.md");
+    expect(stdout).toContain("  - https://example.test/evidence");
+  });
+
   it("rejects invalid numeric arguments", async () => {
     await expect(runCapture(["--port", "0"])).rejects.toMatchObject({
       stderr: expect.stringContaining("--port must be a positive integer"),
+    });
+  });
+
+  it("rejects invalid result values", async () => {
+    await expect(runCapture(["--result", "unknown"])).rejects.toMatchObject({
+      stderr: expect.stringContaining(
+        "--result must be one of: pass, fail, partial"
+      ),
+    });
+  });
+
+  it("rejects empty evidence links", async () => {
+    await expect(runCapture(["--evidence-link", ""])).rejects.toMatchObject({
+      stderr: expect.stringContaining(
+        "--evidence-link must be a non-empty value"
+      ),
     });
   });
 
