@@ -1,3 +1,5 @@
 node_modules/
 ai.flexinfer.streamslate.sdPlugin/logs/
 *.streamDeckPlugin
+streamdeck-package-audit.md
+streamdeck-package-audit.json

@@ -84,6 +84,7 @@ PDF text-semantic extraction.
 - [x] Repository-root validation capture script forwards to the Stream Deck helper
 - [x] Marketplace submission checklist prepared for post-validation packaging review
 - [x] Package ignore rules guard local installers from source maps, logs, and validation artifacts
+- [x] Package audit helper emits Markdown and JSON review artifacts for Marketplace prep
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
 

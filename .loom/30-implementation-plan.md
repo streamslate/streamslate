@@ -99,6 +99,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Repository-root `npm run capture:validation` wrapper for the validation helper
 - [x] Marketplace submission checklist for post-validation package review
 - [x] Package ignore guard for local installer contents
+- [x] Package audit helper for Markdown/JSON Marketplace prep artifacts
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 
@@ -153,3 +154,4 @@ Integrated as roadmap 1.8:
 - `.loom/067-plan-v2-s9-streamdeck-validation-evidence-2026-06-26.md`
 - `.loom/068-plan-v2-s10-streamdeck-marketplace-readiness-2026-06-26.md`
 - `.loom/070-plan-v2-s12-streamdeck-validation-capture-tests-2026-06-26.md`
+- `.loom/074-plan-v2-s16-streamdeck-package-audit-2026-06-27.md`

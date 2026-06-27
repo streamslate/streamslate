@@ -160,6 +160,18 @@ uses the expected SDK/runtime fields, and stays version-aligned with
 guard so local installers omit source maps, logs, generated installers, and
 validation evidence artifacts.
 
+Generate a package audit before Marketplace review or handoff:
+
+```bash
+npm run audit:package
+```
+
+The audit command reuses package validation, then writes
+`streamdeck-package-audit.md` and `streamdeck-package-audit.json` with manifest
+metadata, action inventory, package guard details, checked package files, and
+file hashes. These artifacts support the Marketplace checklist, but they do not
+replace hardware or Stream Deck Mobile validation.
+
 The plugin test suite also exercises the validation capture helper's help text,
 markdown scaffold generation, JSON evidence metadata, output-file path,
 argument validation, and loopback WebSocket probe behavior against a mock
