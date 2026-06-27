@@ -75,7 +75,7 @@ StreamSlate v1.4.0 has strong core functionality (22 features working), but 6 fe
 ## Post-Remediation Roadmap Update — 2026-06-26
 
 - **1.6 OBS WebSocket Direct Control** is complete. StreamSlate now exposes Tauri OBS commands and Output settings controls for scene switching, source visibility, recording, and streaming.
-- **1.7 Stream Deck Plugin** has a first-party Elgato SDK v2 plugin runtime, local action set, build output, package validation, and preflight. Hardware or Stream Deck Mobile validation and Marketplace publication are still pending and must not be claimed as complete.
+- **1.7 Stream Deck Plugin** has a first-party Elgato SDK v2 plugin runtime, local action set, build output, package validation, preflight, and validation capture outputs in Markdown plus structured JSON. Hardware or Stream Deck Mobile validation and Marketplace publication are still pending and must not be claimed as complete.
 - **1.8 Text-Line Annotations** is complete. Underline and strikethrough are supported as visual geometry annotations with tool palette entries, drag previews, live SVG rendering, and burned-in PDF export. They do not perform OCR or semantic PDF text extraction.
 
 ## Sources
@@ -89,3 +89,4 @@ StreamSlate v1.4.0 has strong core functionality (22 features working), but 6 fe
 - `.loom/064-plan-v2-s6-streamdeck-plugin-2026-06-26.md`
 - `.loom/065-plan-v2-s7-text-line-annotations-2026-06-26.md`
 - `.loom/066-plan-v2-s8-streamdeck-package-preflight-2026-06-26.md`
+- `.loom/072-plan-v2-s14-streamdeck-validation-json-2026-06-27.md`

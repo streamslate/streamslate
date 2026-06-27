@@ -159,8 +159,9 @@ uses the expected SDK/runtime fields, and stays version-aligned with
 `package.json`.
 
 The plugin test suite also exercises the validation capture helper's help text,
-markdown scaffold generation, output-file path, argument validation, and
-loopback WebSocket probe behavior against a mock StreamSlate endpoint.
+markdown scaffold generation, JSON evidence metadata, output-file path,
+argument validation, and loopback WebSocket probe behavior against a mock
+StreamSlate endpoint.
 
 Capture validation evidence metadata before or during a hardware/mobile test:
 
@@ -174,6 +175,13 @@ values after the manual run to prefill the validation outcome:
 
 ```bash
 npm run capture:validation -- --probe --result partial --evidence-link validation-capture.md --output validation-report.md
+```
+
+Add `--json-output` to write the same environment, result, evidence-link, and
+loopback probe metadata as a structured artifact for issue/MR attachments:
+
+```bash
+npm run capture:validation -- --probe --output validation-report.md --json-output validation-capture.json
 ```
 
 Link the compiled plugin directory to Stream Deck if the package script does
