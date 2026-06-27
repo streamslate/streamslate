@@ -43,6 +43,7 @@ describe("capture-validation CLI", () => {
     expect(stdout).toContain("--target <target>");
     expect(stdout).toContain("--result <result>");
     expect(stdout).toContain("--evidence-link <link>");
+    expect(stdout).toContain("--json-output <file>");
     expect(stdout).toContain("-o, --output <file>");
   });
 
@@ -81,6 +82,57 @@ describe("capture-validation CLI", () => {
     expect(stdout).toContain("validation-capture.md");
     expect(report).toContain("- Tester: Package QA");
     expect(report).toContain("## Manual Action Results");
+  });
+
+  it("writes structured JSON evidence metadata", async () => {
+    const dir = await makeTempDir();
+    const outputPath = path.join(dir, "validation-capture.md");
+    const jsonOutputPath = path.join(dir, "validation-capture.json");
+
+    const { stdout } = await runCapture([
+      "--tester",
+      "Package QA",
+      "--target",
+      "Stream Deck Mobile",
+      "--result",
+      "partial",
+      "--evidence-link",
+      "validation-capture.md",
+      "--output",
+      outputPath,
+      "--json-output",
+      jsonOutputPath,
+    ]);
+    const capture = JSON.parse(await readFile(jsonOutputPath, "utf8")) as {
+      schemaVersion: string;
+      summary: {
+        tester: string;
+        result: string;
+        target: string;
+        evidenceLinks: string[];
+      };
+      streamSlate: { version: string };
+      plugin: { packageVersion: string; manifestUuid: string };
+      environment: { nodeVersion: string };
+      externalValidationComplete: boolean;
+    };
+
+    expect(stdout).toContain("validation-capture.md");
+    expect(stdout).toContain("validation-capture.json");
+    expect(capture.schemaVersion).toBe(
+      "streamslate.streamdeck.validation-capture.v1"
+    );
+    expect(capture.summary).toMatchObject({
+      tester: "Package QA",
+      result: "partial",
+      target: "Stream Deck Mobile",
+      evidenceLinks: ["validation-capture.md"],
+    });
+    expect(capture.streamSlate.version).toMatch(/\d+\.\d+\.\d+/);
+    expect(capture.plugin.packageVersion).toBe("0.1.0");
+    expect(capture.plugin.manifestUuid).toBe("ai.flexinfer.streamslate");
+    expect(capture.environment.nodeVersion).toBe(process.version);
+    expect(capture.externalValidationComplete).toBe(false);
   });
 
   it("prefills result and evidence links", async () => {
@@ -182,6 +234,87 @@ describe("capture-validation CLI", () => {
       expect(stdout).toContain("- Supported events: STATE, PONG");
       expect(stdout).toContain("- Current state received: yes");
       expect(stdout).toContain("- Pong received: yes");
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+  });
+
+  it("includes loopback API probe evidence in JSON output", async () => {
+    const server = new WebSocketServer({ host: "127.0.0.1", port: 0 });
+    await new Promise<void>((resolve) => server.once("listening", resolve));
+    const dir = await makeTempDir();
+    const jsonOutputPath = path.join(dir, "validation-capture.json");
+
+    server.on("connection", (socket) => {
+      socket.on("message", (data) => {
+        const command = JSON.parse(data.toString("utf8")) as {
+          type: string;
+          request_id?: string;
+        };
+
+        if (command.type === "GET_CAPABILITIES") {
+          socket.send(
+            JSON.stringify({
+              type: "CAPABILITIES",
+              request_id: command.request_id,
+              supported_commands: ["GET_STATE", "PING"],
+              supported_events: ["STATE", "PONG"],
+            })
+          );
+        } else if (command.type === "GET_STATE") {
+          socket.send(
+            JSON.stringify({
+              type: "STATE",
+              request_id: command.request_id,
+              page: 2,
+              total_pages: 5,
+              zoom: 1.25,
+            })
+          );
+        } else if (command.type === "PING") {
+          socket.send(
+            JSON.stringify({ type: "PONG", request_id: command.request_id })
+          );
+        }
+      });
+    });
+
+    try {
+      const address = server.address();
+      const port =
+        typeof address === "object" && address !== null ? address.port : 0;
+      await runCapture([
+        "--probe",
+        "--port",
+        String(port),
+        "--timeout-ms",
+        "1000",
+        "--json-output",
+        jsonOutputPath,
+      ]);
+      const capture = JSON.parse(await readFile(jsonOutputPath, "utf8")) as {
+        loopbackApiProbe: {
+          connected: boolean;
+          observed: string[];
+          capabilities: { supported_commands: string[] };
+          state: { page: number };
+          pong: { type: string };
+        };
+      };
+
+      expect(capture.loopbackApiProbe.connected).toBe(true);
+      expect(capture.loopbackApiProbe.observed).toEqual([
+        "CAPABILITIES",
+        "STATE",
+        "PONG",
+      ]);
+      expect(
+        capture.loopbackApiProbe.capabilities.supported_commands
+      ).toContain("GET_STATE");
+      expect(capture.loopbackApiProbe.state.page).toBe(2);
+      expect(capture.loopbackApiProbe.pong.type).toBe("PONG");
     } finally {
       await new Promise<void>((resolve, reject) => {
         server.close((error) => (error ? reject(error) : resolve()));

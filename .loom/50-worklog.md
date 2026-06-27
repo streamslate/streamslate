@@ -1,5 +1,21 @@
 # Worklog
 
+## 2026-06-27: Stream Deck Validation JSON Evidence
+
+- What changed:
+  - Added `--json-output` to the Stream Deck validation capture helper so external testers can attach structured evidence metadata alongside the Markdown validation report.
+  - Included result, target, evidence links, StreamSlate/plugin versions, host environment, optional loopback API probe data, and `externalValidationComplete: false`.
+  - Updated Stream Deck docs, roadmap status, and Loom planning markers without marking hardware/mobile validation or Marketplace publication complete.
+- Why:
+  - Roadmap 1.7 is blocked on external Stream Deck hardware or Stream Deck Mobile evidence. A JSON artifact makes that evidence easier to attach to issues, MRs, or release records while preserving truthfulness.
+- What's next:
+  - Run hardware or Stream Deck Mobile validation and attach completed Markdown plus JSON evidence.
+  - Prepare Marketplace package/submission records only after validation evidence passes.
+- Sources:
+  - `plugins/streamdeck/scripts/capture-validation.mjs`
+  - `plugins/streamdeck/src/scripts/capture-validation.test.ts`
+  - `.loom/072-plan-v2-s14-streamdeck-validation-json-2026-06-27.md`
+
 ## 2026-06-26: RALPH Planning Reconciliation
 
 - What changed:

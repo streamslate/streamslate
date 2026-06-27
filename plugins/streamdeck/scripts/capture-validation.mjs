@@ -43,7 +43,7 @@ async function main() {
       })
     : null;
 
-  const report = renderReport({
+  const capture = buildCapture({
     date: new Date().toISOString(),
     evidenceLinks: args.evidenceLinks,
     tester: args.tester,
@@ -56,15 +56,25 @@ async function main() {
     streamdeckCli,
     probe,
   });
+  const report = renderReport(capture);
 
   if (args.output) {
     const outputPath = path.resolve(process.cwd(), args.output);
     await writeFile(outputPath, report, "utf8");
     console.log(`Wrote ${path.relative(process.cwd(), outputPath)}`);
-    return;
   }
 
-  process.stdout.write(report);
+  if (args.jsonOutput) {
+    const jsonOutputPath = path.resolve(process.cwd(), args.jsonOutput);
+    await writeFile(
+      jsonOutputPath,
+      `${JSON.stringify(renderJson(capture), null, 2)}\n`,
+      "utf8"
+    );
+    console.log(`Wrote ${path.relative(process.cwd(), jsonOutputPath)}`);
+  }
+
+  if (!args.output) process.stdout.write(report);
 }
 
 function parseArgs(argv) {
@@ -72,6 +82,7 @@ function parseArgs(argv) {
     evidenceLinks: [],
     help: false,
     host: "127.0.0.1",
+    jsonOutput: "",
     output: "",
     port: 11451,
     probe: false,
@@ -93,6 +104,7 @@ function parseArgs(argv) {
     else if (arg === "--host") parsed.host = next();
     else if (arg === "--port") parsed.port = Number(next());
     else if (arg === "--timeout-ms") parsed.timeoutMs = Number(next());
+    else if (arg === "--json-output") parsed.jsonOutput = next();
     else if (arg === "--output" || arg === "-o") parsed.output = next();
     else if (arg === "--tester") parsed.tester = next();
     else if (arg === "--result") parsed.result = next();
@@ -215,7 +227,7 @@ function parseEvent(data) {
   }
 }
 
-function renderReport({
+function buildCapture({
   date,
   evidenceLinks,
   tester,
@@ -224,6 +236,36 @@ function renderReport({
   pkg,
   rootPkg,
   manifest,
+  gitCommit,
+  streamdeckCli,
+  probe,
+}) {
+  return {
+    date,
+    evidenceLinks,
+    tester,
+    result,
+    target,
+    packageVersion: pkg.version,
+    streamSlateVersion: rootPkg.version,
+    manifestVersion: manifest.Version,
+    manifestName: manifest.Name,
+    manifestUuid: manifest.UUID,
+    gitCommit,
+    streamdeckCli,
+    probe,
+  };
+}
+
+function renderReport({
+  date,
+  evidenceLinks,
+  tester,
+  result,
+  target,
+  packageVersion,
+  streamSlateVersion,
+  manifestVersion,
   gitCommit,
   streamdeckCli,
   probe,
@@ -252,9 +294,9 @@ Deck Mobile validation complete by itself.
 - Tester: ${tester || ""}
 - Result: ${result || "pass | fail | partial"}
 - StreamSlate commit: ${gitCommit}
-- StreamSlate version: ${rootPkg.version}
-- Plugin package version: ${pkg.version}
-- Plugin manifest version: ${manifest.Version}
+- StreamSlate version: ${streamSlateVersion}
+- Plugin package version: ${packageVersion}
+- Plugin manifest version: ${manifestVersion}
 - Validation target: ${target || "hardware | Stream Deck Mobile"}
 - Evidence links:${evidenceBlock}
 
@@ -306,6 +348,37 @@ Deck Mobile validation complete by itself.
 `;
 }
 
+function renderJson(capture) {
+  return {
+    schemaVersion: "streamslate.streamdeck.validation-capture.v1",
+    generatedAt: capture.date,
+    summary: {
+      tester: capture.tester || null,
+      result: capture.result || null,
+      target: capture.target || null,
+      evidenceLinks: capture.evidenceLinks,
+    },
+    streamSlate: {
+      commit: capture.gitCommit || null,
+      version: capture.streamSlateVersion,
+    },
+    plugin: {
+      packageVersion: capture.packageVersion,
+      manifestVersion: capture.manifestVersion,
+      manifestName: capture.manifestName,
+      manifestUuid: capture.manifestUuid,
+    },
+    environment: {
+      hostname: hostname(),
+      os: `${platform()} ${release()}`,
+      nodeVersion: process.version,
+      streamDeckCliVersion: capture.streamdeckCli || null,
+    },
+    loopbackApiProbe: capture.probe,
+    externalValidationComplete: false,
+  };
+}
+
 function yesNo(value) {
   return value ? "yes" : "no";
 }
@@ -327,6 +400,7 @@ Options:
   --target <target>       hardware or Stream Deck Mobile.
   --result <result>       Validation result: pass, fail, or partial.
   --evidence-link <link>  Evidence URL/path/note. Can be passed more than once.
+  --json-output <file>    Write structured JSON evidence metadata to a file.
   -o, --output <file>     Write markdown to a file instead of stdout.
   -h, --help              Show this help.
 `);

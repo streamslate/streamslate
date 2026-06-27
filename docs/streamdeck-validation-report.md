@@ -15,10 +15,13 @@ npm run capture:validation -- --probe --target "Stream Deck Mobile" --result par
 Copy the generated details into this report, or attach the generated file as
 evidence alongside the completed manual action results.
 
+Add `--json-output validation-capture.json` when the issue, MR, or release
+record needs structured evidence metadata alongside the Markdown report.
+
 The capture helper is covered by automated plugin tests for its CLI help,
-markdown output, output-file writing, argument validation, and loopback probe
-capture. Those tests validate the evidence tool, not the external hardware or
-Stream Deck Mobile action results recorded below.
+markdown output, JSON evidence metadata, output-file writing, argument
+validation, and loopback probe capture. Those tests validate the evidence tool,
+not the external hardware or Stream Deck Mobile action results recorded below.
 
 ## Summary
 
@@ -41,6 +44,7 @@ Stream Deck Mobile action results recorded below.
 - StreamSlate launch command:
 - Plugin install method: link | local package
 - Validation capture artifact:
+- Structured JSON capture artifact:
 
 ## Preflight
 
