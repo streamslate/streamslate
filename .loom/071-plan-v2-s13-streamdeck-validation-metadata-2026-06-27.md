@@ -42,6 +42,7 @@ Date: 2026-06-27
   - `docs/streamdeck-plugin.md`
   - `docs/streamdeck-validation-report.md`
   - `ROADMAP.md`
+  - `src/components/layout/OutputControls.tsx`
   - `.gitlab-ci.yml`
   - `.loom/00-index.md`
   - `.loom/30-implementation-plan.md`
@@ -49,7 +50,8 @@ Date: 2026-06-27
   1. Extend capture CLI parsing and report rendering.
   2. Add positive and negative CLI tests.
   3. Disable macOS updater artifact generation in CI when the updater private key is absent.
-  4. Update docs and planning artifacts without claiming external validation.
+  4. Stabilize the Settings output controls store subscription that red-lined the post-merge E2E pipeline.
+  5. Update docs and planning artifacts without claiming external validation.
 
 ## Prove
 
@@ -57,6 +59,7 @@ Date: 2026-06-27
   - `npm test` in `plugins/streamdeck`
   - `npm run capture:validation -- --result partial --evidence-link validation-capture.md`
   - `npm run validate:package` in `plugins/streamdeck`
+  - Targeted Settings/sidebar E2E specs after the CI regression fix
   - GitLab MR pipeline
 - Lint/static checks:
   - `npm run typecheck` in `plugins/streamdeck`

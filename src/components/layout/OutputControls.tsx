@@ -23,29 +23,28 @@ export const OutputControls: React.FC = () => {
     listDisplays,
     getCaptureStatus,
   } = useNDI();
-  const {
-    obs,
-    config,
-    connectOBS,
-    disconnectOBS,
-    setOBSCurrentScene,
-    setOBSSourceVisibility,
-    startOBSRecording,
-    stopOBSRecording,
-    startOBSStreaming,
-    stopOBSStreaming,
-  } = useIntegrationStore((state) => ({
-    obs: state.obs,
-    config: state.config,
-    connectOBS: state.connectOBS,
-    disconnectOBS: state.disconnectOBS,
-    setOBSCurrentScene: state.setOBSCurrentScene,
-    setOBSSourceVisibility: state.setOBSSourceVisibility,
-    startOBSRecording: state.startOBSRecording,
-    stopOBSRecording: state.stopOBSRecording,
-    startOBSStreaming: state.startOBSStreaming,
-    stopOBSStreaming: state.stopOBSStreaming,
-  }));
+  const obs = useIntegrationStore((state) => state.obs);
+  const config = useIntegrationStore((state) => state.config);
+  const connectOBS = useIntegrationStore((state) => state.connectOBS);
+  const disconnectOBS = useIntegrationStore((state) => state.disconnectOBS);
+  const setOBSCurrentScene = useIntegrationStore(
+    (state) => state.setOBSCurrentScene
+  );
+  const setOBSSourceVisibility = useIntegrationStore(
+    (state) => state.setOBSSourceVisibility
+  );
+  const startOBSRecording = useIntegrationStore(
+    (state) => state.startOBSRecording
+  );
+  const stopOBSRecording = useIntegrationStore(
+    (state) => state.stopOBSRecording
+  );
+  const startOBSStreaming = useIntegrationStore(
+    (state) => state.startOBSStreaming
+  );
+  const stopOBSStreaming = useIntegrationStore(
+    (state) => state.stopOBSStreaming
+  );
 
   const [selectedDisplayId, setSelectedDisplayId] = useState<
     number | undefined
