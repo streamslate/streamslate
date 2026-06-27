@@ -158,6 +158,10 @@ and validates that `manifest.json` points to existing bundle and icon assets,
 uses the expected SDK/runtime fields, and stays version-aligned with
 `package.json`.
 
+The plugin test suite also exercises the validation capture helper's help text,
+markdown scaffold generation, output-file path, argument validation, and
+loopback WebSocket probe behavior against a mock StreamSlate endpoint.
+
 Capture validation evidence metadata before or during a hardware/mobile test:
 
 ```bash

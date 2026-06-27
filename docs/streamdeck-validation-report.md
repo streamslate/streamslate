@@ -15,6 +15,11 @@ npm run capture:validation -- --probe --output validation-report.md
 Copy the generated details into this report, or attach the generated file as
 evidence alongside the completed manual action results.
 
+The capture helper is covered by automated plugin tests for its CLI help,
+markdown output, output-file writing, argument validation, and loopback probe
+capture. Those tests validate the evidence tool, not the external hardware or
+Stream Deck Mobile action results recorded below.
+
 ## Summary
 
 - Date:
