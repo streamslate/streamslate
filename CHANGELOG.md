@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.0](https://github.com/streamslate/streamslate/compare/v1.5.0...v1.6.0) (2026-06-28)
+
+### Features
+
+- add the Stream Deck plugin runtime, package preflight, audit, validation capture, and pass-evidence guard
+- add OBS websocket controls and frontend output actions
+- add v2 local-control contract support, websocket capability negotiation, and runtime capability messages
+- add text-line annotation types, rendering, tooling, and PDF export support
+- polish the annotation tool picker workflow
+
+### Bug Fixes
+
+- stabilize the output store selector in settings
+- accept empty OBS command responses
+- align v2 contract fixtures with the wire protocol and error shape
+- broadcast annotation events and deliver capability messages over websocket
+- include v2 fixtures in frontend Docker builds
+
+### Tests
+
+- cover Stream Deck validation capture and package validation helpers
+- add v2 websocket and StreamSlate fixture conformance coverage
+- expand annotation tool picker and integration store coverage
+
+### Documentation
+
+- document the v2 local-control contract and fixtures
+- add Stream Deck plugin verification and marketplace readiness guides
+- refresh getting-started, API, roadmap, and release-readiness notes
+
+### CI/CD
+
+- skip macOS updater artifacts when signing keys are unavailable
+- de-gate the notarized macOS build path and expose Cargo on the mac runner
+- add Stream Deck validation/package guards and tech-radar scanning
+
 ## [1.5.0](https://github.com/streamslate/streamslate/compare/streamslate-v1.4.0...streamslate-v1.5.0) (2026-03-14)
 
 ### Features
