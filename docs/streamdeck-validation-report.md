@@ -26,6 +26,11 @@ evidence alongside the completed manual action results.
 Add `--json-output validation-capture.json` when the issue, MR, or release
 record needs structured evidence metadata alongside the Markdown report.
 
+The capture helper refuses `--result pass` unless a validation target and at
+least one evidence link are provided. Use that pass result only after the
+manual hardware or Stream Deck Mobile action results below have been completed
+and the evidence link points to the completed report, recording, issue, or MR.
+
 The capture helper is covered by automated plugin tests for its CLI help,
 markdown output, JSON evidence metadata, output-file writing, argument
 validation, and loopback probe capture. Those tests validate the evidence tool,

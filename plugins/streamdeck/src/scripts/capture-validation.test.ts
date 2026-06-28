@@ -166,6 +166,23 @@ describe("capture-validation CLI", () => {
     expect(stdout).toContain("  - https://example.test/evidence");
   });
 
+  it("prefills pass results only with target and evidence", async () => {
+    const { stdout } = await runCapture([
+      "--result",
+      "pass",
+      "--target",
+      "Stream Deck Mobile",
+      "--evidence-link",
+      "https://example.test/validation-report",
+    ]);
+
+    expect(stdout).toContain("- Result: pass");
+    expect(stdout).toContain("- Validation target: Stream Deck Mobile");
+    expect(stdout).toContain(
+      "- Evidence links:\n  - https://example.test/validation-report"
+    );
+  });
+
   it("rejects invalid numeric arguments", async () => {
     await expect(runCapture(["--port", "0"])).rejects.toMatchObject({
       stderr: expect.stringContaining("--port must be a positive integer"),
@@ -184,6 +201,31 @@ describe("capture-validation CLI", () => {
     await expect(runCapture(["--evidence-link", ""])).rejects.toMatchObject({
       stderr: expect.stringContaining(
         "--evidence-link must be a non-empty value"
+      ),
+    });
+  });
+
+  it("rejects pass results without a validation target", async () => {
+    await expect(
+      runCapture([
+        "--result",
+        "pass",
+        "--evidence-link",
+        "validation-report.md",
+      ])
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining(
+        "--result pass requires --target hardware or Stream Deck Mobile"
+      ),
+    });
+  });
+
+  it("rejects pass results without evidence links", async () => {
+    await expect(
+      runCapture(["--result", "pass", "--target", "Stream Deck Mobile"])
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining(
+        "--result pass requires at least one --evidence-link"
       ),
     });
   });

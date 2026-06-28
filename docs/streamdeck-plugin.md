@@ -216,6 +216,14 @@ loopback probe metadata as a structured artifact for issue/MR attachments:
 npm run capture:validation -- --probe --output validation-report.md --json-output validation-capture.json
 ```
 
+The helper will only prefill `--result pass` when you also provide a validation
+target and at least one `--evidence-link` pointing to external hardware or
+Stream Deck Mobile validation evidence:
+
+```bash
+npm run capture:validation -- --result pass --target "Stream Deck Mobile" --evidence-link validation-report.md
+```
+
 Link the compiled plugin directory to Stream Deck if the package script does
 not do it automatically:
 
