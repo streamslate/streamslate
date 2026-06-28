@@ -21,6 +21,12 @@ import {
   type UseCaseTemplate,
 } from "../../lib/annotations/presets";
 
+const TOOL_GROUPS = [
+  { id: "markup", label: "Markup" },
+  { id: "shape", label: "Shapes" },
+  { id: "freeform", label: "Notes" },
+] as const;
+
 interface ToolSelectorProps {
   activeTool?: AnnotationType;
   activeTemplateId: string | null;
@@ -36,32 +42,44 @@ export const ToolSelector: React.FC<ToolSelectorProps> = ({
 }) => {
   return (
     <>
-      <div className="flex items-center gap-2 flex-wrap">
-        {TOOLS.map((tool) => (
-          <button
-            key={tool.id}
-            onClick={() => onToolClick(tool.type)}
-            className={`group relative p-3 rounded-lg border transition-all duration-200 transform hover:scale-105 ${
-              activeTool === tool.type
-                ? "bg-primary border-primary text-white shadow-lg scale-105"
-                : "bg-bg-tertiary border-border-primary text-text-secondary hover:bg-surface-secondary hover:border-border-secondary hover:text-text-primary"
-            }`}
-            title={tool.name}
-          >
-            <div className="flex items-center justify-center">
-              <span className="text-xl">{tool.icon}</span>
-              <span
-                className={`absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-[10px] font-medium whitespace-nowrap transition-opacity duration-200 pointer-events-none ${
-                  activeTool === tool.type
-                    ? "text-primary opacity-100"
-                    : "text-text-tertiary opacity-0 group-hover:opacity-100"
-                }`}
-              >
-                {tool.name}
-              </span>
+      <div className="space-y-3">
+        {TOOL_GROUPS.map((group) => {
+          const groupTools = TOOLS.filter((tool) => tool.category === group.id);
+          if (groupTools.length === 0) return null;
+
+          return (
+            <div key={group.id} className="space-y-1.5">
+              <div className="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">
+                {group.label}
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {groupTools.map((tool) => {
+                  const selected = activeTool === tool.type;
+                  return (
+                    <button
+                      key={tool.id}
+                      type="button"
+                      onClick={() => onToolClick(tool.type)}
+                      aria-label={tool.name}
+                      aria-pressed={selected}
+                      className={`relative flex h-14 min-w-0 items-center justify-center rounded-lg border text-xl transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+                        selected
+                          ? "border-primary bg-primary text-white shadow-sm"
+                          : "border-border-primary bg-bg-tertiary text-text-secondary hover:border-border-secondary hover:bg-surface-secondary hover:text-text-primary"
+                      }`}
+                      title={`${tool.name}: ${tool.description}`}
+                    >
+                      <span aria-hidden="true">{tool.icon}</span>
+                      {selected && (
+                        <span className="absolute inset-x-2 bottom-1 h-0.5 rounded-full bg-white/80" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </button>
-        ))}
+          );
+        })}
       </div>
 
       <div className="border-t border-border-primary mt-4 pt-4">

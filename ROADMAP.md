@@ -8,7 +8,7 @@
 
 ## Current Status
 
-**1.8 text-line annotations complete / 1.7 validation in progress** (June 2026)
+**1.9 annotation workflow polish complete / 1.7 validation in progress** (June 2026)
 
 StreamSlate is production-ready and professional-grade. All completed README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
 
@@ -95,6 +95,13 @@ PDF text-semantic extraction.
 - [x] Underline and strikethrough annotation types restored as supported tools
 - [x] PDF export burns in underline and strikethrough marks at matching page coordinates
 - [x] Documentation describes them as visual geometry annotations, not OCR or PDF text extraction
+
+### 1.9 ✅ (Annotation Workflow Polish)
+
+- [x] Annotation tool picker grouped into Markup, Shapes, and Notes sections with stable icon controls
+- [x] Built-in template pack includes underline and strikethrough presets for text-line workflows
+- [x] Use-case templates expose first-party key-line and correction-pass templates
+- [x] Tool picker and preset contract covered by focused unit tests
 
 ### Future
 

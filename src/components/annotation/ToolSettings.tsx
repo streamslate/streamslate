@@ -32,6 +32,10 @@ export const ToolSettings: React.FC<ToolSettingsProps> = ({
   onOpacityChange,
   onStrokeWidthChange,
 }) => {
+  const isTextLineTool =
+    activeTool === AnnotationType.UNDERLINE ||
+    activeTool === AnnotationType.STRIKETHROUGH;
+
   return (
     <div className="mt-3 space-y-4 bg-bg-tertiary rounded-lg p-4">
       {/* Color */}
@@ -88,7 +92,8 @@ export const ToolSettings: React.FC<ToolSettingsProps> = ({
       {activeTool !== AnnotationType.HIGHLIGHT && (
         <div>
           <label className="flex items-center justify-between text-xs font-semibold text-text-tertiary mb-2 uppercase tracking-wider">
-            <span>Stroke Width</span>
+            {isTextLineTool && <span>Line Weight</span>}
+            {!isTextLineTool && <span>Stroke Width</span>}
             <span className="text-text-secondary normal-case font-normal">
               {toolConfig.strokeWidth}px
             </span>

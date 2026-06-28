@@ -116,6 +116,15 @@ Integrated as roadmap 1.8:
 - [x] Added PDF export using matching text-line placement helpers
 - [x] Updated docs to describe them as visual geometry annotations, not OCR or semantic PDF text extraction
 
+### M10: Annotation Workflow Polish ✅
+
+Integrated as roadmap 1.9:
+
+- [x] Grouped the annotation picker into Markup, Shapes, and Notes sections with fixed-size icon controls
+- [x] Promoted underline and strikethrough into the built-in template profile
+- [x] Added first-party key-line and correction-pass use-case templates
+- [x] Covered the picker grouping and text-line preset/template contract with focused unit tests
+
 ## Execution Order
 
 1. **M1** — Docs truthfulness ✅ `d43be27`
@@ -127,6 +136,7 @@ Integrated as roadmap 1.8:
 7. **M7** — OBS WebSocket direct control ✅ (roadmap 1.6)
 8. **M8** — Stream Deck local plugin/package readiness 🚧 (roadmap 1.7; external validation and publication pending)
 9. **M9** — Text-line annotations ✅ (roadmap 1.8)
+10. **M10** — Annotation workflow polish ✅ (roadmap 1.9)
 
 ### M8 Follow-Up: Stream Deck Validation CI Guard ✅
 
@@ -164,3 +174,4 @@ Integrated as roadmap 1.8:
 - `.loom/068-plan-v2-s10-streamdeck-marketplace-readiness-2026-06-26.md`
 - `.loom/070-plan-v2-s12-streamdeck-validation-capture-tests-2026-06-26.md`
 - `.loom/074-plan-v2-s16-streamdeck-package-audit-2026-06-27.md`
+- `.loom/077-plan-v2-s19-annotation-workflow-polish-2026-06-28.md`

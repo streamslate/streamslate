@@ -70,6 +70,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.HIGHLIGHT,
     icon: "\u{1F58D}\uFE0F",
     active: false,
+    category: "markup",
+    description: "Soft translucent mark for emphasis.",
     config: { color: "#ffff00", opacity: 0.5, strokeWidth: 2 },
   },
   {
@@ -78,6 +80,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.UNDERLINE,
     icon: "U\u0332",
     active: false,
+    category: "markup",
+    description: "Clean line emphasis under a text band.",
     config: { color: "#2563eb", opacity: 1.0, strokeWidth: 2 },
   },
   {
@@ -86,6 +90,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.STRIKETHROUGH,
     icon: "S\u0336",
     active: false,
+    category: "markup",
+    description: "Correction mark through a text band.",
     config: { color: "#dc2626", opacity: 1.0, strokeWidth: 2 },
   },
   {
@@ -94,6 +100,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.RECTANGLE,
     icon: "\u2B1C",
     active: false,
+    category: "shape",
+    description: "Box callout around a region.",
     config: { color: "#ff0000", opacity: 0.8, strokeWidth: 2 },
   },
   {
@@ -102,6 +110,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.CIRCLE,
     icon: "\u2B55",
     active: false,
+    category: "shape",
+    description: "Oval callout around a region.",
     config: { color: "#00ff00", opacity: 0.8, strokeWidth: 2 },
   },
   {
@@ -110,6 +120,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.ARROW,
     icon: "\u2197\uFE0F",
     active: false,
+    category: "shape",
+    description: "Directional callout for flow and emphasis.",
     config: { color: "#0000ff", opacity: 0.8, strokeWidth: 3 },
   },
   {
@@ -118,6 +130,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.FREE_DRAW,
     icon: "\u270F\uFE0F",
     active: false,
+    category: "freeform",
+    description: "Freehand drawing for quick presenter notes.",
     config: { color: "#ff0000", opacity: 1.0, strokeWidth: 3 },
   },
   {
@@ -126,6 +140,8 @@ export const TOOLS: Tool[] = [
     type: AnnotationType.TEXT,
     icon: "\u{1F4DD}",
     active: false,
+    category: "freeform",
+    description: "Readable note with an optional background.",
     config: {
       color: "#000000",
       opacity: 1.0,
@@ -142,6 +158,20 @@ export const BUILT_IN_PRESETS: ToolPreset[] = [
     name: "Focus Highlight",
     tool: AnnotationType.HIGHLIGHT,
     config: { color: "#ffff00", opacity: 0.45, strokeWidth: 2 },
+    builtIn: true,
+  },
+  {
+    id: "builtin-underline-keyline",
+    name: "Key Underline",
+    tool: AnnotationType.UNDERLINE,
+    config: { color: "#2563eb", opacity: 1, strokeWidth: 3 },
+    builtIn: true,
+  },
+  {
+    id: "builtin-strike-correction",
+    name: "Correction Strike",
+    tool: AnnotationType.STRIKETHROUGH,
+    config: { color: "#dc2626", opacity: 0.95, strokeWidth: 3 },
     builtIn: true,
   },
   {
@@ -187,19 +217,31 @@ export const USE_CASE_TEMPLATES: UseCaseTemplate[] = [
     id: "template-live-review",
     name: "Live Review",
     description: "Bold red boxes for visual QA callouts.",
+    preset: BUILT_IN_PRESETS[3],
+  },
+  {
+    id: "template-key-lines",
+    name: "Key Lines",
+    description: "Blue underlines for phrases to revisit on stream.",
     preset: BUILT_IN_PRESETS[1],
+  },
+  {
+    id: "template-correction-pass",
+    name: "Correction Pass",
+    description: "Red strike marks for text to reject or replace.",
+    preset: BUILT_IN_PRESETS[2],
   },
   {
     id: "template-process-walkthrough",
     name: "Process Walkthrough",
     description: "Stronger arrows for step-by-step flow narration.",
-    preset: BUILT_IN_PRESETS[2],
+    preset: BUILT_IN_PRESETS[4],
   },
   {
     id: "template-commentary-notes",
     name: "Commentary Notes",
     description: "Readable text annotations for presenter context.",
-    preset: BUILT_IN_PRESETS[3],
+    preset: BUILT_IN_PRESETS[5],
   },
 ];
 
