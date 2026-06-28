@@ -87,6 +87,20 @@ function readRectGeometry(selector: string) {
   });
 }
 
+function waitForAnnotationLayer() {
+  return cy
+    .get('[data-testid="annotation-layer"]', { timeout: 20000 })
+    .should("exist")
+    .and(($layer) => {
+      const rect = $layer[0].getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        throw new Error(
+          `Expected annotation layer to have layout size, got ${rect.width}x${rect.height}`
+        );
+      }
+    });
+}
+
 describe("Annotations UX (Canvas)", () => {
   it("selects a rectangle annotation and can delete it via the toolbar", () => {
     const pdfBytes = pdfBytesFromBase64();
@@ -172,9 +186,7 @@ describe("Annotations UX (Canvas)", () => {
       );
     });
 
-    cy.get('[data-testid="annotation-layer"]', { timeout: 20000 }).should(
-      "be.visible"
-    );
+    waitForAnnotationLayer();
     cy.get('[data-annotation-id="ann-rect"]').should("exist");
 
     // Select (shows toolbar + handles).
@@ -285,9 +297,7 @@ describe("Annotations UX (Canvas)", () => {
       );
     });
 
-    cy.get('[data-testid="annotation-layer"]', { timeout: 20000 }).should(
-      "be.visible"
-    );
+    waitForAnnotationLayer();
 
     // Select (shows toolbar).
     cy.get('[data-annotation-id="ann-rect"]').then(($el) => {
@@ -400,9 +410,7 @@ describe("Annotations UX (Canvas)", () => {
       );
     });
 
-    cy.get('[data-testid="annotation-layer"]', { timeout: 20000 }).should(
-      "be.visible"
-    );
+    waitForAnnotationLayer();
     cy.get('[data-annotation-id="ann-rect"]').then(($el) => {
       const rect = $el[0].getBoundingClientRect();
       const clientX = rect.left + rect.width / 2;
