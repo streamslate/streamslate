@@ -273,21 +273,55 @@ describe("constants", () => {
     expect(underline).toMatchObject({
       id: "underline",
       name: "Underline",
+      category: "markup",
       config: { color: "#2563eb", opacity: 1, strokeWidth: 2 },
     });
     expect(strikethrough).toMatchObject({
       id: "strikethrough",
       name: "Strikethrough",
+      category: "markup",
       config: { color: "#dc2626", opacity: 1, strokeWidth: 2 },
     });
   });
 
-  it("BUILT_IN_PRESETS has 4 presets", () => {
-    expect(BUILT_IN_PRESETS.length).toBe(4);
+  it("BUILT_IN_PRESETS has 6 presets", () => {
+    expect(BUILT_IN_PRESETS.length).toBe(6);
   });
 
-  it("USE_CASE_TEMPLATES has 4 templates", () => {
-    expect(USE_CASE_TEMPLATES.length).toBe(4);
+  it("BUILT_IN_PRESETS includes text line workflow presets", () => {
+    expect(BUILT_IN_PRESETS).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "builtin-underline-keyline",
+          tool: AnnotationType.UNDERLINE,
+        }),
+        expect.objectContaining({
+          id: "builtin-strike-correction",
+          tool: AnnotationType.STRIKETHROUGH,
+        }),
+      ])
+    );
+  });
+
+  it("USE_CASE_TEMPLATES has 6 templates", () => {
+    expect(USE_CASE_TEMPLATES.length).toBe(6);
+  });
+
+  it("USE_CASE_TEMPLATES exposes text line workflows", () => {
+    expect(USE_CASE_TEMPLATES).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "template-key-lines",
+          preset: expect.objectContaining({ tool: AnnotationType.UNDERLINE }),
+        }),
+        expect.objectContaining({
+          id: "template-correction-pass",
+          preset: expect.objectContaining({
+            tool: AnnotationType.STRIKETHROUGH,
+          }),
+        }),
+      ])
+    );
   });
 
   it("BUILT_IN_PROFILE is marked builtIn", () => {

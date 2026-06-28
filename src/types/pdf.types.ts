@@ -104,6 +104,8 @@ export interface Tool {
   type: AnnotationType;
   icon: string;
   active: boolean;
+  category: "markup" | "shape" | "freeform";
+  description: string;
   config: ToolConfig;
 }
 
