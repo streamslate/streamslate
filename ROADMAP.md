@@ -86,6 +86,7 @@ PDF text-semantic extraction.
 - [x] Package ignore rules guard local installers from source maps, logs, and validation artifacts
 - [x] Package audit helper emits Markdown and JSON review artifacts for Marketplace prep
 - [x] Root and CI validation guard runs plugin preflight plus package audit artifacts
+- [x] Validation capture helper requires target and evidence links before pre-filling pass results
 - [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
 - [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
 

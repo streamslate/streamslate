@@ -102,6 +102,7 @@ Integrated as roadmap 1.7 local plugin readiness:
 - [x] Package audit helper for Markdown/JSON Marketplace prep artifacts
 - [x] Root `npm run streamdeck:ci` guard for install, preflight, and package audit
 - [x] GitLab `test:streamdeck` job uploads package audit artifacts
+- [x] Validation capture helper refuses pass results unless a validation target and evidence link are provided
 - [ ] Hardware or Stream Deck Mobile validation
 - [ ] Marketplace packaging/publication after validation and Elgato review
 

@@ -127,6 +127,16 @@ function parseArgs(argv) {
   if (parsed.evidenceLinks.some((link) => link.trim() === "")) {
     throw new Error("--evidence-link must be a non-empty value");
   }
+  if (parsed.result === "pass" && parsed.target.trim() === "") {
+    throw new Error(
+      "--result pass requires --target hardware or Stream Deck Mobile"
+    );
+  }
+  if (parsed.result === "pass" && parsed.evidenceLinks.length === 0) {
+    throw new Error(
+      "--result pass requires at least one --evidence-link with external validation evidence"
+    );
+  }
 
   return parsed;
 }
