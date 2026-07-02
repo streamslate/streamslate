@@ -1,11 +1,16 @@
 include:
   - project: "services/tech-radar"
     file: "/ci/radar.yml"
+  # platform/gitops shared node template (portfolio-refresh slice 5).
+  # Brings .node-lint/.node-test/.node-build, security.yml (semgrep-sast +
+  # secret_detection, stage `test`) and the auto-cancel workflow.
+  - project: "platform/gitops"
+    file: "/ci/templates/node.yml"
 
 # StreamSlate GitLab CI/CD Configuration
 #
 # Required CI/CD Variables (Settings > CI/CD > Variables):
-# ─────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────
 #
 # For macOS Code Signing (build:macos job):
 #   APPLE_CERTIFICATE          - Base64-encoded .p12 certificate file (or File type variable)
@@ -129,6 +134,24 @@ lint:linux:
     - cd src-tauri
     - cargo fmt --all -- --check || echo "Skipping cargo fmt check"
     - cargo clippy --all-targets -- -D warnings
+
+# ── platform/gitops node template jobs (portfolio-refresh slice 5) ──────────
+# Node/TypeScript lint via the shared template (`npm run lint`).
+lint:node:
+  extends: .node-lint
+
+# Frontend unit tests via the shared template. This repo's `npm run test`
+# opens interactive Cypress, so the script is overridden to the headless
+# vitest unit-test command.
+test:unit:
+  extends: .node-test
+  script:
+    - npm run test:unit
+
+# Frontend web build via the shared template (`npm run build` = tsc && vite build).
+build:web:
+  extends: .node-build
+# ─────────────────────────────────────────────────────────────────────────────
 
 test:linux:rust:
   stage: test
