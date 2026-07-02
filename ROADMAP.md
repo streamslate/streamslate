@@ -1,116 +1,64 @@
-# Project Roadmap
+# StreamSlate Roadmap
 
-## Tracking
+> Last Updated: 2026-07-02
+> Tier: 1 (see workspace AGENTS.md "Portfolio Tiers")
+> Tracking Issue: https://gitlab.flexinfer.ai/services/streamslate/-/issues/17
 
-- [Roadmap tracking issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/1)
-
-> Last Updated: June 2026
+<!--
+Convention (portfolio-refresh 2026-H2, see libs/STANDARDS.md "Roadmap & Backlog"):
+- This file states CURRENT TRUTH, derived from git activity and deployed state —
+  never re-date stale content. Each refresh MR must cite its evidence (git-log
+  window inspected, deploy-state query used).
+- Backlog lives in GitLab issues (P1/P2/P3 labels + milestones), NOT in this file.
+  This file links the backlog; it does not duplicate it.
+- If a live plan exists in the agent-context plan store, reference its plan_id
+  here; the store is canonical and this file is a rendered summary.
+- Staleness SLO: Tier 1/2 repos must have this file dated within 90 days.
+  `bin/portfolio-inventory --roadmaps` reports conformance.
+-->
 
 ## Current Status
 
-**1.9 annotation workflow polish complete / 1.7 validation in progress** (June 2026)
+StreamSlate is a production-ready Tauri/Rust/React PDF-annotation overlay for
+streamers at **v1.6.0** (bumped 2026-06-28, `f158be7`). The prior phase roadmap
+(MVP → 1.9) is complete: core annotations, WebSocket remote control,
+presets/templates, NDI/Syphon build-time outputs, OBS WebSocket direct control,
+presenter mode, PDF page inversion, text-line annotations, and the Stream Deck
+SDK v2 plugin runtime; 211 unit tests, lint and CI clean. The last product
+commit stream (2026-06-26 → 06-28) was Stream Deck validation/packaging
+evidence tooling; since then only CI template onboarding (2026-07-02,
+`f204df9`). Honest gaps: Stream Deck hardware/Mobile validation and Marketplace
+publication are **not** done, and no commits target the PLAN.md launch items
+(public release binaries, itch.io distribution) yet — the launch goal is
+strategic intent, not current momentum. Phase history (MVP → 1.9) is preserved
+in this file's git history.
 
-StreamSlate is production-ready and professional-grade. All completed README feature claims are backed by working code. Core annotation, WebSocket remote control, presets, templates, output integrations (NDI/Syphon as build-time opt-in), OBS WebSocket direct control, presenter mode wiring, PDF page inversion, and release automation are complete. 211 unit tests, lint, and CI clean.
+Evidence: git log main, last 20 commits (2026-06-26 → 2026-07-02), inspected
+2026-07-02; default-branch pipeline success 2026-06-28
+(`.loom/62-functional-health-baseline-2026-07-02.md`).
 
-Underline and strikethrough are available as geometry-based visual annotation
-tools. They can be exported into burned-in PDFs, but they do not imply OCR or
-PDF text-semantic extraction.
+- **Plan store**: `plan-workspace-portfolio-refresh-2026-h2-roadmaps-quality-baselin-f3db23` (slice 9 refresh; no repo-local live plan)
+- **Deployed**: not deployed (desktop app; public distribution pending itch.io launch)
+- **CI**: node template family (platform/gitops CI templates, onboarded 2026-07-02)
 
-## Phases
+## Now
 
-### MVP ✅
+- [ ] Stream Deck plugin: hardware / Stream Deck Mobile validation, then Marketplace packaging + publication ([#12](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
+- [ ] Execute the manual verification checklist + strict release preflight on the next release candidate ([#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14))
 
-- [x] Dark viewer
-- [x] Highlighter
-- [x] OBS browser source
+## Next
 
-### Beta ✅
+- [ ] Launch distribution: release binaries (macOS DMG first) + itch.io page and upload ([#18](https://gitlab.flexinfer.ai/services/streamslate/-/issues/18))
 
-- [x] Annotation save/export
-- [x] WebSocket remote control API
+## Later
 
-### 1.0 ✅ (Public Release)
+- PLAN.md §2 launch goal: pay-what-you-want distribution on itch.io; marketing hand-off to services/streamslate-site (CTA switch tracked as streamslate-site#8)
+- Mobile companion (iPad side-car) ([#7](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
+- Cloud sync for settings ([#8](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
 
-- [x] Local WebSocket sync and remote control
-- [x] Native screen capture (ScreenCaptureKit)
-- [x] Cross-platform builds (macOS, Windows, Linux)
-- [x] CI/CD with code signing and notarization
-- [x] E2E test coverage (Cypress)
+## Backlog
 
-### 1.1 ✅ (Annotation Presets, Templates, Hardening)
-
-- [x] Annotation presets library ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/5))
-- [x] Template system for common use cases ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/6))
-- [x] Real WebSocket integration state (replaced simulated status)
-- [x] UI consistency and design token alignment
-- [x] Core workflow E2E test coverage
-- [x] Syphon output scaffolding (macOS only) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
-
-### Post-1.1 ✅
-
-- [x] NDI output (build-time opt-in, requires NDI SDK) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/3))
-- [x] Syphon output GA (macOS only, build-time opt-in) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/2))
-- [x] Portable settings export/import
-- [x] Auto-update key setup ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/4))
-- [x] Multi-monitor capture (macOS ScreenCaptureKit) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/9))
-
-### 1.5 ✅ (Professional Grade — Truthfulness & Gap Closure)
-
-- [x] Documentation truthfulness audit and README/ROADMAP corrections
-- [x] Code cleanup (removed unused annotation types, isolated OBS stub)
-- [x] Presenter mode wired to Tauri window commands (open/close/toggle)
-- [x] PDF page inversion toggle (independent of dark mode)
-- [x] Output settings promoted from experimental to first-class UI
-- [x] Verification coverage: 180 → 211 tests (+31)
-- [x] Manual verification checklist for NDI/Syphon/multi-monitor
-
-### 1.6 ✅ (OBS WebSocket Direct Control)
-
-- [x] OBS WebSocket integration (direct scene/source control) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/11))
-- [x] OBS recording and streaming controls
-- [x] Manual verification checklist for local OBS WebSocket control
-
-### 1.7 🚧 (Stream Deck Plugin)
-
-- [x] Official Elgato SDK v2 plugin runtime under `plugins/streamdeck` ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
-- [x] Stream Deck actions for page navigation, zoom, presenter mode, state refresh, and health check over `ws://127.0.0.1:11451`
-- [x] Local development, install, build, and manual verification documentation
-- [x] Local package preflight validates manifest assets, compiled bundle, version, and runtime metadata
-- [x] Validation evidence template prepared for hardware or Stream Deck Mobile testing
-- [x] Validation capture helper prepared for environment metadata and loopback API evidence
-- [x] Validation capture helper covered by automated CLI and loopback probe tests
-- [x] Validation capture helper pre-fills result status and evidence links for external test reports
-- [x] Validation capture helper emits structured JSON evidence metadata for issue/MR attachments
-- [x] Repository-root validation capture script forwards to the Stream Deck helper
-- [x] Marketplace submission checklist prepared for post-validation packaging review
-- [x] Package ignore rules guard local installers from source maps, logs, and validation artifacts
-- [x] Package audit helper emits Markdown and JSON review artifacts for Marketplace prep
-- [x] Root and CI validation guard runs plugin preflight plus package audit artifacts
-- [x] Validation capture helper requires target and evidence links before pre-filling pass results
-- [ ] Local Stream Deck validation against hardware or Stream Deck Mobile
-- [ ] Marketplace packaging and publication; not claimed until Elgato review/publication has actually happened
-
-### 1.8 ✅ (Text-Line Annotations)
-
-- [x] Underline and strikethrough annotation types restored as supported tools
-- [x] PDF export burns in underline and strikethrough marks at matching page coordinates
-- [x] Documentation describes them as visual geometry annotations, not OCR or PDF text extraction
-
-### 1.9 ✅ (Annotation Workflow Polish)
-
-- [x] Annotation tool picker grouped into Markup, Shapes, and Notes sections with stable icon controls
-- [x] Built-in template pack includes underline and strikethrough presets for text-line workflows
-- [x] Use-case templates expose first-party key-line and correction-pass templates
-- [x] Tool picker and preset contract covered by focused unit tests
-
-### Future
-
-- [ ] Mobile companion (iPad side-car) ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/7))
-- [ ] Cloud sync for settings ([Issue](https://gitlab.flexinfer.ai/services/streamslate/-/issues/8))
-
-## References
-
-| Document               | Purpose               |
-| ---------------------- | --------------------- |
-| [README.md](README.md) | Project documentation |
-| [AGENTS.md](AGENTS.md) | Agent guidance        |
+Full backlog: [P1 issues](https://gitlab.flexinfer.ai/services/streamslate/-/issues/?label_name[]=P1) ·
+[P2](https://gitlab.flexinfer.ai/services/streamslate/-/issues/?label_name[]=P2) ·
+[P3](https://gitlab.flexinfer.ai/services/streamslate/-/issues/?label_name[]=P3) ·
+[Milestones](https://gitlab.flexinfer.ai/services/streamslate/-/milestones)
