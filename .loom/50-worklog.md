@@ -1,5 +1,33 @@
 # Worklog
 
+## 2026-07-17: Native PDF Render Recovery
+
+- What changed:
+  - Installed and verified the official signed/notarized v1.6.0 Apple-silicon
+    release.
+  - Reproduced its blank PDF viewport with a known-good 65-page PDF.
+  - Replaced the hidden-canvas PNG workaround with direct visible-canvas
+    rendering in both main and presenter views and added a native pixel/a11y
+    completion signal.
+  - Preserved serialized Tauri PDF errors and added regression tests.
+  - Verified page 3 navigation, 150% zoom, and connected status; reproduced a
+    separate presenter-window failure.
+- Why:
+  - Backend PDF-open success was masking a user-visible rendering failure and
+    made the remaining manual verification invalid.
+- Validation:
+  - Signed DMG digest, `codesign --verify --deep --strict`, and Gatekeeper.
+  - Targeted Vitest regression tests.
+  - `npm run test:unit` (250 passed).
+  - Native `PDF page 3 rendered` pixel/a11y evidence.
+  - Native `GO_TO_PAGE` and `SET_ZOOM` WebSocket requests.
+- What's next:
+  - Fix presenter mode so `active: true` corresponds to a real second window.
+  - Re-run the corrected code as a signed release-candidate build.
+- Sources:
+  - `docs/manual-verification-evidence-2026-07-17.md`
+  - `.loom/080-plan-v2-s22-pdf-render-recovery-2026-07-17.md`
+
 ## 2026-07-17: Current-Source Native WebSocket Evidence
 
 - What changed:

@@ -5,17 +5,26 @@ Partial evidence for
 This record marks only behavior observed directly on the current-source native
 runtime. It does not complete the full manual checklist.
 
-## Runtime baseline
+## Runtime baselines
 
-- Source ref: `fab65342` (`origin/main` at test start)
-- Application version: `1.6.0`
-- Build/run mode: `npm run tauri:dev` (`cargo run --no-default-features`)
+- Initial WebSocket source ref: `fab65342`
+- PDF follow-up source ref: `518717a` plus the PDF render-recovery slice on
+  `codex/fix-pdf-blank-render`
+- Signed installed release: `/Applications/StreamSlate.app` v1.6.0, notarized
+  Developer ID team `BX8243HJHS`
+- Patched build/run mode: `npm run tauri:dev`
+  (`cargo run --no-default-features`)
 - Host: macOS 26.4, Apple M4
 - WebSocket client: `websocat`
 - Endpoint: `ws://127.0.0.1:11451`
 
-The signed `/Applications/StreamSlate.app` installation reported version
-`1.0.1`, so it was explicitly excluded from current release evidence.
+The official Apple-silicon v1.6.0 DMG matched GitHub's SHA-256 digest, its app
+passed strict code-signature verification, and Gatekeeper accepted it as a
+notarized Developer ID build. Opening the known-good 65-page
+`/usr/share/doc/bash/bash.pdf` in that installed release reproduced a blank
+black document viewport even though the backend and sidebar reported success.
+The follow-up native build tests the scoped source correction for that release
+defect; it is not a signed replacement release.
 
 ## Passed checks
 
@@ -43,6 +52,39 @@ annotation events.
 
 Result: **pass**.
 
+### PDF render recovery
+
+The installed v1.6.0 renderer painted PDF.js into a Tailwind `hidden`
+(`display: none`) canvas and converted that canvas to a PNG. The native
+screenshot showed the resulting blank black page area.
+
+The patched native run rendered PDF.js directly into the displayed canvas and
+audited the rendered pixel alpha channel. macOS accessibility then exposed:
+
+```text
+AXImage | PDF page 3 rendered | 893 x 1263
+```
+
+The `rendered` state is set only after PDF.js completes and the canvas sample
+contains opaque pixels. Result: **pass** for the current macOS WKWebView.
+
+### Page navigation and zoom
+
+With the 65-page PDF loaded, direct requests produced matching protocol
+responses and visible native UI changes:
+
+- `GO_TO_PAGE`, page `3`, request `manual-page-3` returned `PAGE_CHANGED`; the
+  accessible canvas changed to `PDF page 3 rendered`.
+- `SET_ZOOM`, zoom `1.5`, request `manual-zoom-150` returned `ZOOM_CHANGED`;
+  the canvas grew from 596×842 at 100% to 893×1263 at 150%.
+
+Result: **pass** for page navigation and zoom.
+
+### Connection status
+
+The installed v1.6.0 screenshot directly showed both the header `Connected`
+indicator and footer `WebSocket Connected` status. Result: **pass**.
+
 ### Multiple simultaneous clients
 
 Two `websocat` processes remained connected simultaneously. Each received the
@@ -56,13 +98,10 @@ Result: **pass**.
 
 ## Checks not passed by this run
 
-| Checklist behavior                                   | Result       | Reason                                                                                                |
-| ---------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------- |
-| `GO_TO_PAGE` changes the loaded document             | Not run      | No PDF was loaded; the direct probe correctly returned `PDF_NOT_LOADED`.                              |
-| `SET_ZOOM` visibly zooms a PDF                       | Partial only | The backend emitted `ZOOM_CHANGED`, but no PDF was loaded for visual confirmation.                    |
-| `TOGGLE_PRESENTER` opens/closes the presenter window | Partial only | `PRESENTER_CHANGED` emitted for active `true` and `false`; visual window/title proof was unavailable. |
-| Status bar shows connected                           | Not run      | Native WebView inspection was unavailable without macOS assistive access.                             |
-| Automatic reconnection succeeds                      | Not run      | A new manual client connection succeeded, which does not prove client auto-reconnect behavior.        |
+| Checklist behavior                                   | Result  | Reason                                                                                                      |
+| ---------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| `TOGGLE_PRESENTER` opens/closes the presenter window | Failed  | The response reported `active: true`, but both AX and CoreGraphics still found only the main native window. |
+| Automatic reconnection succeeds                      | Not run | A new manual client connection succeeded, which does not prove client auto-reconnect behavior.              |
 
 ## Environment blockers
 
@@ -74,6 +113,8 @@ Result: **pass**.
 
 ## Conclusion
 
-Two WebSocket checklist items are directly verified on the current-source
-v1.6.0 native runtime. All other manual items remain unchecked until their
+Capabilities, simultaneous clients, page navigation, zoom, and connection
+status are directly verified. The signed v1.6.0 release has a blank-render
+defect corrected by this source slice. Presenter-window creation is a separate
+reproduced defect, and all remaining manual items stay unchecked until their
 exact prerequisites and observable outcomes are available.

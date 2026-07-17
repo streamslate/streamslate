@@ -28,6 +28,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { pdfRenderer } from "../../lib/pdf/renderer";
 import { logger } from "../../lib/logger";
+import { getErrorMessage } from "../../lib/error-message";
 
 interface PageChangedPayload {
   page: number;
@@ -47,7 +48,9 @@ export const PresenterView: React.FC = () => {
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [renderedImage, setRenderedImage] = useState<string | null>(null);
+  const [hasVisibleContent, setHasVisibleContent] = useState<boolean | null>(
+    null
+  );
 
   // Canvas ref for rendering
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +64,7 @@ export const PresenterView: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
+    setHasVisibleContent(null);
 
     try {
       // Load the document if needed
@@ -89,10 +93,9 @@ export const PresenterView: React.FC = () => {
         }
       );
 
-      // Convert canvas to data URL for display
-      setRenderedImage(result.canvas.toDataURL("image/png"));
+      setHasVisibleContent(result.hasVisibleContent);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to render page");
+      setError(getErrorMessage(err, "Failed to render page"));
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +141,7 @@ export const PresenterView: React.FC = () => {
           setPdfPath(null);
           setTotalPages(0);
           setCurrentPage(1);
-          setRenderedImage(null);
+          setHasVisibleContent(null);
         });
         unlistenFns.push(unlistenPdfClosed);
 
@@ -194,7 +197,7 @@ export const PresenterView: React.FC = () => {
               setPdfPath(null);
               setTotalPages(0);
               setCurrentPage(1);
-              setRenderedImage(null);
+              setHasVisibleContent(null);
               break;
 
             case "ZOOM_CHANGED":
@@ -288,21 +291,17 @@ export const PresenterView: React.FC = () => {
         </div>
       )}
 
-      {/* PDF Display */}
-      {renderedImage && (
-        <img
-          src={renderedImage}
-          alt={`Page ${currentPage} of ${totalPages}`}
-          className="max-w-full max-h-full object-contain"
-          style={{
-            // Apply dark mode inversion if needed
-            filter: "none",
-          }}
-        />
-      )}
-
-      {/* Hidden canvas for rendering */}
-      <canvas ref={canvasRef} className="hidden" />
+      <canvas
+        ref={canvasRef}
+        aria-label={
+          hasVisibleContent === true
+            ? `Presenter PDF page ${currentPage} rendered`
+            : hasVisibleContent === false
+              ? `Presenter PDF page ${currentPage} is blank`
+              : `Presenter PDF page ${currentPage}`
+        }
+        className={pdfPath ? "block max-w-full max-h-full" : "hidden"}
+      />
 
       {/* Minimal page indicator (bottom right, semi-transparent) */}
       {pdfPath && totalPages > 0 && (

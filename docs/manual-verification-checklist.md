@@ -85,10 +85,10 @@ Re-run applicable checks on the next release-candidate binary before tagging.
 **Prerequisites:** WebSocket client (e.g., `websocat ws://127.0.0.1:11451`).
 
 - [x] Send `{"type": "GET_CAPABILITIES", "protocolVersion": "2.0", "request_id": "manual-capabilities"}` → app replies with `CAPABILITIES` ([evidence](manual-verification-evidence-2026-07-17.md#protocol-v2-capabilities))
-- [ ] Send `{"type": "GO_TO_PAGE", "page": 3}` → app navigates to page 3
-- [ ] Send `{"type": "SET_ZOOM", "zoom": 1.5}` → app zooms to 150%
+- [x] Send `{"type": "GO_TO_PAGE", "page": 3}` → app navigates to page 3 ([evidence](manual-verification-evidence-2026-07-17.md#page-navigation-and-zoom))
+- [x] Send `{"type": "SET_ZOOM", "zoom": 1.5}` → app zooms to 150% ([evidence](manual-verification-evidence-2026-07-17.md#page-navigation-and-zoom))
 - [ ] Send `{"type": "TOGGLE_PRESENTER"}` → presenter opens or closes
-- [ ] Connection status indicator in status bar shows connected
+- [x] Connection status indicator in status bar shows connected ([evidence](manual-verification-evidence-2026-07-17.md#connection-status))
 - [ ] Disconnect and reconnect → auto-reconnection succeeds
 - [x] Multiple simultaneous WebSocket clients work correctly ([evidence](manual-verification-evidence-2026-07-17.md#multiple-simultaneous-clients))
 

@@ -49,6 +49,7 @@ export interface RenderOptions {
 export interface PDFRenderResult {
   canvas: HTMLCanvasElement;
   page: PDFPageProxy;
+  hasVisibleContent: boolean;
   viewport: {
     width: number;
     height: number;
@@ -217,17 +218,16 @@ export class PDFRenderer {
       await renderTask.promise;
       this.renderTasks.delete(pageNumber);
 
-      // Check if anything was actually drawn
+      // Check whether PDF.js painted opaque pixels into the render target.
       const imageData = context.getImageData(
         0,
         0,
         Math.min(100, canvas.width),
         Math.min(100, canvas.height)
       );
-      const hasContent = imageData.data.some((value, index) => {
-        // Check if any pixel is not transparent white
-        return index % 4 < 3 && value !== 255; // RGB channels that aren't white
-      });
+      const hasContent = imageData.data.some(
+        (value, index) => index % 4 === 3 && value > 0
+      );
       logger.debug(`[PDFRenderer] Canvas has visible content:`, hasContent);
       logger.debug(
         `[PDFRenderer] Sample pixel data (first 16 bytes):`,
@@ -239,6 +239,7 @@ export class PDFRenderer {
       return {
         canvas,
         page,
+        hasVisibleContent: hasContent,
         viewport,
       };
     } catch (error) {
