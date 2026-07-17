@@ -188,7 +188,7 @@ if [[ -n "${BUTLER_API_KEY:-}" ]]; then
     ok "itch.io status returned for ${PROJECT_ITCHIO}"
     echo "$butler_output" | sed -n '1,40p'
   else
-    warn "itch.io status returned empty output"
+    critical_warn "itch.io status returned empty output"
   fi
 else
   warn "Skipping itch.io status because BUTLER_API_KEY is not set"

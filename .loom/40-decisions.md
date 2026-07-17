@@ -1,5 +1,26 @@
 # Decisions
 
+## 2026-07-16: Strict Release Checks Fail Closed on Empty Channel Evidence
+
+- Decision:
+  - Treat an empty `butler status` result as blocking in strict release
+    preflight mode while preserving the warning-only behavior in standard mode.
+- Rationale:
+  - A successful process exit without channel output does not prove that the
+    public itch.io artifacts exist. Strict release readiness should require
+    positive evidence from every configured distribution surface.
+- Alternatives considered:
+  - Keep empty output warning-only in both modes.
+  - Make empty output blocking in standard and strict modes.
+- Consequences:
+  - Transient Butler output failures can block a strict release, requiring a
+    retry or investigation.
+  - Local diagnostic runs remain usable in standard mode.
+- Sources:
+  - `scripts/release-preflight.sh`
+  - `docs/release-readiness-1.0.md`
+  - `.loom/078-plan-v2-s20-release-preflight-evidence-2026-07-16.md`
+
 ## 2026-06-26: Treat Stream Deck Hardware and Marketplace as External Validation Gates
 
 - Decision:
