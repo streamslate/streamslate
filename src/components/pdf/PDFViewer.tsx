@@ -239,7 +239,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
               toolConfig={toolConfig}
               onToolConfigChange={handleToolConfigChange}
               documentPath={document?.path}
-              className="flex-1 max-w-fit"
+              className="min-w-0 flex-1"
             />
 
             <div className="flex items-center gap-2">

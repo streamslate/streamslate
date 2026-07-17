@@ -45,6 +45,7 @@ import {
   sanitizePreset,
   parseImportProfiles,
   exportProfiles,
+  USE_CASE_TEMPLATES,
 } from "../../lib/annotations/presets";
 import { ToolSelector } from "./ToolSelector";
 import { TemplatePacks } from "./TemplatePacks";
@@ -69,8 +70,10 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   documentPath,
   className = "",
 }) => {
-  const [showConfig, setShowConfig] = useState(false);
-  const [showTemplatePanel, setShowTemplatePanel] = useState(false);
+  const [openPanel, setOpenPanel] = useState<"templates" | "settings" | null>(
+    null
+  );
+  const [showTemplatePacks, setShowTemplatePacks] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const [customProfiles, setCustomProfiles] = useState<TemplateProfile[]>(
     INITIAL_CUSTOM_PROFILES
@@ -86,6 +89,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   >(null);
   const [importMessage, setImportMessage] = useState<string | null>(null);
   const autoAppliedDocumentRef = useRef<string | null>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
 
   const allProfiles = useMemo(
     () => [BUILT_IN_PROFILE, ...customProfiles],
@@ -135,6 +139,30 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
       setSelectedProfileId(allProfiles[0]?.id ?? BUILT_IN_PROFILE_ID);
     }
   }, [allProfiles, selectedProfileId]);
+
+  useEffect(() => {
+    if (!openPanel) return;
+
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      if (!toolbarRef.current?.contains(event.target as Node)) {
+        setOpenPanel(null);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenPanel(null);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsidePointer);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsidePointer);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openPanel]);
+
+  useEffect(() => {
+    if (!activeTool && openPanel === "settings") setOpenPanel(null);
+  }, [activeTool, openPanel]);
 
   // ── Clean stale document-profile entries ──────────────────────────────
 
@@ -208,6 +236,7 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
   const applyTemplate = (template: UseCaseTemplate) => {
     setActiveTemplateId(template.id);
     applyPreset(template.preset);
+    setOpenPanel(null);
   };
 
   const createProfile = () => {
@@ -463,73 +492,80 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
 
   return (
     <div
-      className={`flex flex-col bg-surface-primary border border-border-primary rounded-xl shadow-lg p-4 ${className}`}
+      ref={toolbarRef}
+      data-testid="annotation-tools"
+      className={`relative z-20 flex max-w-full flex-nowrap items-center gap-2 rounded-xl border border-border-primary bg-surface-primary p-2 shadow-lg ${className}`}
     >
-      <ToolSelector
-        activeTool={activeTool}
-        activeTemplateId={activeTemplateId}
-        onToolClick={handleToolClick}
-        onTemplateApply={applyTemplate}
+      <ToolSelector activeTool={activeTool} onToolClick={handleToolClick} />
+
+      <div
+        aria-hidden="true"
+        className="h-7 w-px bg-[rgb(var(--color-border-primary))]"
       />
 
-      {/* Template Packs collapsible */}
-      <div className="border-t border-border-primary mt-4 pt-4">
-        <button
-          onClick={() => setShowTemplatePanel((prev) => !prev)}
-          className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-lg transition-all duration-200"
-        >
-          <span className="flex items-center gap-2">Template Packs</span>
-          <svg
-            className={`w-4 h-4 transform transition-transform ${showTemplatePanel ? "rotate-180" : ""}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </button>
+      <button
+        type="button"
+        onClick={() =>
+          setOpenPanel((current) =>
+            current === "templates" ? null : "templates"
+          )
+        }
+        aria-expanded={openPanel === "templates"}
+        aria-controls="annotation-templates-panel"
+        className={`h-10 rounded-lg border px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+          openPanel === "templates"
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border-primary bg-bg-tertiary text-text-secondary hover:bg-surface-secondary hover:text-text-primary"
+        }`}
+      >
+        Templates
+      </button>
 
-        {showTemplatePanel && (
-          <TemplatePacks
-            activeTool={activeTool}
-            documentPath={documentPath}
-            allProfiles={allProfiles}
-            selectedProfile={selectedProfile}
-            selectedProfileId={selectedProfileId}
-            onSelectProfile={setSelectedProfileId}
-            onCreateProfile={createProfile}
-            onRenameProfile={renameSelectedProfile}
-            onDeleteProfile={deleteSelectedProfile}
-            onApplyPreset={applyPreset}
-            onSavePreset={saveCurrentAsPreset}
-            onDeletePreset={deletePresetFromSelectedProfile}
-            onApplyProfileToDocument={applySelectedProfileToDocument}
-            onClearDocumentProfile={clearDocumentProfile}
-            onExportSelected={exportSelectedProfile}
-            onExportAll={exportAllCustomProfiles}
-            onImportFile={importProfilesFromFile}
-            activeDocumentProfileName={activeDocumentProfileName}
-            importMessage={importMessage}
-            customProfileCount={customProfiles.length}
-          />
-        )}
-      </div>
-
-      {/* Tool Settings collapsible */}
       {activeTool && (
-        <div className="border-t border-border-primary mt-4 pt-4">
-          <button
-            onClick={() => setShowConfig(!showConfig)}
-            className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-bg-tertiary rounded-lg transition-all duration-200"
-          >
-            <span className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() =>
+            setOpenPanel((current) =>
+              current === "settings" ? null : "settings"
+            )
+          }
+          aria-expanded={openPanel === "settings"}
+          aria-controls="annotation-settings-panel"
+          className={`h-10 rounded-lg border px-3 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+            openPanel === "settings"
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border-primary bg-bg-tertiary text-text-secondary hover:bg-surface-secondary hover:text-text-primary"
+          }`}
+        >
+          Tool Settings
+        </button>
+      )}
+
+      {openPanel === "templates" && (
+        <div
+          id="annotation-templates-panel"
+          data-testid="annotation-tools-popover"
+          role="dialog"
+          aria-label="Annotation templates"
+          className="absolute left-0 top-full z-30 mt-2 max-h-[min(70vh,36rem)] w-[min(42rem,calc(100vw-3rem))] overflow-y-auto rounded-xl border border-border-primary bg-surface-primary p-4 shadow-xl"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-text-primary">
+                Use-Case Templates
+              </div>
+              <div className="mt-0.5 text-xs text-text-tertiary">
+                Apply a ready-made annotation style without covering the PDF.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenPanel(null)}
+              aria-label="Close annotation templates"
+              className="rounded-lg p-2 text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary"
+            >
               <svg
-                className="w-4 h-4"
+                className="h-4 w-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -538,37 +574,131 @@ export const AnnotationTools: React.FC<AnnotationToolsProps> = ({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                  d="M6 18 18 6M6 6l12 12"
                 />
               </svg>
-              Tool Settings
-            </span>
-            <svg
-              className={`w-4 h-4 transform transition-transform ${showConfig ? "rotate-180" : ""}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+            </button>
+          </div>
 
-          {showConfig && (
-            <ToolSettings
-              activeTool={activeTool}
-              toolConfig={toolConfig}
-              onColorChange={(color) => onToolConfigChange({ color })}
-              onOpacityChange={(opacity) => onToolConfigChange({ opacity })}
-              onStrokeWidthChange={(strokeWidth) =>
-                onToolConfigChange({ strokeWidth })
-              }
-            />
-          )}
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {USE_CASE_TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => applyTemplate(template)}
+                className={`rounded-lg border px-3 py-2 text-left transition-colors ${
+                  activeTemplateId === template.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border-primary bg-bg-tertiary/70 hover:bg-surface-secondary"
+                }`}
+                title={template.description}
+              >
+                <div className="text-xs font-semibold text-text-primary">
+                  {template.name}
+                </div>
+                <div className="mt-0.5 text-[11px] leading-4 text-text-tertiary">
+                  {template.description}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-4 border-t border-border-primary pt-3">
+            <button
+              type="button"
+              onClick={() => setShowTemplatePacks((current) => !current)}
+              aria-expanded={showTemplatePacks}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-bg-tertiary hover:text-text-primary"
+            >
+              <span>Template Packs</span>
+              <svg
+                className={`h-4 w-4 transform transition-transform ${showTemplatePacks ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {showTemplatePacks && (
+              <div className="mt-3 rounded-lg bg-bg-tertiary p-4">
+                <TemplatePacks
+                  activeTool={activeTool}
+                  documentPath={documentPath}
+                  allProfiles={allProfiles}
+                  selectedProfile={selectedProfile}
+                  selectedProfileId={selectedProfileId}
+                  onSelectProfile={setSelectedProfileId}
+                  onCreateProfile={createProfile}
+                  onRenameProfile={renameSelectedProfile}
+                  onDeleteProfile={deleteSelectedProfile}
+                  onApplyPreset={applyPreset}
+                  onSavePreset={saveCurrentAsPreset}
+                  onDeletePreset={deletePresetFromSelectedProfile}
+                  onApplyProfileToDocument={applySelectedProfileToDocument}
+                  onClearDocumentProfile={clearDocumentProfile}
+                  onExportSelected={exportSelectedProfile}
+                  onExportAll={exportAllCustomProfiles}
+                  onImportFile={importProfilesFromFile}
+                  activeDocumentProfileName={activeDocumentProfileName}
+                  importMessage={importMessage}
+                  customProfileCount={customProfiles.length}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {openPanel === "settings" && activeTool && (
+        <div
+          id="annotation-settings-panel"
+          data-testid="annotation-tools-popover"
+          role="dialog"
+          aria-label="Annotation tool settings"
+          className="absolute left-0 top-full z-30 mt-2 max-h-[min(70vh,36rem)] w-[min(24rem,calc(100vw-3rem))] overflow-y-auto rounded-xl border border-border-primary bg-surface-primary p-4 shadow-xl"
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div className="text-sm font-semibold text-text-primary">
+              Tool Settings
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpenPanel(null)}
+              aria-label="Close tool settings"
+              className="rounded-lg p-2 text-text-tertiary hover:bg-bg-tertiary hover:text-text-primary"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <ToolSettings
+            activeTool={activeTool}
+            toolConfig={toolConfig}
+            onColorChange={(color) => onToolConfigChange({ color })}
+            onOpacityChange={(opacity) => onToolConfigChange({ opacity })}
+            onStrokeWidthChange={(strokeWidth) =>
+              onToolConfigChange({ strokeWidth })
+            }
+          />
         </div>
       )}
     </div>

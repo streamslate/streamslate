@@ -42,17 +42,17 @@ afterEach(async () => {
 
 describe("ToolSelector", () => {
   it("groups annotation tools into stable picker sections", async () => {
-    const { container } = await render(
-      <ToolSelector
-        activeTemplateId={null}
-        onToolClick={vi.fn()}
-        onTemplateApply={vi.fn()}
-      />
-    );
+    const { container } = await render(<ToolSelector onToolClick={vi.fn()} />);
 
-    expect(container.textContent).toContain("Markup");
-    expect(container.textContent).toContain("Shapes");
-    expect(container.textContent).toContain("Notes");
+    expect(
+      container.querySelector("[role='group'][aria-label='Markup']")
+    ).not.toBeNull();
+    expect(
+      container.querySelector("[role='group'][aria-label='Shapes']")
+    ).not.toBeNull();
+    expect(
+      container.querySelector("[role='group'][aria-label='Notes']")
+    ).not.toBeNull();
     expect(container.querySelectorAll("button[aria-label]")).toHaveLength(8);
   });
 
@@ -61,9 +61,7 @@ describe("ToolSelector", () => {
     const { container } = await render(
       <ToolSelector
         activeTool={AnnotationType.UNDERLINE}
-        activeTemplateId={null}
         onToolClick={onToolClick}
-        onTemplateApply={vi.fn()}
       />
     );
 
