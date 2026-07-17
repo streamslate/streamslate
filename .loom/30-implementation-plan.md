@@ -144,7 +144,20 @@ Integrated as roadmap 1.9:
 - [x] GitLab CI runs the plugin guard independently on Node 24 and uploads Markdown/JSON package audit artifacts.
 - [x] Deployment waits for the Stream Deck guard without claiming external hardware/mobile validation.
 
-## Acceptance Gate — ALL MET
+### M11: Release Readiness Evidence 🚧
+
+Tracked by
+[issue #14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14):
+
+- [x] Re-run strict release preflight against the v1.6.0 tag, GitHub release
+      assets, updater metadata, and itch.io channels.
+- [x] Fail strict mode closed when itch.io returns empty status evidence.
+- [x] Refresh the release-readiness baseline with the v1.6.0 result.
+- [ ] Execute and attach the native/manual verification checklist.
+- [ ] Re-run strict preflight on the next release-candidate commit before
+      tagging.
+
+## Professional Grade Acceptance Gate — ALL MET
 
 - [x] Every ✅ in README is backed by working, exercised code
 - [x] No `OBS_NOT_IMPLEMENTED` stub referenced in user-facing docs

@@ -1,5 +1,41 @@
 # Worklog
 
+## 2026-07-16: Release Preflight Evidence Guard
+
+- What changed:
+  - Changed strict release preflight to block when Butler returns no itch.io
+    channel evidence; standard mode still warns.
+  - Added and passed an empty-output Butler kill-test: standard exited `0`,
+    strict exited `1` with one blocking error.
+  - Re-ran live strict preflight for v1.6.0 and verified aligned versions, tag
+    content, GitHub desktop/updater assets, `latest.json`, and macOS, Windows,
+    and Linux itch.io channels.
+  - Refreshed release-readiness and implementation-plan progress without
+    claiming completion of the native manual checklist.
+- Why:
+  - Issue #14 requires trustworthy release evidence, and strict mode previously
+    allowed an empty external status response to pass.
+- Validation:
+  - `bash -n scripts/release-preflight.sh`
+  - empty-output Butler kill-test
+  - `npm run release:preflight:strict`
+  - `npm run format:check`
+  - `npm run lint`
+  - `npm run test:unit` (246 passed)
+  - `npm run build`
+  - scoped `pre-commit run --files ...`
+- Known baseline note:
+  - Repository-wide `pre-commit run --all-files` found and auto-fixed unrelated
+    historical EOF/whitespace drift; those edits were reverted and excluded
+    from this slice.
+- What's next:
+  - Execute and attach the native/manual verification checklist for issue #14.
+  - Re-run strict preflight on the next release candidate before tagging.
+- Sources:
+  - `scripts/release-preflight.sh`
+  - `docs/release-readiness-1.0.md`
+  - `.loom/078-plan-v2-s20-release-preflight-evidence-2026-07-16.md`
+
 ## 2026-06-27: Stream Deck Validation JSON Evidence
 
 - What changed:

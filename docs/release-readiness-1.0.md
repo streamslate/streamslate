@@ -25,21 +25,29 @@ The preflight script:
 - validates `latest.json`
 - checks itch.io channel status
 
-## Current Baseline (2026-03-11)
+## Current Baseline (2026-07-16)
 
-Validated with `npm run release:preflight`:
+Validated with `npm run release:preflight:strict` from a clean worktree at
+`9de1c83`:
 
 - toolchain present (`git`, `node`, `npm`, `cargo`, `gh`, `butler`)
 - `BUTLER_API_KEY` available for itch.io checks
-- local version alignment at `1.4.0`
-- local tag `v1.4.0` exists and matches repo version files
-- GitHub release `v1.4.0` exists with desktop binaries, updater bundle/signature, and `latest.json`
-- `latest.json` reports version `1.4.0` with `9` configured platforms
-- itch.io channels `macos`, `windows`, and `linux` all report `v1.4.0`
+- local version alignment at `1.6.0`
+- local tag `v1.6.0` exists and matches repo version files
+- GitHub release `v1.6.0` exists with desktop binaries, updater
+  bundle/signature, and `latest.json`
+- `latest.json` reports version `1.6.0` with `9` configured platforms
+- itch.io channels `macos`, `windows`, and `linux` all report `v1.6.0`
 
-Non-blocking note:
+The strict gate now treats empty itch.io status output as blocking. Standard
+mode retains a warning so it remains useful for local diagnostics without
+release credentials or reliable external status.
 
-- the preflight script warns if the working tree has local changes
+Remaining issue #14 work:
+
+- execute and attach results for the native/manual scenarios in
+  `docs/manual-verification-checklist.md`
+- rerun strict preflight on the next release-candidate commit before tagging
 
 ## Standard Release Flow
 
