@@ -1,6 +1,6 @@
 # StreamSlate Roadmap
 
-> Last Updated: 2026-07-02
+> Last Updated: 2026-07-17
 > Tier: 1 (see workspace AGENTS.md "Portfolio Tiers")
 > Tracking Issue: https://gitlab.flexinfer.ai/services/streamslate/-/issues/17
 
@@ -19,36 +19,32 @@ Convention (portfolio-refresh 2026-H2, see libs/STANDARDS.md "Roadmap & Backlog"
 
 ## Current Status
 
-StreamSlate is a production-ready Tauri/Rust/React PDF-annotation overlay for
-streamers at **v1.6.0** (bumped 2026-06-28, `f158be7`). The prior phase roadmap
-(MVP → 1.9) is complete: core annotations, WebSocket remote control,
-presets/templates, NDI/Syphon build-time outputs, OBS WebSocket direct control,
-presenter mode, PDF page inversion, text-line annotations, and the Stream Deck
-SDK v2 plugin runtime; 211 unit tests, lint and CI clean. The last product
-commit stream (2026-06-26 → 06-28) was Stream Deck validation/packaging
-evidence tooling; since then only CI template onboarding (2026-07-02,
-`f204df9`). Honest gaps: Stream Deck hardware/Mobile validation and Marketplace
-publication are **not** done, and no commits target the PLAN.md launch items
-(public release binaries, itch.io distribution) yet — the launch goal is
-strategic intent, not current momentum. Phase history (MVP → 1.9) is preserved
-in this file's git history.
+StreamSlate is a Tauri/Rust/React PDF-annotation overlay for streamers at
+**v1.6.0** (bumped 2026-06-28, `f158be7`). Signed desktop binaries, updater
+metadata, and macOS/Windows/Linux itch.io channels are published. Native
+verification on 2026-07-17 proved protocol-v2 capabilities, simultaneous
+clients, PDF page navigation, zoom, and connection status. It also found two
+release-readiness defects: the signed v1.6.0 build displays a blank PDF
+viewport, corrected by the current visible-canvas slice, and presenter control
+reports active without creating a second native window. Stream Deck
+hardware/Mobile validation and Marketplace publication remain external gates.
 
-Evidence: git log main, last 20 commits (2026-06-26 → 2026-07-02), inspected
-2026-07-02; default-branch pipeline success 2026-06-28
-(`.loom/62-functional-health-baseline-2026-07-02.md`).
+Evidence: v1.6.0 strict release preflight; signed Apple-silicon installation;
+native evidence in `docs/manual-verification-evidence-2026-07-17.md`; latest
+merged default-branch pipeline `19648` for `518717a` passed.
 
 - **Plan store**: `plan-workspace-portfolio-refresh-2026-h2-roadmaps-quality-baselin-f3db23` (slice 9 refresh; no repo-local live plan)
-- **Deployed**: not deployed (desktop app; public distribution pending itch.io launch)
+- **Deployed**: v1.6.0 desktop release and itch.io channels published
 - **CI**: node template family (platform/gitops CI templates, onboarded 2026-07-02)
 
 ## Now
 
 - [ ] Stream Deck plugin: hardware / Stream Deck Mobile validation, then Marketplace packaging + publication ([#12](https://gitlab.flexinfer.ai/services/streamslate/-/issues/12))
-- [ ] Execute the manual verification checklist + strict release preflight on the next release candidate ([#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14))
+- [ ] Complete the manual verification checklist, including presenter-window recovery, then run strict preflight on the next release candidate ([#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14))
 
 ## Next
 
-- [ ] Launch distribution: release binaries (macOS DMG first) + itch.io page and upload ([#18](https://gitlab.flexinfer.ai/services/streamslate/-/issues/18))
+- [ ] Publish a signed follow-up release containing verified PDF-render and presenter-window fixes ([#18](https://gitlab.flexinfer.ai/services/streamslate/-/issues/18))
 
 ## Later
 

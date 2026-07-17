@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-07-17: Render PDF.js Directly Into the Displayed Canvas
+
+- Decision:
+  - Remove the hidden-canvas PNG fallback and make the displayed canvas the
+    PDF.js render target.
+  - Preserve serialized Tauri error strings in the PDF load error UI.
+- Rationale:
+  - The signed v1.6.0 release opened a valid 65-page PDF in the backend but
+    displayed a blank black page because PDF.js painted a `display: none`
+    canvas. The current macOS WKWebView directly rendered the visible canvas,
+    and its pixel audit plus accessibility state proved opaque page content.
+- Alternatives considered:
+  - Keep the hidden canvas and adjust only the PNG conversion timing.
+  - Treat backend `open_pdf` success as sufficient and leave the visual defect
+    for manual troubleshooting.
+- Consequences:
+  - Direct-canvas behavior needs release-candidate coverage on non-macOS
+    WebViews.
+  - Presenter mode remains a separate failed native check because it reports
+    active without creating a second window.
+- Sources:
+  - `src/components/pdf/PDFViewer.tsx`
+  - `src/lib/pdf/renderer.ts`
+  - `docs/manual-verification-evidence-2026-07-17.md`
+  - `.loom/080-plan-v2-s22-pdf-render-recovery-2026-07-17.md`
+
 ## 2026-07-17: Mark Only Directly Observed Manual Checks Complete
 
 - Decision:

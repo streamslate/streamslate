@@ -389,7 +389,7 @@ interface PDFCanvasRendererProps {
   fitMode?: FitMode;
 }
 
-const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
+export const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   pdfDocument,
   currentPage,
   zoom,
@@ -409,7 +409,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   } | null>(null); // Track current render task
   const [isRendering, setIsRendering] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [hasVisibleContent, setHasVisibleContent] = useState<boolean | null>(
+    null
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -432,6 +434,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
       setIsRendering(true);
       setRenderError(null);
+      setHasVisibleContent(null);
 
       try {
         // Load document if not already loaded
@@ -454,16 +457,7 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
 
         if (isMounted) {
           setIsRendering(false);
-
-          // WORKAROUND: Convert canvas to image for Tauri WebView compatibility
-          if (canvasRef.current) {
-            try {
-              const dataUrl = canvasRef.current.toDataURL("image/png");
-              setImageDataUrl(dataUrl);
-            } catch {
-              // Fallback image creation failed - canvas rendering will still work
-            }
-          }
+          setHasVisibleContent(result.hasVisibleContent);
 
           // Update canvas size for annotation layer
           if (canvasRef.current && onCanvasSizeChange) {
@@ -542,15 +536,9 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full overflow-auto ${
-        transparentBg ? "bg-transparent" : "bg-bg-secondary"
+      className={`relative inline-block ${
+        transparentBg ? "bg-transparent" : "bg-white"
       }`}
-      style={{
-        // Force hardware acceleration and compositing for Tauri WebView
-        transform: "translateZ(0)",
-        backfaceVisibility: "hidden",
-        perspective: "1000px",
-      }}
     >
       {isRendering && (
         <div
@@ -568,40 +556,24 @@ const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
         </div>
       )}
 
-      {/* Canvas element (hidden for WebView compatibility) */}
       <canvas
         ref={canvasRef}
-        className="hidden"
+        aria-label={
+          hasVisibleContent === true
+            ? `PDF page ${currentPage} rendered`
+            : hasVisibleContent === false
+              ? `PDF page ${currentPage} is blank`
+              : `PDF page ${currentPage}`
+        }
+        className={`block max-w-full h-auto ${
+          darkMode && invertPages ? "pdf-dark-mode" : ""
+        }`}
         style={{
-          position: "absolute",
-          top: "-9999px",
-          left: "-9999px",
+          display: "block",
+          visibility: "visible",
+          opacity: "1",
         }}
       />
-
-      {/* Fallback image for Tauri WebView */}
-      {imageDataUrl ? (
-        <img
-          src={imageDataUrl}
-          alt={`PDF page ${currentPage}`}
-          className={`block mx-auto max-w-full h-auto ${
-            darkMode && invertPages ? "pdf-dark-mode" : ""
-          }`}
-          style={{
-            display: "block",
-            visibility: "visible",
-            opacity: "1",
-            transform: "translateZ(0)",
-            backfaceVisibility: "hidden",
-            WebkitTransform: "translateZ(0)",
-            WebkitBackfaceVisibility: "hidden",
-          }}
-        />
-      ) : (
-        <div className="flex items-center justify-center w-full h-64 bg-bg-tertiary text-text-tertiary border border-border-secondary rounded-lg">
-          No image data available
-        </div>
-      )}
     </div>
   );
 };

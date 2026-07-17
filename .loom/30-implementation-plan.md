@@ -155,6 +155,11 @@ Tracked by
 - [x] Refresh the release-readiness baseline with the v1.6.0 result.
 - [x] Record current-source native WebSocket evidence for protocol-v2
       capabilities and simultaneous clients.
+- [x] Install and verify the signed v1.6.0 Apple-silicon release, reproduce its
+      blank PDF viewport, and restore visible PDF.js canvas rendering.
+- [x] Verify native PDF page navigation, zoom, and connection-status behavior.
+- [ ] Correct presenter mode reporting `active: true` without creating a second
+      native window.
 - [ ] Execute and attach the native/manual verification checklist.
 - [ ] Re-run strict preflight on the next release-candidate commit before
       tagging.
@@ -167,7 +172,7 @@ Tracked by
 - [x] Local quality commands pass (`lint`, `test:unit`, `tsc --noEmit`)
 - [x] Feature-gated capabilities (NDI/Syphon) clearly labeled
 - [x] Integration guide describes only implemented behaviors
-- [x] 211 tests passing, 0 lint errors
+- [x] 250 tests passing, 0 lint errors
 
 ## Sources
 

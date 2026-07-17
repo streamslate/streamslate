@@ -39,6 +39,7 @@ import {
   emitPdfClosed,
   emitZoomChanged,
 } from "../lib/tauri/events";
+import { getErrorMessage } from "../lib/error-message";
 
 export const usePDF = () => {
   const {
@@ -158,7 +159,7 @@ export const usePDF = () => {
     } catch (err) {
       const error: PDFError = {
         code: "LOAD_ERROR",
-        message: err instanceof Error ? err.message : "Failed to load PDF",
+        message: getErrorMessage(err, "Failed to load PDF"),
         details: err,
       };
       setError(error);

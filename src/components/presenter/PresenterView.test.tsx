@@ -4,8 +4,13 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PresenterView } from "./PresenterView";
 
-const { listenMock } = vi.hoisted(() => ({
+const { listenMock, pdfRendererMock } = vi.hoisted(() => ({
   listenMock: vi.fn(),
+  pdfRendererMock: {
+    loadDocument: vi.fn(),
+    getPageDimensions: vi.fn(),
+    renderPage: vi.fn(),
+  },
 }));
 
 vi.mock("@tauri-apps/api/event", () => ({
@@ -13,11 +18,7 @@ vi.mock("@tauri-apps/api/event", () => ({
 }));
 
 vi.mock("../../lib/pdf/renderer", () => ({
-  pdfRenderer: {
-    loadDocument: vi.fn(),
-    getPageDimensions: vi.fn(),
-    renderPage: vi.fn(),
-  },
+  pdfRenderer: pdfRendererMock,
 }));
 
 vi.mock("../../lib/logger", () => ({
@@ -85,6 +86,22 @@ afterEach(async () => {
 
 beforeEach(() => {
   listenMock.mockReset();
+  pdfRendererMock.loadDocument.mockReset();
+  pdfRendererMock.getPageDimensions.mockReset();
+  pdfRendererMock.renderPage.mockReset();
+  pdfRendererMock.loadDocument.mockResolvedValue({});
+  pdfRendererMock.getPageDimensions.mockResolvedValue({
+    width: 612,
+    height: 792,
+  });
+  pdfRendererMock.renderPage.mockImplementation(
+    async (_page: number, canvas: HTMLCanvasElement) => ({
+      canvas,
+      hasVisibleContent: true,
+      page: {},
+      viewport: { width: 612, height: 792 },
+    })
+  );
   MockWebSocket.instances = [];
   vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
   delete (window as Window & { __TAURI__?: unknown }).__TAURI__;
@@ -101,5 +118,38 @@ describe("PresenterView", () => {
     expect(MockWebSocket.instances).toHaveLength(1);
     expect(MockWebSocket.instances[0]?.url).toBe("ws://127.0.0.1:11451");
     expect(listenMock).not.toHaveBeenCalled();
+  });
+
+  it("renders presenter pages into the displayed canvas", async () => {
+    const { container } = await render(<PresenterView />);
+    const websocket = MockWebSocket.instances[0];
+
+    await act(async () => {
+      websocket?.onmessage?.(
+        new MessageEvent("message", {
+          data: JSON.stringify({
+            type: "STATE",
+            page: 2,
+            total_pages: 65,
+            pdf_path: "/tmp/presenter.pdf",
+          }),
+        })
+      );
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const canvas = container.querySelector("canvas");
+    expect(canvas).not.toBeNull();
+    expect(canvas?.classList.contains("hidden")).toBe(false);
+    expect(canvas?.getAttribute("aria-label")).toBe(
+      "Presenter PDF page 2 rendered"
+    );
+    expect(container.querySelector("img")).toBeNull();
+    expect(pdfRendererMock.renderPage).toHaveBeenCalledWith(
+      2,
+      canvas,
+      expect.objectContaining({ rotation: 0 })
+    );
   });
 });
