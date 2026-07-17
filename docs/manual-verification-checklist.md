@@ -6,6 +6,13 @@ the unit test environment.
 
 Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/streamslate/-/issues/14)
 
+Evidence runs:
+
+- [2026-07-17 current-source native WebSocket smoke](manual-verification-evidence-2026-07-17.md)
+
+Checked items apply to the source ref and build mode in their linked evidence.
+Re-run applicable checks on the next release-candidate binary before tagging.
+
 ## NDI Output (Feature-gated)
 
 **Prerequisites:** Build with `--features ndi`, NDI SDK installed.
@@ -77,13 +84,13 @@ Tracking issue: [services/streamslate#14](https://gitlab.flexinfer.ai/services/s
 
 **Prerequisites:** WebSocket client (e.g., `websocat ws://127.0.0.1:11451`).
 
-- [ ] Send `{"type": "GET_CAPABILITIES", "protocolVersion": "2.0", "request_id": "manual-capabilities"}` → app replies with `CAPABILITIES`
+- [x] Send `{"type": "GET_CAPABILITIES", "protocolVersion": "2.0", "request_id": "manual-capabilities"}` → app replies with `CAPABILITIES` ([evidence](manual-verification-evidence-2026-07-17.md#protocol-v2-capabilities))
 - [ ] Send `{"type": "GO_TO_PAGE", "page": 3}` → app navigates to page 3
 - [ ] Send `{"type": "SET_ZOOM", "zoom": 1.5}` → app zooms to 150%
 - [ ] Send `{"type": "TOGGLE_PRESENTER"}` → presenter opens or closes
 - [ ] Connection status indicator in status bar shows connected
 - [ ] Disconnect and reconnect → auto-reconnection succeeds
-- [ ] Multiple simultaneous WebSocket clients work correctly
+- [x] Multiple simultaneous WebSocket clients work correctly ([evidence](manual-verification-evidence-2026-07-17.md#multiple-simultaneous-clients))
 
 ## Stream Deck Plugin (Official SDK v2)
 

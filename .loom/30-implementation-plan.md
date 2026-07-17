@@ -153,6 +153,8 @@ Tracked by
       assets, updater metadata, and itch.io channels.
 - [x] Fail strict mode closed when itch.io returns empty status evidence.
 - [x] Refresh the release-readiness baseline with the v1.6.0 result.
+- [x] Record current-source native WebSocket evidence for protocol-v2
+      capabilities and simultaneous clients.
 - [ ] Execute and attach the native/manual verification checklist.
 - [ ] Re-run strict preflight on the next release-candidate commit before
       tagging.

@@ -1,5 +1,24 @@
 # Decisions
 
+## 2026-07-17: Mark Only Directly Observed Manual Checks Complete
+
+- Decision:
+  - Check a manual-verification item only when its exact user-visible or
+    protocol outcome is observed on a current-source runtime.
+- Rationale:
+  - Backend events, stale installed binaries, or adjacent behavior can provide
+    useful diagnostics without proving the checklist wording. Keeping partial
+    results explicit prevents release-readiness overclaims.
+- Alternatives considered:
+  - Treat related unit/E2E coverage as equivalent to native evidence.
+  - Check presenter, zoom, and reconnect items from protocol-adjacent results.
+- Consequences:
+  - This slice completes only protocol-v2 capabilities and simultaneous-client
+    checks; PDF, visual, automatic reconnect, and hardware items remain open.
+- Sources:
+  - `docs/manual-verification-evidence-2026-07-17.md`
+  - `.loom/079-plan-v2-s21-native-websocket-evidence-2026-07-17.md`
+
 ## 2026-07-16: Strict Release Checks Fail Closed on Empty Channel Evidence
 
 - Decision:

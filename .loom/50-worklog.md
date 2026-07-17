@@ -1,5 +1,31 @@
 # Worklog
 
+## 2026-07-17: Current-Source Native WebSocket Evidence
+
+- What changed:
+  - Built and launched StreamSlate v1.6.0 from `origin/main` on macOS.
+  - Verified protocol-v2 capabilities and two simultaneous WebSocket clients
+    against the native runtime.
+  - Added a dated evidence record and checked only those two exact manual
+    checklist items.
+  - Recorded why PDF, presenter-window, reconnect, and hardware scenarios remain
+    open.
+- Why:
+  - Issue #14 requires direct manual evidence. The installed application was
+    stale v1.0.1, so current source was used to avoid certifying old behavior.
+- Validation:
+  - `npm run tauri:dev`
+  - `websocat -t ws://127.0.0.1:11451`
+  - current-source `GET_CAPABILITIES` request/response
+  - simultaneous independent `PING`/`PONG` and `GET_STATE` round-trips
+- What's next:
+  - Load a PDF in the native runtime and verify page, zoom, and presenter
+    synchronization.
+  - Run hardware-dependent scenarios only when their prerequisites are present.
+- Sources:
+  - `docs/manual-verification-evidence-2026-07-17.md`
+  - `.loom/079-plan-v2-s21-native-websocket-evidence-2026-07-17.md`
+
 ## 2026-07-16: Release Preflight Evidence Guard
 
 - What changed:
