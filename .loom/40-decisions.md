@@ -1,5 +1,31 @@
 # Decisions
 
+## 2026-07-17: Derive Presenter State From Native Visibility
+
+- Decision:
+  - Route Tauri and WebSocket presenter toggles through one native lifecycle
+    and report active only after the `presenter` window is visible.
+  - Hydrate the presenter from native state after its Tauri listeners mount.
+  - Convert PDF canvas pixels directly for dark mode instead of relying on a
+    compositor-only CSS filter.
+- Rationale:
+  - Tauri pre-creates a hidden presenter webview, so label existence does not
+    prove active output. The former WebSocket path only flipped state.
+  - The optional `window.__TAURI__` global is disabled; Tauri's supported
+    `isTauri()` detector is required.
+  - Buffer-level dark conversion makes black-page/light-text output observable
+    before WebKit compositing and preserves mid-tone color identity.
+- Consequences:
+  - Remote active state is backed by actual native visibility.
+  - Presenter PDF/page state survives listener-mount races and cold reopen.
+  - Render success requires page contrast, not merely opaque background pixels.
+- Sources:
+  - `src-tauri/src/commands/presenter.rs`
+  - `src-tauri/src/websocket/handlers.rs`
+  - `src/components/presenter/PresenterView.tsx`
+  - `src/lib/pdf/renderer.ts`
+  - `docs/manual-verification-evidence-2026-07-17.md`
+
 ## 2026-07-17: Render PDF.js Directly Into the Displayed Canvas
 
 - Decision:

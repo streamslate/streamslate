@@ -58,9 +58,88 @@ export interface PDFRenderResult {
   };
 }
 
+export function hasMeaningfulPageContrast(
+  pixels: Uint8ClampedArray,
+  minimumRange = 16
+): boolean {
+  let minimumLuminance = 255;
+  let maximumLuminance = 0;
+  let visiblePixels = 0;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] < 16) continue;
+
+    const luminance =
+      pixels[index] * 0.2126 +
+      pixels[index + 1] * 0.7152 +
+      pixels[index + 2] * 0.0722;
+    minimumLuminance = Math.min(minimumLuminance, luminance);
+    maximumLuminance = Math.max(maximumLuminance, luminance);
+    visiblePixels += 1;
+  }
+
+  return (
+    visiblePixels > 0 && maximumLuminance - minimumLuminance >= minimumRange
+  );
+}
+
+export function convertPixelsToDarkMode(pixels: Uint8ClampedArray): void {
+  const darkBackground = 18;
+  const lightForeground = 235;
+  const outputRange = lightForeground - darkBackground;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    if (pixels[index + 3] === 0) continue;
+
+    const red = pixels[index];
+    const green = pixels[index + 1];
+    const blue = pixels[index + 2];
+    const sourceLightness =
+      (Math.max(red, green, blue) + Math.min(red, green, blue)) / 2;
+    const targetLightness =
+      lightForeground - (sourceLightness / 255) * outputRange;
+    const shift = targetLightness - sourceLightness;
+
+    pixels[index] = Math.max(0, Math.min(255, red + shift));
+    pixels[index + 1] = Math.max(0, Math.min(255, green + shift));
+    pixels[index + 2] = Math.max(0, Math.min(255, blue + shift));
+  }
+}
+
+function sampleCanvasPixels(canvas: HTMLCanvasElement): Uint8ClampedArray {
+  const sampleCanvas = document.createElement("canvas");
+  sampleCanvas.width = Math.min(canvas.width, 128);
+  sampleCanvas.height = Math.min(canvas.height, 128);
+  const sampleContext = sampleCanvas.getContext("2d");
+
+  if (!sampleContext) {
+    return new Uint8ClampedArray();
+  }
+
+  sampleContext.drawImage(
+    canvas,
+    0,
+    0,
+    canvas.width,
+    canvas.height,
+    0,
+    0,
+    sampleCanvas.width,
+    sampleCanvas.height
+  );
+  return sampleContext.getImageData(
+    0,
+    0,
+    sampleCanvas.width,
+    sampleCanvas.height
+  ).data;
+}
+
 export class PDFRenderer {
   private document: PDFDocumentProxy | null = null;
-  private renderTasks: Map<number, RenderTask> = new Map();
+  private renderTasks: Set<RenderTask> = new Set();
+  private canvasRenderTasks: WeakMap<HTMLCanvasElement, RenderTask> =
+    new WeakMap();
 
   /**
    * Load a PDF document from a file path
@@ -142,6 +221,27 @@ export class PDFRenderer {
     );
 
     const page = await this.getPage(pageNumber);
+    const existingTask = this.canvasRenderTasks.get(canvas);
+    if (existingTask) {
+      logger.debug("[PDFRenderer] Cancelling existing canvas render task");
+      existingTask.cancel();
+      try {
+        await existingTask.promise;
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          error.name !== "RenderingCancelledException"
+        ) {
+          logger.warn("Prior canvas render failed during cancellation", error);
+        }
+      } finally {
+        this.renderTasks.delete(existingTask);
+        if (this.canvasRenderTasks.get(canvas) === existingTask) {
+          this.canvasRenderTasks.delete(canvas);
+        }
+      }
+    }
+
     const viewport = page.getViewport({
       scale: options.scale,
       rotation: options.rotation,
@@ -180,17 +280,6 @@ export class PDFRenderer {
       canvas.style.height
     );
 
-    // Cancel any existing render task for this page
-    const existingTask = this.renderTasks.get(pageNumber);
-    if (existingTask) {
-      logger.debug(
-        "[PDFRenderer] Cancelling existing render task for page",
-        pageNumber
-      );
-      existingTask.cancel();
-      this.renderTasks.delete(pageNumber);
-    }
-
     // Clear canvas before rendering
     context.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -198,9 +287,11 @@ export class PDFRenderer {
     const renderTask = page.render({
       canvasContext: context,
       viewport: viewport,
+      background: options.backgroundColor ?? "#ffffff",
     });
 
-    this.renderTasks.set(pageNumber, renderTask);
+    this.renderTasks.add(renderTask);
+    this.canvasRenderTasks.set(canvas, renderTask);
 
     try {
       logger.debug("[PDFRenderer] Starting render for page", pageNumber);
@@ -216,22 +307,33 @@ export class PDFRenderer {
       );
 
       await renderTask.promise;
-      this.renderTasks.delete(pageNumber);
+      this.renderTasks.delete(renderTask);
+      if (this.canvasRenderTasks.get(canvas) === renderTask) {
+        this.canvasRenderTasks.delete(canvas);
+      }
 
-      // Check whether PDF.js painted opaque pixels into the render target.
-      const imageData = context.getImageData(
-        0,
-        0,
-        Math.min(100, canvas.width),
-        Math.min(100, canvas.height)
-      );
-      const hasContent = imageData.data.some(
-        (value, index) => index % 4 === 3 && value > 0
-      );
+      let contrastPixels: Uint8ClampedArray;
+      if (options.darkMode) {
+        const pagePixels = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        convertPixelsToDarkMode(pagePixels.data);
+        context.putImageData(pagePixels, 0, 0);
+        contrastPixels = pagePixels.data;
+      } else {
+        contrastPixels = sampleCanvasPixels(canvas);
+      }
+
+      // A solid page background is not a successful PDF render. Require
+      // visible luminance contrast from the converted or sampled page pixels.
+      const hasContent = hasMeaningfulPageContrast(contrastPixels);
       logger.debug(`[PDFRenderer] Canvas has visible content:`, hasContent);
       logger.debug(
         `[PDFRenderer] Sample pixel data (first 16 bytes):`,
-        Array.from(imageData.data.slice(0, 16))
+        Array.from(contrastPixels.slice(0, 16))
       );
 
       logger.debug("[PDFRenderer] Successfully rendered page", pageNumber);
@@ -249,7 +351,10 @@ export class PDFRenderer {
         ":",
         error
       );
-      this.renderTasks.delete(pageNumber);
+      this.renderTasks.delete(renderTask);
+      if (this.canvasRenderTasks.get(canvas) === renderTask) {
+        this.canvasRenderTasks.delete(canvas);
+      }
       throw error;
     }
   }
@@ -334,6 +439,7 @@ export class PDFRenderer {
       task.cancel();
     });
     this.renderTasks.clear();
+    this.canvasRenderTasks = new WeakMap();
   }
 
   /**

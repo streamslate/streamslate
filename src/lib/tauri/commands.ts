@@ -64,6 +64,7 @@ export interface PresenterState {
   current_page: number;
   total_pages: number;
   zoom_level: number;
+  pdf_path: string | null;
 }
 
 // PDF Commands

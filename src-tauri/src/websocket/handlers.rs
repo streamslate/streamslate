@@ -21,6 +21,7 @@
 //! Processes incoming commands and generates appropriate responses/events.
 
 use super::protocol::{WebSocketCommand, WebSocketErrorCode, WebSocketEvent};
+use crate::commands::presenter::toggle_presenter_window;
 use crate::state::AppState;
 use std::sync::Arc;
 use tauri::AppHandle;
@@ -345,24 +346,10 @@ fn handle_toggle_presenter(
     app_handle: &AppHandle,
     command: &str,
 ) -> WebSocketEvent {
-    let presenter_state = match state.get_presenter_state() {
-        Ok(s) => s,
-        Err(e) => return internal_error(command, e),
-    };
-
-    let new_active = !presenter_state.is_active;
-
-    // Update state
-    if let Err(e) = state.update_presenter_state(|s| {
-        s.is_active = new_active;
-    }) {
-        return internal_error(command, e);
+    match toggle_presenter_window(app_handle, state.as_ref()) {
+        Ok(active) => WebSocketEvent::PresenterChanged { active },
+        Err(error) => internal_error(command, error),
     }
-
-    // Emit event to frontend
-    emit_presenter_changed(app_handle, new_active);
-
-    WebSocketEvent::PresenterChanged { active: new_active }
 }
 
 // Helper functions to emit events to the frontend
@@ -391,19 +378,6 @@ fn emit_zoom_changed(app_handle: &AppHandle, zoom: f64) {
 
     if let Err(e) = app_handle.emit("zoom-changed", ZoomChangedPayload { zoom }) {
         warn!(error = %e, "Failed to emit zoom-changed event");
-    }
-}
-
-fn emit_presenter_changed(app_handle: &AppHandle, active: bool) {
-    use tauri::Emitter;
-
-    #[derive(serde::Serialize, Clone)]
-    struct PresenterChangedPayload {
-        active: bool,
-    }
-
-    if let Err(e) = app_handle.emit("presenter-changed", PresenterChangedPayload { active }) {
-        warn!(error = %e, "Failed to emit presenter-changed event");
     }
 }
 
