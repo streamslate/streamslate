@@ -23,10 +23,10 @@ StreamSlate is a Tauri/Rust/React PDF-annotation overlay for streamers at
 **v1.6.0** (bumped 2026-06-28, `f158be7`). Signed desktop binaries, updater
 metadata, and macOS/Windows/Linux itch.io channels are published. Native
 verification on 2026-07-17 proved protocol-v2 capabilities, simultaneous
-clients, PDF page navigation, zoom, and connection status. It also found two
-release-readiness defects: the signed v1.6.0 build displays a blank PDF
-viewport, corrected by the current visible-canvas slice, and presenter control
-reports active without creating a second native window. Stream Deck
+clients, PDF page navigation, zoom, connection status, dark-page rendering,
+and the presenter open/sync/close/reopen lifecycle. Follow-up source slices
+correct the signed v1.6.0 blank-viewport defect and the remote presenter command
+that reported active without showing a second native window. Stream Deck
 hardware/Mobile validation and Marketplace publication remain external gates.
 
 Evidence: v1.6.0 strict release preflight; signed Apple-silicon installation;

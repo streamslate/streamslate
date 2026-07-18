@@ -21,8 +21,8 @@
 use crate::error::Result;
 use crate::state::AppState;
 use serde::{Deserialize, Serialize};
-use tauri::{Emitter, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
-use tracing::{debug, info, instrument};
+use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tracing::{debug, info, instrument, warn};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PresenterConfig {
@@ -51,6 +51,12 @@ pub struct PresenterState {
     pub current_page: u32,
     pub total_pages: u32,
     pub zoom_level: f64,
+    pub pdf_path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct PresenterChangedPayload {
+    active: bool,
 }
 
 /// Payload for PDF opened events
@@ -76,15 +82,34 @@ pub async fn open_presenter_mode(
     state: State<'_, AppState>,
     config: Option<PresenterConfig>,
 ) -> Result<()> {
-    let app_handle = window.app_handle();
+    open_presenter_window(window.app_handle(), state.inner(), config)
+}
 
+/// Open the native presenter window from either a Tauri command or a remote
+/// control handler. State is marked active only after the window is visible.
+pub(crate) fn open_presenter_window(
+    app_handle: &AppHandle,
+    state: &AppState,
+    config: Option<PresenterConfig>,
+) -> Result<()> {
     // Check if presenter window already exists
     if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
         info!("Presenter window already exists, showing and emitting current state");
-        let _ = presenter_window.show();
+        presenter_window.show().map_err(|e| {
+            crate::error::StreamSlateError::Window(format!("Failed to show presenter window: {e}"))
+        })?;
+        ensure_presenter_visible(&presenter_window)?;
+
+        if let Err(error) = state.update_presenter_state(|presenter| {
+            presenter.is_active = true;
+        }) {
+            let _ = presenter_window.hide();
+            return Err(error);
+        }
 
         // Emit current state to sync presenter
-        emit_current_state_to_presenter(&presenter_window, &state)?;
+        emit_current_state_to_presenter(&presenter_window, state)?;
+        emit_presenter_changed(app_handle, true);
         return Ok(());
     }
 
@@ -121,21 +146,64 @@ pub async fn open_presenter_mode(
         crate::error::StreamSlateError::Window(format!("Failed to create presenter window: {e}"))
     })?;
 
-    // Update presenter state
-    state.update_presenter_state(|presenter| {
-        presenter.is_active = true;
+    presenter_window.show().map_err(|e| {
+        crate::error::StreamSlateError::Window(format!("Failed to show presenter window: {e}"))
     })?;
+    ensure_presenter_visible(&presenter_window)?;
+
+    // Update presenter state
+    if let Err(error) = state.update_presenter_state(|presenter| {
+        presenter.is_active = true;
+    }) {
+        let _ = presenter_window.close();
+        return Err(error);
+    }
 
     // Emit current PDF state so the presenter window syncs immediately
-    emit_current_state_to_presenter(&presenter_window, &state)?;
+    emit_current_state_to_presenter(&presenter_window, state)?;
+    emit_presenter_changed(app_handle, true);
 
     Ok(())
+}
+
+fn ensure_presenter_visible(presenter_window: &WebviewWindow) -> Result<()> {
+    let is_visible = inspect_presenter_visibility(presenter_window)?;
+
+    if !is_visible {
+        return Err(crate::error::StreamSlateError::Window(
+            "Presenter window was created but is not visible".to_string(),
+        ));
+    }
+
+    Ok(())
+}
+
+fn inspect_presenter_visibility(presenter_window: &WebviewWindow) -> Result<bool> {
+    presenter_window.is_visible().map_err(|e| {
+        crate::error::StreamSlateError::Window(format!(
+            "Failed to inspect presenter window visibility: {e}"
+        ))
+    })
+}
+
+fn presenter_is_visible(app_handle: &AppHandle) -> Result<bool> {
+    app_handle
+        .get_webview_window("presenter")
+        .as_ref()
+        .map(inspect_presenter_visibility)
+        .unwrap_or(Ok(false))
+}
+
+fn emit_presenter_changed(app_handle: &AppHandle, active: bool) {
+    if let Err(error) = app_handle.emit("presenter-changed", PresenterChangedPayload { active }) {
+        warn!(%error, active, "Failed to emit presenter lifecycle change");
+    }
 }
 
 /// Helper to emit current PDF state to presenter window
 fn emit_current_state_to_presenter(
     presenter_window: &WebviewWindow,
-    state: &State<'_, AppState>,
+    state: &AppState,
 ) -> Result<()> {
     let pdf_state = state.get_pdf_state()?;
 
@@ -175,20 +243,31 @@ fn emit_current_state_to_presenter(
 #[tauri::command]
 #[instrument(skip(window, state))]
 pub async fn close_presenter_mode(window: WebviewWindow, state: State<'_, AppState>) -> Result<()> {
-    let app_handle = window.app_handle();
+    close_presenter_window(window.app_handle(), state.inner())
+}
 
+/// Close the native presenter window and publish the resulting lifecycle state.
+pub(crate) fn close_presenter_window(app_handle: &AppHandle, state: &AppState) -> Result<()> {
     info!("Closing presenter mode");
 
-    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
-        presenter_window.close().map_err(|e| {
-            crate::error::StreamSlateError::Window(format!("Failed to close presenter window: {e}"))
-        })?;
-    }
-
-    // Update presenter state
+    // Persist the intended state before the irreversible close. If closing the
+    // native window fails, restore the active flag while the window is visible.
     state.update_presenter_state(|presenter| {
         presenter.is_active = false;
     })?;
+
+    if let Some(presenter_window) = app_handle.get_webview_window("presenter") {
+        if let Err(error) = presenter_window.close() {
+            state.update_presenter_state(|presenter| {
+                presenter.is_active = true;
+            })?;
+            return Err(crate::error::StreamSlateError::Window(format!(
+                "Failed to close presenter window: {error}"
+            )));
+        }
+    }
+
+    emit_presenter_changed(app_handle, false);
 
     Ok(())
 }
@@ -238,7 +317,7 @@ pub async fn get_presenter_state(
     state: State<'_, AppState>,
 ) -> Result<PresenterState> {
     let app_handle = window.app_handle();
-    let is_active = app_handle.get_webview_window("presenter").is_some();
+    let is_active = presenter_is_visible(app_handle)?;
 
     // Get PDF state for page info
     let pdf_state = state.get_pdf_state()?;
@@ -248,6 +327,7 @@ pub async fn get_presenter_state(
         current_page: pdf_state.current_page,
         total_pages: pdf_state.total_pages,
         zoom_level: pdf_state.zoom_level,
+        pdf_path: pdf_state.current_file,
     })
 }
 
@@ -258,13 +338,16 @@ pub async fn toggle_presenter_mode(
     window: WebviewWindow,
     state: State<'_, AppState>,
 ) -> Result<bool> {
-    let app_handle = window.app_handle();
+    toggle_presenter_window(window.app_handle(), state.inner())
+}
 
-    if app_handle.get_webview_window("presenter").is_some() {
-        close_presenter_mode(window, state).await?;
+/// Toggle the actual native window and return its resulting visibility.
+pub(crate) fn toggle_presenter_window(app_handle: &AppHandle, state: &AppState) -> Result<bool> {
+    if presenter_is_visible(app_handle)? {
+        close_presenter_window(app_handle, state)?;
         Ok(false)
     } else {
-        open_presenter_mode(window, state, None).await?;
+        open_presenter_window(app_handle, state, None)?;
         Ok(true)
     }
 }

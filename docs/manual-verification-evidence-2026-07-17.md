@@ -10,6 +10,7 @@ runtime. It does not complete the full manual checklist.
 - Initial WebSocket source ref: `fab65342`
 - PDF follow-up source ref: `518717a` plus the PDF render-recovery slice on
   `codex/fix-pdf-blank-render`
+- Presenter/dark-page follow-up: `codex/fix-presenter-window`
 - Signed installed release: `/Applications/StreamSlate.app` v1.6.0, notarized
   Developer ID team `BX8243HJHS`
 - Patched build/run mode: `npm run tauri:dev`
@@ -66,7 +67,8 @@ AXImage | PDF page 3 rendered | 893 x 1263
 ```
 
 The `rendered` state is set only after PDF.js completes and the canvas sample
-contains opaque pixels. Result: **pass** for the current macOS WKWebView.
+contains meaningful luminance contrast. Result: **pass** for the current macOS
+WKWebView.
 
 ### Page navigation and zoom
 
@@ -96,12 +98,59 @@ initial `CONNECTED`/`STATE` messages and independently completed a request:
 
 Result: **pass**.
 
+### Dark-page conversion
+
+The follow-up renderer now paints an opaque source page and converts the
+canvas pixels themselves when dark-page inversion is enabled. White page
+pixels map to RGB `18,18,18`; black text maps to `235,235,235`; mid-tone color
+identity is retained while lightness is inverted. A whole-page contrast audit
+prevents a solid background from being reported as a successful render.
+
+The known fixture's page 1 contains only the printed page number `1` (one
+extracted character), which explained the nearly empty screenshots. Page 2
+contains 3,124 extracted characters beginning with `BASH(1)` and `NAME`.
+With page 2 selected, accessibility exposed both contrast-bearing buffers:
+
+```text
+StreamSlate: PDF page 2 rendered
+StreamSlate - Presenter Mode: Presenter PDF page 2 rendered
+```
+
+Result: **pass** for dark mode with page inversion enabled. Inversion-off and
+light-mode checks remain open.
+
+### Presenter native lifecycle
+
+Before the correction, WebSocket `TOGGLE_PRESENTER` returned `active: true`
+while macOS exposed only `StreamSlate`. The command now invokes the same native
+lifecycle as the Tauri UI, distinguishes the configured hidden presenter
+webview from a visible presenter, and responds active only after native
+visibility succeeds.
+
+Observed current-source sequence:
+
+- `TOGGLE_PRESENTER` request `s23-open-hydrated` returned
+  `PRESENTER_CHANGED { active: true }`; macOS exposed two windows titled
+  `StreamSlate` and `StreamSlate - Presenter Mode`.
+- A main-window Next button press moved the main canvas and presenter canvas
+  together from page 2 to `PDF page 3 rendered` / `Presenter PDF page 3 rendered`.
+- `TOGGLE_PRESENTER` request `s23-close` returned `active: false` and removed
+  the second window.
+- Request `s23-cold-reopen` returned `active: true`; the newly constructed
+  presenter exposed `Presenter PDF page 2 rendered` and `2 / 65`.
+- Escape in the presenter destroyed it; macOS reported one remaining window
+  and `GET_STATE` request `s23-state-after-escape-2` returned
+  `presenter_active: false`.
+
+Result: **pass** for native open, exact title, main-to-presenter page sync,
+remote close, cold reopen, and Escape close. Borderless and multi-monitor
+checks remain open.
+
 ## Checks not passed by this run
 
-| Checklist behavior                                   | Result  | Reason                                                                                                      |
-| ---------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| `TOGGLE_PRESENTER` opens/closes the presenter window | Failed  | The response reported `active: true`, but both AX and CoreGraphics still found only the main native window. |
-| Automatic reconnection succeeds                      | Not run | A new manual client connection succeeded, which does not prove client auto-reconnect behavior.              |
+| Checklist behavior              | Result  | Reason                                                                                         |
+| ------------------------------- | ------- | ---------------------------------------------------------------------------------------------- |
+| Automatic reconnection succeeds | Not run | A new manual client connection succeeded, which does not prove client auto-reconnect behavior. |
 
 ## Environment blockers
 
@@ -113,8 +162,8 @@ Result: **pass**.
 
 ## Conclusion
 
-Capabilities, simultaneous clients, page navigation, zoom, and connection
-status are directly verified. The signed v1.6.0 release has a blank-render
-defect corrected by this source slice. Presenter-window creation is a separate
-reproduced defect, and all remaining manual items stay unchecked until their
+Capabilities, simultaneous clients, page navigation, zoom, connection status,
+dark-page rendering, and the native presenter lifecycle are directly verified.
+The signed v1.6.0 blank-render and remote presenter defects are corrected by
+follow-up source slices. All remaining manual items stay unchecked until their
 exact prerequisites and observable outcomes are available.

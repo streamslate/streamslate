@@ -4,7 +4,16 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PresenterView } from "./PresenterView";
 
-const { listenMock, pdfRendererMock } = vi.hoisted(() => ({
+const {
+  closePresenterModeMock,
+  getPresenterStateMock,
+  isTauriMock,
+  listenMock,
+  pdfRendererMock,
+} = vi.hoisted(() => ({
+  closePresenterModeMock: vi.fn(),
+  getPresenterStateMock: vi.fn(),
+  isTauriMock: vi.fn(),
   listenMock: vi.fn(),
   pdfRendererMock: {
     loadDocument: vi.fn(),
@@ -15,6 +24,17 @@ const { listenMock, pdfRendererMock } = vi.hoisted(() => ({
 
 vi.mock("@tauri-apps/api/event", () => ({
   listen: listenMock,
+}));
+
+vi.mock("@tauri-apps/api/core", () => ({
+  isTauri: isTauriMock,
+}));
+
+vi.mock("../../lib/tauri/commands", () => ({
+  PresenterCommands: {
+    closePresenterMode: closePresenterModeMock,
+    getPresenterState: getPresenterStateMock,
+  },
 }));
 
 vi.mock("../../lib/pdf/renderer", () => ({
@@ -85,7 +105,20 @@ afterEach(async () => {
 });
 
 beforeEach(() => {
+  closePresenterModeMock.mockReset();
+  closePresenterModeMock.mockResolvedValue(undefined);
+  getPresenterStateMock.mockReset();
+  getPresenterStateMock.mockResolvedValue({
+    is_active: true,
+    current_page: 1,
+    total_pages: 0,
+    zoom_level: 1,
+    pdf_path: null,
+  });
+  isTauriMock.mockReset();
+  isTauriMock.mockReturnValue(false);
   listenMock.mockReset();
+  listenMock.mockResolvedValue(vi.fn());
   pdfRendererMock.loadDocument.mockReset();
   pdfRendererMock.getPageDimensions.mockReset();
   pdfRendererMock.renderPage.mockReset();
@@ -104,7 +137,6 @@ beforeEach(() => {
   );
   MockWebSocket.instances = [];
   vi.stubGlobal("WebSocket", MockWebSocket as unknown as typeof WebSocket);
-  delete (window as Window & { __TAURI__?: unknown }).__TAURI__;
 });
 
 describe("PresenterView", () => {
@@ -149,7 +181,48 @@ describe("PresenterView", () => {
     expect(pdfRendererMock.renderPage).toHaveBeenCalledWith(
       2,
       canvas,
-      expect.objectContaining({ rotation: 0 })
+      expect.objectContaining({
+        rotation: 0,
+        backgroundColor: "#ffffff",
+        darkMode: true,
+      })
     );
+  });
+
+  it("hydrates the loaded PDF after Tauri listeners are ready", async () => {
+    isTauriMock.mockReturnValue(true);
+    getPresenterStateMock.mockResolvedValue({
+      is_active: true,
+      current_page: 4,
+      total_pages: 65,
+      zoom_level: 1,
+      pdf_path: "/tmp/presenter.pdf",
+    });
+
+    const { container } = await render(<PresenterView />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const canvas = container.querySelector("canvas");
+    expect(getPresenterStateMock).toHaveBeenCalledTimes(1);
+    expect(canvas?.getAttribute("aria-label")).toBe(
+      "Presenter PDF page 4 rendered"
+    );
+    expect(container.textContent).toContain("4 / 65");
+  });
+
+  it("closes the native presenter window when Escape is pressed", async () => {
+    isTauriMock.mockReturnValue(true);
+    await render(<PresenterView />);
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+      await Promise.resolve();
+    });
+
+    expect(closePresenterModeMock).toHaveBeenCalledTimes(1);
   });
 });

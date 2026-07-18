@@ -55,6 +55,7 @@ async function renderCanvas(): Promise<RenderHandle> {
         currentPage={1}
         zoom={1}
         rotation={0}
+        darkMode
         fitMode={FitMode.CUSTOM}
       />
     );
@@ -112,7 +113,12 @@ describe("PDFCanvasRenderer", () => {
     expect(pdfRendererMock.renderPage).toHaveBeenCalledWith(
       1,
       canvas,
-      expect.objectContaining({ scale: 1, rotation: 0 })
+      expect.objectContaining({
+        scale: 1,
+        rotation: 0,
+        backgroundColor: "#ffffff",
+        darkMode: true,
+      })
     );
   });
 });

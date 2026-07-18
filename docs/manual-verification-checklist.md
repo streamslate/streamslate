@@ -46,11 +46,11 @@ Re-run applicable checks on the next release-candidate binary before tagging.
 
 ## Presenter Mode (Multi-Window)
 
-- [ ] Toggle presenter mode → a second window opens
-- [ ] Presenter window title shows "StreamSlate - Presenter Mode"
-- [ ] Changing pages in main window syncs to presenter
-- [ ] ESC key closes presenter mode and destroys presenter window
-- [ ] Re-opening presenter mode after close creates a new window
+- [x] Toggle presenter mode → a second window opens ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
+- [x] Presenter window title shows "StreamSlate - Presenter Mode" ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
+- [x] Changing pages in main window syncs to presenter ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
+- [x] ESC key closes presenter mode and destroys presenter window ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
+- [x] Re-opening presenter mode after close creates a new window ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
 - [ ] Presenter mode works when app is in borderless mode
 - [ ] Presenter mode works across multiple monitors (drag to second screen)
 
@@ -73,7 +73,7 @@ Re-run applicable checks on the next release-candidate binary before tagging.
 
 ## PDF Page Inversion
 
-- [ ] Dark mode + invert ON → PDF pages have dark background
+- [x] Dark mode + invert ON → PDF pages have dark background ([evidence](manual-verification-evidence-2026-07-17.md#dark-page-conversion))
 - [ ] Dark mode + invert OFF → PDF pages show original colors
 - [ ] Light mode → invert toggle is hidden (no effect)
 - [ ] Annotations render correctly over inverted pages
@@ -87,7 +87,7 @@ Re-run applicable checks on the next release-candidate binary before tagging.
 - [x] Send `{"type": "GET_CAPABILITIES", "protocolVersion": "2.0", "request_id": "manual-capabilities"}` → app replies with `CAPABILITIES` ([evidence](manual-verification-evidence-2026-07-17.md#protocol-v2-capabilities))
 - [x] Send `{"type": "GO_TO_PAGE", "page": 3}` → app navigates to page 3 ([evidence](manual-verification-evidence-2026-07-17.md#page-navigation-and-zoom))
 - [x] Send `{"type": "SET_ZOOM", "zoom": 1.5}` → app zooms to 150% ([evidence](manual-verification-evidence-2026-07-17.md#page-navigation-and-zoom))
-- [ ] Send `{"type": "TOGGLE_PRESENTER"}` → presenter opens or closes
+- [x] Send `{"type": "TOGGLE_PRESENTER"}` → presenter opens or closes ([evidence](manual-verification-evidence-2026-07-17.md#presenter-native-lifecycle))
 - [x] Connection status indicator in status bar shows connected ([evidence](manual-verification-evidence-2026-07-17.md#connection-status))
 - [ ] Disconnect and reconnect → auto-reconnection succeeds
 - [x] Multiple simultaneous WebSocket clients work correctly ([evidence](manual-verification-evidence-2026-07-17.md#multiple-simultaneous-clients))

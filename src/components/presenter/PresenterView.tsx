@@ -26,9 +26,12 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { isTauri } from "@tauri-apps/api/core";
 import { pdfRenderer } from "../../lib/pdf/renderer";
 import { logger } from "../../lib/logger";
 import { getErrorMessage } from "../../lib/error-message";
+import { PresenterCommands } from "../../lib/tauri/commands";
+import { useTheme } from "../../hooks/useTheme";
 
 interface PageChangedPayload {
   page: number;
@@ -42,6 +45,7 @@ interface PdfOpenedPayload {
 }
 
 export const PresenterView: React.FC = () => {
+  const { darkMode, invertPages } = useTheme();
   // State for PDF display
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,6 +59,7 @@ export const PresenterView: React.FC = () => {
   // Canvas ref for rendering
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const renderPageRef = useRef<() => Promise<void>>(async () => {});
 
   // Render the current page
   const renderPage = useCallback(async () => {
@@ -72,8 +77,9 @@ export const PresenterView: React.FC = () => {
 
       // Get container dimensions for fit calculation
       const container = containerRef.current;
-      const containerWidth = container.clientWidth;
-      const containerHeight = container.clientHeight;
+      const containerWidth = container.clientWidth || window.innerWidth || 800;
+      const containerHeight =
+        container.clientHeight || window.innerHeight || 600;
 
       // Get page dimensions
       const pageDims = await pdfRenderer.getPageDimensions(currentPage);
@@ -90,16 +96,24 @@ export const PresenterView: React.FC = () => {
         {
           scale,
           rotation: 0,
+          backgroundColor: "#ffffff",
+          darkMode: darkMode && invertPages,
         }
       );
 
+      setError(null);
       setHasVisibleContent(result.hasVisibleContent);
     } catch (err) {
+      if (err instanceof Error && err.name === "RenderingCancelledException") {
+        return;
+      }
       setError(getErrorMessage(err, "Failed to render page"));
     } finally {
       setIsLoading(false);
     }
-  }, [pdfPath, currentPage]);
+  }, [pdfPath, currentPage, darkMode, invertPages]);
+
+  renderPageRef.current = renderPage;
 
   // Set up Tauri event listeners
   // Set up event listeners (Tauri or WebSocket)
@@ -150,10 +164,17 @@ export const PresenterView: React.FC = () => {
           "zoom-changed",
           () => {
             // Re-render with new zoom
-            renderPage();
+            void renderPageRef.current();
           }
         );
         unlistenFns.push(unlistenZoomChanged);
+
+        // Events emitted while the webview is mounting can be missed. Hydrate
+        // from native state only after every listener is ready.
+        const presenterState = await PresenterCommands.getPresenterState();
+        setCurrentPage(presenterState.current_page);
+        setTotalPages(presenterState.total_pages);
+        setPdfPath(presenterState.pdf_path);
       } catch (err) {
         logger.warn(
           "Failed to setup Tauri listeners, falling back to WebSocket",
@@ -202,7 +223,7 @@ export const PresenterView: React.FC = () => {
 
             case "ZOOM_CHANGED":
               // Trigger re-render
-              renderPage();
+              void renderPageRef.current();
               break;
           }
         } catch (e) {
@@ -221,7 +242,7 @@ export const PresenterView: React.FC = () => {
     };
 
     // Detect environment
-    if ("__TAURI__" in window) {
+    if (isTauri()) {
       setupTauriListeners();
     } else {
       setupWebSocket();
@@ -238,7 +259,25 @@ export const PresenterView: React.FC = () => {
         clearTimeout(reconnectTimeout);
       }
     };
-  }, [renderPage]);
+  }, []);
+
+  // Escape must close the native presenter window, not merely hide its view.
+  useEffect(() => {
+    if (!isTauri()) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        void PresenterCommands.closePresenterMode().catch((err) => {
+          logger.error("Failed to close presenter window", err);
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Re-render when page or PDF changes
   useEffect(() => {
@@ -300,7 +339,7 @@ export const PresenterView: React.FC = () => {
               ? `Presenter PDF page ${currentPage} is blank`
               : `Presenter PDF page ${currentPage}`
         }
-        className={pdfPath ? "block max-w-full max-h-full" : "hidden"}
+        className={pdfPath ? "block max-w-full max-h-full bg-white" : "hidden"}
       />
 
       {/* Minimal page indicator (bottom right, semi-transparent) */}

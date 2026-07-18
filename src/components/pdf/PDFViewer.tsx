@@ -449,6 +449,8 @@ export const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
           {
             scale: zoom,
             rotation: rotation,
+            backgroundColor: "#ffffff",
+            darkMode: darkMode && invertPages,
           }
         );
 
@@ -511,6 +513,8 @@ export const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
     rotation,
     onCanvasSizeChange,
     fitMode,
+    darkMode,
+    invertPages,
   ]);
 
   if (renderError) {
@@ -565,9 +569,7 @@ export const PDFCanvasRenderer: React.FC<PDFCanvasRendererProps> = ({
               ? `PDF page ${currentPage} is blank`
               : `PDF page ${currentPage}`
         }
-        className={`block max-w-full h-auto ${
-          darkMode && invertPages ? "pdf-dark-mode" : ""
-        }`}
+        className="block max-w-full h-auto bg-white"
         style={{
           display: "block",
           visibility: "visible",

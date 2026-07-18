@@ -38,15 +38,15 @@ Commit: `3e46b46` (2026-03-14)
 - [x] `useViewModes.togglePresenterMode()` invokes Tauri `open_presenter_mode` / `close_presenter_mode`
 - [x] `exitPresenterMode()` convenience wrapper for ESC key / exit button
 - [x] Graceful fallback for non-Tauri environments (dev server in browser)
-- [x] Rust `open_presenter_mode` creates window dynamically via `WebviewWindowBuilder`
-- [x] `setPresenterMode` remains available for remote control events (no Tauri command needed)
+- [x] Rust presenter lifecycle shows the configured hidden window and recreates it via `WebviewWindowBuilder` after close
+- [x] Remote control invokes the same native lifecycle helper; `setPresenterMode` synchronizes frontend state only
 
 ### M4: PDF Page Inversion ✅
 
 Commit: `dd9216e` (2026-03-14)
 
 - [x] Added `invertPages` state to `useTheme.ts` with localStorage persistence
-- [x] CSS inversion conditioned on `darkMode && invertPages` (independent toggle)
+- [x] Canvas pixel conversion conditioned on `darkMode && invertPages` (independent toggle)
 - [x] "Invert PDF Pages" toggle in Sidebar settings (nested under dark mode)
 - [x] Wired through PDFViewer → PDFCanvasRenderer via props
 - [x] Included in settings sync export/import
@@ -158,8 +158,9 @@ Tracked by
 - [x] Install and verify the signed v1.6.0 Apple-silicon release, reproduce its
       blank PDF viewport, and restore visible PDF.js canvas rendering.
 - [x] Verify native PDF page navigation, zoom, and connection-status behavior.
-- [ ] Correct presenter mode reporting `active: true` without creating a second
-      native window.
+- [x] Correct presenter mode reporting `active: true` without creating a second
+      native window; derive active state from native visibility and share the
+      lifecycle between Tauri and WebSocket commands.
 - [ ] Execute and attach the native/manual verification checklist.
 - [ ] Re-run strict preflight on the next release-candidate commit before
       tagging.
