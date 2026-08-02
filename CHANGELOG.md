@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.1](https://github.com/streamslate/streamslate/compare/v1.6.0...v1.6.1) (2026-08-02)
+
+
+### Bug Fixes
+
+* **pdf:** restore native page rendering ([59abeb1](https://github.com/streamslate/streamslate/commit/59abeb1e27d75aec0d7dc416a0bb1c0f4431ab63))
+* **pdf:** restore native page rendering ([49eba7e](https://github.com/streamslate/streamslate/commit/49eba7e63fcdb193d6ec1cefa6b251b341f40b6c))
+* **presenter:** render dark PDFs reliably ([edcfa2c](https://github.com/streamslate/streamslate/commit/edcfa2c1f3c38a3a054e3a007eed8baab3203d03))
+* **presenter:** render dark PDFs reliably ([8161817](https://github.com/streamslate/streamslate/commit/8161817e9873a464350c23860b87f1a78649aded))
+* **release:** require itch status evidence ([fab6534](https://github.com/streamslate/streamslate/commit/fab65342cb8ed87ef055d65a2ed305172d31c118))
+* **release:** require itch status evidence ([9f9fd50](https://github.com/streamslate/streamslate/commit/9f9fd50adaeb8877518950c3dce155759793d170))
+* **ui:** preserve PDF viewport ([b9129a8](https://github.com/streamslate/streamslate/commit/b9129a821f7acd1a7174e609d063e8a2ba86cb42))
+* **ui:** preserve PDF viewport ([a4fcd9d](https://github.com/streamslate/streamslate/commit/a4fcd9d54357a3ea6cfb189c7fc67ff14574a838))
+
+
+### Documentation
+
+* **release:** record native websocket evidence ([518717a](https://github.com/streamslate/streamslate/commit/518717af3697aba456d146bfa37864b7964c6897))
+* **release:** record native websocket evidence ([33b1ce4](https://github.com/streamslate/streamslate/commit/33b1ce430cf18a601bea361ff15c86ae8142e317))
+* roadmap refresh per workspace convention (portfolio-refresh slice 9) ([3fc84fd](https://github.com/streamslate/streamslate/commit/3fc84fd369dfd14b6f162eb849b81fa22ca37c11))
+* roadmap refresh per workspace convention (portfolio-refresh slice 9) ([119da0d](https://github.com/streamslate/streamslate/commit/119da0d3d7da07d14b27b13929aad601ba5e24cc))
+
+
+### CI/CD
+
+* add pre-commit config (slice 7) ([9de1c83](https://github.com/streamslate/streamslate/commit/9de1c83eddff9a3eb50e3a327a6c08d0c2db1283))
+* add pre-commit config (slice 7) ([ead5496](https://github.com/streamslate/streamslate/commit/ead5496c424b3877fdfe9cd63277306759406912))
+* fix gitlab release gates ([5fb3499](https://github.com/streamslate/streamslate/commit/5fb3499192e9ef6396959b476ec1b68cf3dbb9ac))
+* onboard to platform/gitops CI template (portfolio-refresh slice 5) ([f204df9](https://github.com/streamslate/streamslate/commit/f204df9714d2f4056fde700b67f864fb154a06d3))
+* onboard to platform/gitops CI template (portfolio-refresh slice 5) ([ed1299e](https://github.com/streamslate/streamslate/commit/ed1299eec64ada5cd369daa5a501b36cce9c93f3))
+
 ## [1.6.0](https://github.com/streamslate/streamslate/compare/v1.5.0...v1.6.0) (2026-06-28)
 
 ### Features
